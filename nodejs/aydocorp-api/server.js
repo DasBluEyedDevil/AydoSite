@@ -1,222 +1,106 @@
+// server.js
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const fs = require('fs');
-const http = require('http');
-const https = require('https');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
-const logger = require('./utils/logger');
+const bodyParser = require('body-parser');
+const path = require('path');
+const fs = require('fs');
 
-// Load environment variables
-dotenv.config();
-
-// Initialize express app
+// Initialize the Express app
 const app = express();
 
-// Add security headers
-app.use(helmet());
-
-// Use morgan for logging in development
-if (process.env.NODE_ENV !== 'production') {
-  app.use(morgan('dev'));
-} else {
-  // In production, only log errors
-  app.use(morgan('combined', {
-    skip: (req, res) => res.statusCode < 400
-  }));
-}
-
-// Enhanced CORS configuration
+// Middleware setup
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 
-          (process.env.NODE_ENV === 'production' ? [] : '*'),
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-auth-token'],
+  origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
+app.use(helmet({
+  contentSecurityPolicy: false // Disable CSP for simplicity, enable in production with proper config
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again after 15 minutes'
-});
-app.use('/api/', apiLimiter);
-
-app.use(express.json());
-// Serve static files from a dedicated public directory, not parent directory
-app.use(express.static('./public'));
-
-// Debug endpoint for connectivity testing
-app.get('/api/test', (req, res) => {
-  res.json({
-    message: 'API connection successful',
-    time: new Date().toISOString(),
-    origin: req.headers.origin || 'unknown origin',
-    host: req.headers.host
-  });
-});
-
-// Basic route for testing
-app.get('/', (req, res) => {
-  res.send('AydoCorp API is running');
-});
-
-const PORT = process.env.PORT || 8080;
-const HTTPS_PORT = process.env.HTTPS_PORT || 8443;
-let httpServer, httpsServer;
-
-// Connect to MongoDB first, then set up routes and start server
-// In server.js or database connection file
-const mongoose = require('mongoose');
-
-// Enhanced MongoDB connection options
-const mongoOptions = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    retryWrites: true,
-    w: 'majority'
-};
-
-async function connectToMongoDB() {
-    try {
-        // Ensure MONGODB_URI is present
-        if (!process.env.MONGODB_URI) {
-            throw new Error('MONGODB_URI is not defined in environment variables');
-        }
-
-        await mongoose.connect(process.env.MONGODB_URI, mongoOptions);
-        console.log('✅ MongoDB connected successfully');
-    } catch (error) {
-        console.error('❌ MongoDB connection error:', error.message);
-        // Log additional details in non-production environments
-        if (process.env.NODE_ENV !== 'production') {
-            console.error('Detailed Error:', error);
-        }
-        process.exit(1);  // Critical failure, exit process
-    }
+// Configure logging
+const logsDir = path.join(__dirname, 'logs');
+// Ensure logs directory exists
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+  
+  // Create access log stream
+  const accessLogStream = fs.createWriteStream(
+    path.join(logsDir, 'access.log'),
+    { flags: 'a' }
+  );
+  
+  // Setup morgan logging
+  app.use(morgan('combined', { stream: accessLogStream }));
+} catch (error) {
+  console.warn('Could not set up file logging, falling back to console logging:', error.message);
+  app.use(morgan('combined')); // Fallback to console logging
 }
 
-// Optional: Add event listeners for connection monitoring
-mongoose.connection.on('disconnected', () => {
-    console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
+// Define routes
+const authRoutes = require('./routes/auth');
+const forumRoutes = require('./routes/forum');
+
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/forum', forumRoutes);
+
+// Basic routes
+app.get('/', (req, res) => {
+  res.json({ message: 'AydoCorp API is running' });
 });
 
-mongoose.connection.on('reconnected', () => {
-    console.log('🔄 MongoDB reconnected successfully');
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API is working correctly' });
 });
 
-module.exports = connectToMongoDB;
-  .then(() => {
-    console.log('Connected to MongoDB');
-
-    // Only set up routes after successful database connection
-    app.use('/api/auth', require('./routes/auth'));
-    app.use('/api/forum', require('./routes/forum'));
-
-    // Add a health check endpoint
-    app.get('/api/health-check', (req, res) => {
-      res.json({ status: 'ok', message: 'API is healthy' });
-    });
-
-    // Add a test post endpoint
-    app.post('/api/test-post', (req, res) => {
-      res.json({ 
-        status: 'ok', 
-        message: 'Test post received',
-        body: req.body || {}
-      });
-    });
-
-    // Catch-all route for undefined API routes
-    app.all('/api/*', (req, res) => {
-      res.status(404).json({ 
-        message: 'API endpoint not found',
-        path: req.originalUrl,
-        method: req.method
-      });
-    });
-
-    // Error handling middleware - must be last
-    app.use((err, req, res, next) => {
-      // Log the error with context
-      logger.logError(err, 'requestHandler', {
-        url: req.originalUrl,
-        method: req.method,
-        ip: req.ip,
-        userId: req.user ? req.user.user.id : 'unauthenticated',
-        statusCode: err.statusCode || 500
-      });
-
-      // Check if headers have already been sent
-      if (res.headersSent) {
-        return next(err);
-      }
-
-      // Determine status code (default to 500)
-      const statusCode = err.statusCode || 500;
-
-      // Create error response
-      const errorResponse = {
-        message: err.message || 'Server error occurred',
-        status: statusCode,
-        // In production, don't expose the stack trace
-        ...(process.env.NODE_ENV !== 'production' && { 
-          stack: err.stack,
-          details: err.details || {}
-        })
-      };
-
-      res.status(statusCode).json(errorResponse);
-    });
-
-    // Start HTTP server
-    httpServer = http.createServer(app);
-    httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`HTTP Server running on port ${PORT}`);
-    });
-
-    // Error handling for HTTP server
-    httpServer.on('error', handleServerError(PORT, 'HTTP'));
-
-    // Start HTTPS server if certificates are available
-    if (process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH && process.env.SSL_CA_PATH) {
-      try {
-        // Try to load SSL certificates from environment variables
-        const privateKey = fs.readFileSync(process.env.SSL_KEY_PATH, 'utf8');
-        const certificate = fs.readFileSync(process.env.SSL_CERT_PATH, 'utf8');
-        const ca = fs.readFileSync(process.env.SSL_CA_PATH, 'utf8');
-
-        const credentials = {
-          key: privateKey,
-          cert: certificate,
-          ca: ca
-        };
-
-        httpsServer = https.createServer(credentials, app);
-        httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
-          console.log(`HTTPS Server running on port ${HTTPS_PORT}`);
-        });
-
-        // Error handling for HTTPS server
-        httpsServer.on('error', handleServerError(HTTPS_PORT, 'HTTPS'));
-      } catch (error) {
-        console.log('SSL certificates not found or invalid:', error.message);
-        console.log('HTTPS server not started.');
-      }
-    } else {
-      console.log('SSL certificate paths not provided in environment variables. HTTPS server not started.');
+// MongoDB connection with proper error handling
+async function connectToMongoDB() {
+  try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MONGODB_URI environment variable is not defined');
     }
-  })
-  .catch(err => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1); // Exit if cannot connect to database
-  });
+    
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    
+    console.log('MongoDB connected successfully');
+  } catch (error) {
+    console.error('MongoDB connection error:', error.message);
+    console.error('Detailed error:', error);
+    process.exit(1);  // Exit with failure
+  }
+}
 
-// Function to handle server errors
+// Generic error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    message: 'Server error',
+    error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+  });
+});
+
+// Start server function
+function startServer() {
+  const PORT = process.env.PORT || 8080;
+  
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  }).on('error', handleServerError(PORT, 'HTTP'));
+}
+
+// Error handler for server startup
 function handleServerError(port, serverType) {
   return (error) => {
     console.error(`${serverType} Server startup error:`, error);
@@ -227,78 +111,12 @@ function handleServerError(port, serverType) {
   };
 }
 
-// Logger is imported at the top of the file
-
-// Global error handlers
-process.on('uncaughtException', (err) => {
-  logger.logError(err, 'uncaughtException', { shutdownReason: 'Uncaught exception' });
-  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-
-  // Exit process with failure
-  process.exit(1);
-});
-
-process.on('unhandledRejection', (err) => {
-  logger.logError(err, 'unhandledRejection', { shutdownReason: 'Unhandled promise rejection' });
-  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-
-  // Exit process with failure
-  process.exit(1);
-});
-
-// Add to server.js or main app file
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-});
-
-// Graceful shutdown
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
-
-function gracefulShutdown() {
-  console.log('Received shutdown signal, closing servers and database connections...');
-
-  // Close HTTP server if it exists
-  if (httpServer) {
-    httpServer.close(() => {
-      console.log('HTTP server closed');
-    });
-  }
-
-  // Close HTTPS server if it exists
-  if (httpsServer) {
-    httpsServer.close(() => {
-      console.log('HTTPS server closed');
-    });
-  }
-
-  // Close database connection
-  mongoose.connection.close(false)
-    .then(() => {
-      console.log('MongoDB connection closed');
-      process.exit(0);
-    })
-    .catch(err => {
-      console.error('Error during MongoDB connection close:', err);
-      process.exit(1);
-    });
-
-  // Force close if graceful shutdown takes too long
-  setTimeout(() => {
-    console.error('Could not close connections in time, forcefully shutting down');
+// Connect to MongoDB then start server
+connectToMongoDB()
+  .then(() => {
+    startServer();
+  })
+  .catch(error => {
+    console.error('Failed to start application:', error);
     process.exit(1);
-  }, 10000);
-}
-
-// Example global error handler
-app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err);
-  res.status(500).json({
-    message: 'Unexpected server error',
-    error: process.env.NODE_ENV !== 'production' ? err.message : 'Internal Server Error'
   });
-});
