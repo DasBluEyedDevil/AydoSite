@@ -71,15 +71,45 @@ let httpServer, httpsServer;
 
 // Connect to MongoDB first, then set up routes and start server
 // In server.js or database connection file
-mongoose.connect(process.env.MONGODB_URI, {
+const mongoose = require('mongoose');
+
+// Enhanced MongoDB connection options
+const mongoOptions = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch((err) => {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);  // Exit process with failure
+    retryWrites: true,
+    w: 'majority'
+};
+
+async function connectToMongoDB() {
+    try {
+        // Ensure MONGODB_URI is present
+        if (!process.env.MONGODB_URI) {
+            throw new Error('MONGODB_URI is not defined in environment variables');
+        }
+
+        await mongoose.connect(process.env.MONGODB_URI, mongoOptions);
+        console.log('✅ MongoDB connected successfully');
+    } catch (error) {
+        console.error('❌ MongoDB connection error:', error.message);
+        // Log additional details in non-production environments
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Detailed Error:', error);
+        }
+        process.exit(1);  // Critical failure, exit process
+    }
+}
+
+// Optional: Add event listeners for connection monitoring
+mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
 });
+
+mongoose.connection.on('reconnected', () => {
+    console.log('🔄 MongoDB reconnected successfully');
+});
+
+module.exports = connectToMongoDB;
   .then(() => {
     console.log('Connected to MongoDB');
 
