@@ -1,23 +1,29 @@
 # Enable rewrite engine
 RewriteEngine On
 
-# Set the proxy flag only once - ensures all subsequent flags inherit it
-RewriteOptions Inherit
+# Add HTTP authorization support (if needed)
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
 
-# Make sure authorization headers are passed through
-SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
-
-# Proxy all API requests to the Node.js server
+# Proxy all API requests to Node.js
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
 RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
 
-# Add proper proxy headers
-<IfModule mod_headers.c>
-  RequestHeader set X-Forwarded-Proto "https"
-  RequestHeader set X-Forwarded-For %{REMOTE_ADDR}e
-  RequestHeader set X-Forwarded-Host %{HTTP_HOST}e
-</IfModule>
+# Handle proxy errors with custom error page
+ErrorDocument 503 /503.html
+ErrorDocument 502 /503.html
+ErrorDocument 504 /503.html
 
-# If the proxy module fails, handle the error
-RewriteCond %{REQUEST_URI} ^/api/ [NC]
-RewriteRule .* - [F]
+# Ensure .htaccess is not accessible
+<Files .htaccess>
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Optional: Enable CORS for all routes
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+    Header set Access-Control-Allow-Credentials "true"
+</IfModule>
