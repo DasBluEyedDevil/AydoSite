@@ -1,46 +1,17 @@
-# Enable rewrite engine if mod_rewrite is available
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    
-    # Support for Authorization headers
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-    
-    # Only proxy API requests if mod_proxy is available
-    <IfModule mod_proxy.c>
-        <IfModule mod_proxy_http.c>
-            # Proxy API requests to the Node.js server
-            RewriteCond %{REQUEST_URI} ^/api/ [NC]
-            RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
-            
-            # Add ProxyPassReverse directive
-            ProxyPassReverse /api/ http://localhost:8080/api/
-        </IfModule>
-    </IfModule>
-</IfModule>
+# Basic rewrite setup - absolute minimum
+RewriteEngine On
 
-# Custom error pages
+# Direct proxy approach (no conditional checks)
+RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+
+# Error pages
 ErrorDocument 500 /503.html
 ErrorDocument 502 /503.html
 ErrorDocument 503 /503.html
 ErrorDocument 504 /503.html
 
-# Protect .htaccess file
+# Basic file protection
 <Files ".htaccess">
-    Require all denied
+    Order deny,allow
+    Deny from all
 </Files>
-
-# Add CORS headers only if mod_headers is available
-<IfModule mod_headers.c>
-    <FilesMatch "^api/">
-        Header set Access-Control-Allow-Origin "*"
-        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
-        Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, x-auth-token"
-    </FilesMatch>
-</IfModule>
-
-# Fallback for when mod_rewrite is not available
-<IfModule !mod_rewrite.c>
-    # Redirect to error page explaining that mod_rewrite is required
-    RedirectMatch 302 ^/api/.* /api-requirements.html
-</IfModule>
