@@ -5,9 +5,17 @@
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
         } else {
-            // Use proxy.php on the current domain
+            // Use proxy.php on the current domain, without trailing slash
             return window.location.origin + '/proxy.php?url=';
         }
+    }
+
+    // Then create a helper function to construct API URLs correctly
+    function getApiUrl(endpoint) {
+        const baseUrl = getApiBaseUrl();
+        // If the endpoint starts with a slash, remove it to prevent double slashes
+        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        return `${baseUrl}${cleanEndpoint}`;
     }
 
     async function testApiConnection() {
@@ -108,8 +116,10 @@
         const apiBase = getApiBaseUrl();
         console.log('Attempting login at:', `${apiBase}/api/auth/login`);
 
-        // Perform login request
-        const response = await fetch(`${apiBase}/api/auth/login`, {
+        // Instead of:
+        // const response = await fetch(`${apiBase}/api/auth/login`, {
+        // Use:
+        const response = await fetch(getApiUrl('api/auth/login'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
