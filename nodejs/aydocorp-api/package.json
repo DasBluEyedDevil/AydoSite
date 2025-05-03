@@ -5,12 +5,6 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-<<<<<<< HEAD
-    "dev": "nodemon server.js"
-  },
-  "dependencies": {
-    "express": "^5.1.0"
-=======
     "dev": "nodemon server.js",
     "restart": "npm stop --if-present && npm start"
   },
@@ -27,6 +21,5 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
->>>>>>> refs/remotes/origin/main
   }
 }
