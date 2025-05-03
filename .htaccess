@@ -1,8 +1,9 @@
 # Basic rewrite setup - absolute minimum
+# Enable RewriteEngine
 RewriteEngine On
 
-# Direct proxy approach (no conditional checks)
-RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+# Redirect API requests to our PHP proxy
+RewriteRule ^api/(.*)$ api.php [L]
 
 # Error pages
 ErrorDocument 500 /503.html
