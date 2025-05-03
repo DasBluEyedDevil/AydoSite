@@ -553,28 +553,25 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
 /* Mobile navigation layout - two columns of three buttons */
 @media screen and (max-width: 736px) {
     #header nav ul {
-        flex-wrap: wrap; /* Allow wrapping on mobile */
-        justify-content: space-between; /* Space between items */
+        display: grid; /* Switch to CSS grid for better control */
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 10px; /* Space between grid items */
+        width: 100%;
     }
     
     #header nav ul li {
-        flex: 0 0 48%; /* Set to approximately half width with small gap */
-        min-width: 0; /* Remove the min-width restriction on mobile */
-        margin: 0 0 0.5rem 0; /* Add margin to bottom only */
+        flex: none; /* Reset any flex properties */
+        width: 100%; /* Full width of grid cell */
+        max-width: none; /* Remove max-width restriction */
+        min-width: 0; /* Remove min-width restriction */
+        margin: 0; /* Reset margins */
     }
     
-    /* Every third button should start a new row by having clear: left */
-    #header nav ul li:nth-child(3n+1) {
-        clear: none; /* Remove any existing clear property */
-    }
-    
-    /* Every odd button should start a new row in the two-column layout */
-    #header nav ul li:nth-child(odd) {
-        margin-right: 1%; /* Small right margin */
-    }
-    
-    #header nav ul li:nth-child(even) {
-        margin-left: 1%; /* Small left margin */
+    /* Make sure all buttons have consistent spacing */
+    #header nav ul li a {
+        width: 100%;
+        min-height: 2.5rem;
+        margin: 0;
     }
 }
 /* Footer Logo Styling - Smaller size */
