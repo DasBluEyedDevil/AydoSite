@@ -79,7 +79,14 @@ mongoose.connect(process.env.MONGODB_URI)
 
     // Error handling middleware - must be last
     app.use((err, req, res, next) => {
-      console.error('Server error:', err);
+      // Log the error with context
+      logger.logError(err, 'requestHandler', {
+        url: req.originalUrl,
+        method: req.method,
+        ip: req.ip,
+        userId: req.user ? req.user.user.id : 'unauthenticated',
+        statusCode: err.statusCode || 500
+      });
 
       // Check if headers have already been sent
       if (res.headersSent) {
@@ -156,6 +163,26 @@ function handleServerError(port, serverType) {
     }
   };
 }
+
+// Import logger
+const logger = require('./utils/logger');
+
+// Global error handlers
+process.on('uncaughtException', (err) => {
+  logger.logError(err, 'uncaughtException', { shutdownReason: 'Uncaught exception' });
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+
+  // Exit process with failure
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (err) => {
+  logger.logError(err, 'unhandledRejection', { shutdownReason: 'Unhandled promise rejection' });
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+
+  // Exit process with failure
+  process.exit(1);
+});
 
 // Graceful shutdown
 process.on('SIGTERM', gracefulShutdown);
