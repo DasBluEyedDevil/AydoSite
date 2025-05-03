@@ -1,0 +1,12 @@
+LICENSE.txt
+README.txt
+assets
+aydocorp-backend
+aydosite.zip
+cgi-bin
+images
+index.html
+nohup.out
+proxy.php
+proxy_log.txt
+start.sh

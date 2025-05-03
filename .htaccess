@@ -1,0 +1,3 @@
+RewriteEngine On
+RewriteRule ^$ http://127.0.0.1:8080/ [P,L]
+RewriteRule ^(.*)$ http://127.0.0.1:8080/$1 [P,L]

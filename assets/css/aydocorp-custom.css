@@ -1,0 +1,727 @@
+@font-face {
+    font-family: 'Quantify';
+    src: url('../webfonts/Quantify Bold.woff') format('woff'),
+         url('../webfonts/Quantify.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Apply Quantify font to the entire website */
+body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Quantify', sans-serif !important;
+}
+
+/* Clean, simplified logo circle styling */
+#header .logo {
+    width: 5.25rem;
+    height: 5.25rem;
+    line-height: 5.25rem;
+    border-radius: 100%;
+    
+    /* White circle styling */
+    border: 2px solid white !important;
+    background: transparent !important;
+    
+    /* Ensure no filters or opacity settings are affecting it */
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Logo container styling (keep this part) */
+.logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    padding-bottom: 20%;
+}
+
+.centered-logo {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Fix for subsidiary card and image alignment */
+.subsidiaries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.subsidiary-card {
+    background: rgba(27, 31, 34, 0.85);
+    border-radius: 4px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.subsidiary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Proper image container styling */
+.image.subsidiary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 150px;
+    margin: 1rem auto;
+    height: 150px; /* Fixed height for consistency */
+}
+
+/* Image styling within container */
+.image.subsidiary img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+}
+
+/* Keep button styling */
+.subsidiary-more {
+    display: inline-block;
+    margin: 1rem auto 0;
+    width: auto;
+    min-width: 120px;
+    text-align: center;
+    background: #1b1f22;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.subsidiary-more:hover {
+    background: #ffffff;
+    color: #1b1f22;
+}
+
+/* Fix for subsidiary popup button alignment */
+.subsidiary-more {
+    display: block;
+    margin: 1rem auto;
+    width: auto;
+    min-width: 120px;
+    text-align: center;
+}
+
+.subsidiary-more {
+    background: #1b1f22;
+    color: #ffffff;
+    border: 1px solid #ffffff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.subsidiary-more:hover {
+    background: #ffffff;
+    color: #1b1f22;
+}
+
+/* Popup Styles */
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.popup {
+    position: relative;
+    width: 80%;
+    max-width: 800px;
+    margin: 5% auto;
+    background: #1b1f22;
+    border-radius: 4px;
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.popup-content {
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #ffffff;
+    z-index: 1001;
+    padding: 0.5rem;
+}
+
+.close:hover {
+    color: #53e3fb;
+}
+
+/* Fix popup content alignment */
+.subsidiary-popup-content {
+    text-align: left;
+}
+
+.subsidiary-popup-content {
+    display: none;
+}
+
+.subsidiary-popup-content h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.subsidiary-popup-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+/* Forum styles */
+.forum-categories {
+    width: 100%;
+}
+
+.forum-category {
+    margin-bottom: 2rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 1rem;
+}
+
+.forum-category h3 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+    color: #ffffff;
+}
+
+.forum-topics {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.forum-topics li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 0;
+}
+
+.forum-topics li:last-child {
+    border-bottom: none;
+}
+
+.forum-topics a {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    border: none;
+}
+
+.forum-topics a:hover {
+    color: #ffffff;
+}
+
+.error-message {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 5px;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+/* Loading indicator */
+.loading-indicator {
+    text-align: center;
+    padding: 2rem 0;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+/* Forum topic view */
+.forum-topic {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.topic-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.topic-title {
+    margin-bottom: 0.5rem;
+}
+
+.topic-meta {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.topic-content {
+    line-height: 1.6;
+}
+
+.topic-replies {
+    margin-top: 2rem;
+}
+
+.reply {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 5px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.reply-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.reply-content {
+    line-height: 1.5;
+}
+
+/* Reply form */
+.reply-form {
+    margin-top: 2rem;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 5px;
+}
+
+.reply-form h4 {
+    margin-bottom: 1rem;
+}
+
+/* Contact info */
+.contact-info {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.contact-info li {
+    padding: 0.5rem 0;
+}
+
+.version {
+    font-size: 0.8em;
+    opacity: 0.6;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 736px) {
+    .subsidiaries-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .popup {
+        width: 90%;
+        padding: 1rem;
+    }
+}
+/* Background image update */
+#bg:after {
+    content: '';
+    background-image: url("../../images/starcitizen-hulla.webp");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    z-index: -1;
+}
+/* Header content styling */
+#header .inner h1 {
+    margin-bottom: 0.5rem;
+}
+
+.corp-name {
+    font-size: 1.2rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 2rem; /* Increased spacing before tagline */
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.tagline {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 736px) {
+    .corp-name {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tagline {
+        font-size: 0.9rem;
+    }
+}
+/* User account status indicator */
+.user-status {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+    font-size: 0.8rem;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.user-status .username {
+    font-weight: bold;
+}
+
+.user-status .logout-option {
+    display: none;
+    margin-left: 0.5rem;
+    padding-left: 0.5rem;
+    border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.user-status:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.user-status:hover .logout-option {
+    display: inline-block;
+}
+
+.user-status a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    border-bottom: none;
+}
+
+.user-status a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* Make sure it stays visible on mobile */
+@media screen and (max-width: 736px) {
+    .user-status {
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.7rem;
+        padding: 0.3rem 0.7rem;
+    }
+}
+/* Navigation styling with single row layout */
+#header nav {
+    width: 100%;
+    max-width: 1200px; /* Wider to accommodate all buttons in one row */
+    margin: 1.5rem auto 0;
+}
+
+#header nav ul {
+    display: flex;
+    flex-wrap: nowrap; /* Keep buttons in a single row */
+    justify-content: space-evenly; /* Space evenly across the full width */
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+/* Button container styling */
+#header nav ul li {
+    flex: 1 1 0; /* Equal width for all buttons */
+    min-width: 130px; /* Minimum width */
+    max-width: 180px; /* Maximum width */
+    margin: 0 0.25rem; /* Small horizontal margin between buttons */
+    position: relative;
+    background: none;
+    border: none;
+}
+
+/* Remove any pseudo-elements causing white lines */
+#header nav ul li::before,
+#header nav ul li::after {
+    display: none !important;
+}
+
+/* Fix for text centering in navigation buttons */
+#header nav ul li a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 2.5rem;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    background-color: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Make sure text is perfectly centered */
+#header nav ul li a span {
+    display: inline-block;
+    width: 100%;
+    text-align: center;
+}
+
+/* Reset any other styles that might affect centering */
+#header nav ul li a::before,
+#header nav ul li a::after {
+    display: none !important;
+}
+
+/* Ensure all text displays the same way */
+#header nav ul li a,
+#header nav ul li:first-child a,
+#header nav ul li:last-child a {
+    font-weight: normal;
+    letter-spacing: normal;
+    text-transform: none; /* Override any potential text-transform from base theme */
+}
+
+/* Remove pseudo-elements from links */
+#header nav ul li a::before,
+#header nav ul li a::after {
+    display: none !important;
+}
+
+/* Hover effect */
+#header nav ul li a:hover {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 980px) {
+    #header nav {
+        max-width: 95%;
+    }
+    
+    #header nav ul li {
+        min-width: 110px;
+        margin: 0 0.2rem;
+    }
+    
+    #header nav ul li a {
+        padding: 0.6rem 0.3rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media screen and (max-width: 736px) {
+    #header nav ul {
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        justify-content: center;
+    }
+    
+    #header nav ul li {
+        flex: 0 0 auto;
+        width: calc(33.33% - 0.5rem);
+        min-width: 100px;
+        margin: 0.25rem;
+    }
+    
+    #header nav ul li a {
+        padding: 0.5rem 0.3rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #header nav ul li {
+        width: calc(50% - 0.5rem);
+    }
+}
+/* Footer Logo Styling - Smaller size */
+.footer-logo {
+    text-align: center;
+    margin-top: 0.8rem;
+}
+
+.footer-logo img {
+    max-width: 100px; /* Reduced from 150px to 100px */
+    height: auto;
+    opacity: 0.7; /* Makes it slightly subtle */
+    transition: opacity 0.3s ease;
+}
+
+.footer-logo img:hover {
+    opacity: 1; /* Full visibility on hover */
+}
+
+/* Footer spacing adjustments */
+#footer {
+    padding-bottom: 1.5rem; /* Extra padding at bottom to accommodate the logo */
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 736px) {
+    .footer-logo img {
+        max-width: 80px; /* Slightly smaller on mobile */
+    }
+}
+/* Bulletin Board Styles */
+.bulletin-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    align-items: center;
+}
+
+.dropdown {
+    padding: 0.5rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #fff;
+}
+
+.bulletin-category {
+    margin-bottom: 2rem;
+}
+
+.bulletin-category h3 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.post-list {
+    margin-bottom: 1.5rem;
+}
+
+.post-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: background 0.3s ease;
+}
+
+.post-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.post-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+}
+
+.pin-icon {
+    color: #f6b352;
+}
+
+.post-meta {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    gap: 1rem;
+}
+
+.post-author, .post-date, .reply-count {
+    display: inline-block;
+}
+
+/* Single post view */
+.single-post {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.post-header {
+    margin-bottom: 1.5rem;
+}
+
+.post-content {
+    white-space: pre-line;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.post-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Replies section */
+.post-replies {
+    margin-bottom: 2rem;
+}
+
+.reply-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.reply-meta {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+.reply-content {
+    white-space: pre-line;
+    line-height: 1.5;
+}
+
+/* Loading indicator */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Error message */
+.error-message {
+    padding: 1rem;
+    background: rgba(255, 0, 0, 0.1);
+    border-left: 3px solid rgba(255, 0, 0, 0.5);
+    margin-bottom: 1rem;
+}

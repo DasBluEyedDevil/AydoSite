@@ -1,0 +1,37 @@
+   # Node.js
+   nodejs/*/node_modules/
+   */node_modules/
+   node_modules/
+
+   # Environment files
+   .env
+   *.env
+
+   # Logs
+   npm-debug.log
+   *.log
+   logs/
+
+   # Editor files
+   .vscode/
+   .idea/
+   *.swp
+   *.swo
+
+   # OS generated files
+   .DS_Store
+   Thumbs.db
+
+   # Temporary files
+   *.tmp
+   *.bak
+
+   # cPanel specific
+   .cpanel/
+   .htpasswds/
+   etc/
+   tmp/
+   .bash_history
+   .contactemail
+   .cpanel-logs/
+   .lastlogin
