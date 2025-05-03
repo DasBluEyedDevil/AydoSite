@@ -5,8 +5,8 @@
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
         } else {
-            // Use the current domain rather than a hardcoded IP and port
-            return window.location.origin;
+            // Use proxy.php on the current domain
+            return window.location.origin + '/proxy.php?url=';
         }
     }
 
