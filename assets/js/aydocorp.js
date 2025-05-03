@@ -5,24 +5,75 @@
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
         } else {
-            // Use the direct server IP that your domain points to
-            return 'http://31.22.7.56:8080';
+            // Use the current domain rather than a hardcoded IP and port
+            return window.location.origin;
         }
     }
 
     async function testApiConnection() {
         try {
             const apiBase = getApiBaseUrl();
-            // Make sure API endpoint has a leading slash
-            const response = await fetch(`${apiBase}/api/test`);
-            console.log('API request URL:', `${apiBase}/api/test`);
-            return response.ok;
+            const url = `${apiBase}/api/test`;
+            console.log('Testing API connection to:', url);
+            
+            const response = await fetch(url);
+            const status = response.status;
+            console.log('API test response status:', status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('API test response data:', data);
+                return true;
+            } else {
+                console.error('API test failed with status:', status);
+                return false;
+            }
         } catch (error) {
-            console.error('API connection test failed:', error);
+            console.error('API connection test failed with error:', error);
             return false;
         }
     }
 
+    async function checkServerStatus() {
+        try {
+            const apiBase = getApiBaseUrl();
+            console.log('Checking server status at:', apiBase);
+            
+            // First try /api/test endpoint
+            let response = await fetch(`${apiBase}/api/test`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                console.log('Server is online at /api/test');
+                return true;
+            }
+            
+            // If that fails, try /api/auth endpoint
+            response = await fetch(`${apiBase}/api/auth`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                console.log('Server is online at /api/auth');
+                return true;
+            }
+            
+            console.error('Server check failed - all endpoints unreachable');
+            return false;
+        } catch (error) {
+            console.error('Server status check failed with error:', error);
+            return false;
+        }
+    }
 
     async function validateToken() {
         try {
@@ -30,7 +81,6 @@
             if (!token) return false;
 
             const apiBase = getApiBaseUrl();
-            // Make sure API endpoint has a leading slash
             const response = await fetch(`${apiBase}/api/auth/validate`, {
                 headers: {'x-auth-token': token}
             });
@@ -44,7 +94,7 @@
 
     // Authentication Functions
     // ==================================
-    async function handleLogin(username, password, $loginButton) {
+    async function handleLogin(username, password) {
         if (!username || !password) {
             throw new Error('Please enter both username and password.');
         }
@@ -56,7 +106,6 @@
         }
 
         const apiBase = getApiBaseUrl();
-        // Make sure API endpoint has a leading slash
         console.log('Attempting login at:', `${apiBase}/api/auth/login`);
 
         // Perform login request
@@ -251,17 +300,28 @@
         // Authentication event handlers
         $('#login-form').on('submit', async function (event) {
             event.preventDefault();
-
+            
             const username = $('#username').val();
             const password = $('#password').val();
-
+            
             // Show loading state
             const $loginButton = $(this).find('input[type="submit"]');
             const originalButtonText = $loginButton.val();
+            
+            $loginButton.val('Checking connection...').prop('disabled', true);
+            
+            // Check server status first
+            const serverOnline = await checkServerStatus();
+            if (!serverOnline) {
+                alert('Cannot connect to the server. Please try again later.');
+                $loginButton.val(originalButtonText).prop('disabled', false);
+                return;
+            }
+            
             $loginButton.val('Logging in...').prop('disabled', true);
-
+            
             try {
-                await handleLogin(username, password, $loginButton);
+                await handleLogin(username, password);
             } catch (error) {
                 console.error('Login error:', error);
                 alert(error.message || 'Login failed. Please try again.');
@@ -304,10 +364,10 @@
                 return;
             }
 
-            try {
-                // Show loading indicator
-                $('#register-button').val('Creating account...').prop('disabled', true);
+            // Show loading indicator
+            $('#register-button').val('Creating account...').prop('disabled', true);
 
+            try {
                 const apiBase = getApiBaseUrl();
 
                 // Send registration request with correct URL format
@@ -319,10 +379,21 @@
                     body: JSON.stringify({username, email, password})
                 });
                 
-                // Rest of the function remains the same
-                // ...
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert('Registration failed: ' + (errorData.message || 'Unknown error'));
+                    return;
+                }
+                
+                const data = await response.json();
+                alert('Account created successfully! You can now log in.');
+                
+                // Switch to login form
+                $('#register-container').hide();
+                $('#login-container').show();
+                
             } catch (error) {
-                alert('Registration failed: ' + error.message);
+                alert('Registration failed: ' + (error.message || 'Network error'));
                 console.error('Registration error:', error);
             } finally {
                 // Reset button
@@ -393,9 +464,6 @@
         // Initial API test
         testApiConnection();
 
-        // Add this to your $(document).ready function
-        // After your other event handlers
-
         // New Post button click handler
         $('#new-post-button').on('click', function(event) {
             event.preventDefault();
@@ -430,7 +498,6 @@
                 const apiBase = getApiBaseUrl();
                 const token = localStorage.getItem('aydocorpToken');
                 
-                // CORRECTED URL CONSTRUCTION - ensure leading slash
                 const response = await fetch(`${apiBase}/api/forum/posts`, {
                     method: 'POST',
                     headers: {
@@ -440,19 +507,29 @@
                     body: JSON.stringify({ title, content })
                 });
                 
-                // Rest of the function remains the same
-                // ...
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert('Failed to create post: ' + (errorData.message || 'Unknown error'));
+                    return;
+                }
+                
+                // Post created successfully
+                alert('Post created successfully!');
+                
+                // Clear form fields
+                $('#post-title').val('');
+                $('#post-content').val('');
+                
+                // Redirect to forum
+                window.location.href = '#forum';
+                
             } catch (error) {
-                // Error handling code
-                // ...
+                alert('Error creating post: ' + (error.message || 'Network error'));
+                console.error('Post creation error:', error);
+            } finally {
+                // Reset button state
+                $submitButton.text(originalButtonText).prop('disabled', false);
             }
         });
     });
-    // At the end of the file, REMOVE THIS CODE
-    // $(document).ready(function() {
-    //    // Your existing code...
-    //    
-    //    // Test proxy POST functionality
-    //    testProxyPost();
-    // });
 })(jQuery);
