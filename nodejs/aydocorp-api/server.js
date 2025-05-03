@@ -72,18 +72,35 @@ let httpServer, httpsServer;
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
-    
+
     // Only set up routes after successful database connection
     app.use('/api/auth', require('./routes/auth'));
     app.use('/api/forum', require('./routes/forum'));
-    
+
     // Error handling middleware - must be last
     app.use((err, req, res, next) => {
       console.error('Server error:', err);
-      res.status(500).json({
-        message: 'Server error occurred',
-        error: process.env.NODE_ENV === 'production' ? {} : err.message
-      });
+
+      // Check if headers have already been sent
+      if (res.headersSent) {
+        return next(err);
+      }
+
+      // Determine status code (default to 500)
+      const statusCode = err.statusCode || 500;
+
+      // Create error response
+      const errorResponse = {
+        message: err.message || 'Server error occurred',
+        status: statusCode,
+        // In production, don't expose the stack trace
+        ...(process.env.NODE_ENV !== 'production' && { 
+          stack: err.stack,
+          details: err.details || {}
+        })
+      };
+
+      res.status(statusCode).json(errorResponse);
     });
 
     // Start HTTP server
@@ -96,28 +113,32 @@ mongoose.connect(process.env.MONGODB_URI)
     httpServer.on('error', handleServerError(PORT, 'HTTP'));
 
     // Start HTTPS server if certificates are available
-    try {
-      // Try to load SSL certificates from environment variables
-      const privateKey = fs.readFileSync(process.env.SSL_KEY_PATH || '/path/to/your/privkey.pem', 'utf8');
-      const certificate = fs.readFileSync(process.env.SSL_CERT_PATH || '/path/to/your/cert.pem', 'utf8');
-      const ca = fs.readFileSync(process.env.SSL_CA_PATH || '/path/to/your/chain.pem', 'utf8');
+    if (process.env.SSL_KEY_PATH && process.env.SSL_CERT_PATH && process.env.SSL_CA_PATH) {
+      try {
+        // Try to load SSL certificates from environment variables
+        const privateKey = fs.readFileSync(process.env.SSL_KEY_PATH, 'utf8');
+        const certificate = fs.readFileSync(process.env.SSL_CERT_PATH, 'utf8');
+        const ca = fs.readFileSync(process.env.SSL_CA_PATH, 'utf8');
 
-      const credentials = {
-        key: privateKey,
-        cert: certificate,
-        ca: ca
-      };
+        const credentials = {
+          key: privateKey,
+          cert: certificate,
+          ca: ca
+        };
 
-      httpsServer = https.createServer(credentials, app);
-      httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
-        console.log(`HTTPS Server running on port ${HTTPS_PORT}`);
-      });
+        httpsServer = https.createServer(credentials, app);
+        httpsServer.listen(HTTPS_PORT, '0.0.0.0', () => {
+          console.log(`HTTPS Server running on port ${HTTPS_PORT}`);
+        });
 
-      // Error handling for HTTPS server
-      httpsServer.on('error', handleServerError(HTTPS_PORT, 'HTTPS'));
-    } catch (error) {
-      console.log('SSL certificates not found or invalid:', error.message);
-      console.log('HTTPS server not started.');
+        // Error handling for HTTPS server
+        httpsServer.on('error', handleServerError(HTTPS_PORT, 'HTTPS'));
+      } catch (error) {
+        console.log('SSL certificates not found or invalid:', error.message);
+        console.log('HTTPS server not started.');
+      }
+    } else {
+      console.log('SSL certificate paths not provided in environment variables. HTTPS server not started.');
     }
   })
   .catch(err => {
@@ -142,21 +163,21 @@ process.on('SIGINT', gracefulShutdown);
 
 function gracefulShutdown() {
   console.log('Received shutdown signal, closing servers and database connections...');
-  
+
   // Close HTTP server if it exists
   if (httpServer) {
     httpServer.close(() => {
       console.log('HTTP server closed');
     });
   }
-  
+
   // Close HTTPS server if it exists
   if (httpsServer) {
     httpsServer.close(() => {
       console.log('HTTPS server closed');
     });
   }
-  
+
   // Close database connection
   mongoose.connection.close(false)
     .then(() => {
@@ -167,7 +188,7 @@ function gracefulShutdown() {
       console.error('Error during MongoDB connection close:', err);
       process.exit(1);
     });
-    
+
   // Force close if graceful shutdown takes too long
   setTimeout(() => {
     console.error('Could not close connections in time, forcefully shutting down');

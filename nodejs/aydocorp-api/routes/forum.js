@@ -19,11 +19,14 @@ router.get('/posts', auth, async (req, res) => {
         const posts = await Post.find()
             .sort({ createdAt: -1 })
             .populate('author', 'username');
-        
+
         res.json(posts);
     } catch (err) {
         console.error('Error fetching posts:', err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({
+            message: 'Server error while fetching posts',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
     }
 });
 
@@ -33,7 +36,7 @@ router.get('/posts', auth, async (req, res) => {
 router.post('/posts', auth, async (req, res) => {
     try {
         const { title, content, category } = req.body;
-        
+
         const newPost = new Post({
             title,
             content,
@@ -41,14 +44,17 @@ router.post('/posts', auth, async (req, res) => {
             author: req.user.user.id,
             pinned: false
         });
-        
+
         const post = await newPost.save();
         await post.populate('author', 'username');
-        
+
         res.json(post);
     } catch (err) {
         console.error('Error creating post:', err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({
+            message: 'Server error while creating post',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
     }
 });
 
@@ -66,20 +72,23 @@ router.get('/posts/:id', auth, async (req, res) => {
                     select: 'username'
                 }
             });
-            
+
         if (!post) {
             return res.status(404).json({ message: 'Post not found' });
         }
-        
+
         res.json(post);
     } catch (err) {
         console.error('Error fetching post:', err.message);
-        
+
         if (err.kind === 'ObjectId') {
             return res.status(404).json({ message: 'Post not found' });
         }
-        
-        res.status(500).send('Server error');
+
+        res.status(500).json({
+            message: 'Server error while fetching post',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
     }
 });
 
