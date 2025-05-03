@@ -1,3 +1,11 @@
-RewriteEngine On
-RewriteRule ^$ http://127.0.0.1:8080/ [P,L]
-RewriteRule ^(.*)$ http://127.0.0.1:8080/$1 [P,L]
+# Proxy API requests to Node.js application
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+</IfModule>
+
+# If needed, add proxy headers
+<IfModule mod_headers.c>
+  RequestHeader set X-Forwarded-Proto "https"
+  RequestHeader set X-Forwarded-For %{REMOTE_ADDR}e
+</IfModule>
