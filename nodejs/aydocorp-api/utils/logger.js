@@ -4,13 +4,23 @@ const path = require('path');
 
 // Ensure logs directory exists
 const logsDir = path.join(__dirname, '..', 'logs');
-if (!fs.existsSync(logsDir)) {
-    fs.mkdirSync(logsDir, { recursive: true });
+let logsAccessible = true;
+
+try {
+    if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+    }
+
+    // Test write access
+    fs.accessSync(logsDir, fs.constants.W_OK);
+} catch (err) {
+    console.error(`Cannot access logs directory: ${err.message}`);
+    logsAccessible = false;
 }
 
 // Create log file paths
-const errorLogPath = path.join(logsDir, 'error.log');
-const combinedLogPath = path.join(logsDir, 'combined.log');
+const errorLogPath = logsAccessible ? path.join(logsDir, 'error.log') : null;
+const combinedLogPath = logsAccessible ? path.join(logsDir, 'combined.log') : null;
 
 /**
  * Log an error with context
@@ -27,9 +37,9 @@ function logError(err, context, additionalInfo = {}) {
         stack: err.stack,
         ...additionalInfo
     };
-    
+
     const logEntry = JSON.stringify(errorObj) + '\n';
-    
+
     // Log to console in development
     if (process.env.NODE_ENV !== 'production') {
         console.error(`[${timestamp}] [${context}] Error:`, err.message);
@@ -38,13 +48,18 @@ function logError(err, context, additionalInfo = {}) {
             console.error('Additional Info:', additionalInfo);
         }
     }
-    
-    // Always log to file
-    fs.appendFile(errorLogPath, logEntry, (writeErr) => {
-        if (writeErr) {
-            console.error('Failed to write to error log:', writeErr);
-        }
-    });
+
+    // Always log to file if logs are accessible
+    if (errorLogPath) {
+        fs.appendFile(errorLogPath, logEntry, (writeErr) => {
+            if (writeErr) {
+                console.error('Failed to write to error log:', writeErr);
+            }
+        });
+    } else {
+        // Always log to console if logs are not accessible
+        console.error(`[${timestamp}] [${context}] Error (not logged to file):`, err.message);
+    }
 }
 
 /**
@@ -62,9 +77,9 @@ function logInfo(message, context, additionalInfo = {}) {
         message,
         ...additionalInfo
     };
-    
+
     const logEntry = JSON.stringify(infoObj) + '\n';
-    
+
     // Log to console in development
     if (process.env.NODE_ENV !== 'production') {
         console.log(`[${timestamp}] [${context}] Info:`, message);
@@ -72,13 +87,18 @@ function logInfo(message, context, additionalInfo = {}) {
             console.log('Additional Info:', additionalInfo);
         }
     }
-    
-    // Always log to file
-    fs.appendFile(combinedLogPath, logEntry, (writeErr) => {
-        if (writeErr) {
-            console.error('Failed to write to combined log:', writeErr);
-        }
-    });
+
+    // Always log to file if logs are accessible
+    if (combinedLogPath) {
+        fs.appendFile(combinedLogPath, logEntry, (writeErr) => {
+            if (writeErr) {
+                console.error('Failed to write to combined log:', writeErr);
+            }
+        });
+    } else {
+        // Always log to console if logs are not accessible
+        console.log(`[${timestamp}] [${context}] Info (not logged to file):`, message);
+    }
 }
 
 module.exports = {

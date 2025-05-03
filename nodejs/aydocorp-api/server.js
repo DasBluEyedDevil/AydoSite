@@ -8,6 +8,7 @@ const https = require('https');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const logger = require('./utils/logger');
 
 // Load environment variables
 dotenv.config();
@@ -164,8 +165,7 @@ function handleServerError(port, serverType) {
   };
 }
 
-// Import logger
-const logger = require('./utils/logger');
+// Logger is imported at the top of the file
 
 // Global error handlers
 process.on('uncaughtException', (err) => {

@@ -6,13 +6,15 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 // Base URL for API requests
-const baseURL = `http://localhost:${process.env.PORT || 8080}`;
+// Use API_HOST environment variable if set, otherwise default to localhost
+const apiHost = process.env.API_HOST || 'localhost';
+const baseURL = `http://${apiHost}:${process.env.PORT || 8080}`;
 
 // Function to test API endpoints
 async function testAPI() {
     try {
         console.log('Testing API endpoints...');
-        
+
         // Test the root endpoint
         console.log('\nTesting root endpoint:');
         try {
@@ -24,7 +26,7 @@ async function testAPI() {
                 console.error('Response data:', error.response.data);
             }
         }
-        
+
         // Test the API test endpoint
         console.log('\nTesting /api/test endpoint:');
         try {
@@ -36,7 +38,7 @@ async function testAPI() {
                 console.error('Response data:', error.response.data);
             }
         }
-        
+
         // Test the auth routes
         console.log('\nTesting auth routes:');
         try {
@@ -48,7 +50,7 @@ async function testAPI() {
                 console.error('Response data:', error.response.data);
             }
         }
-        
+
         // Test the forum routes
         console.log('\nTesting forum routes:');
         try {
@@ -60,7 +62,7 @@ async function testAPI() {
                 console.error('Response data:', error.response.data);
             }
         }
-        
+
         // Test registration with invalid data to see error handling
         console.log('\nTesting registration with invalid data:');
         try {
@@ -74,7 +76,7 @@ async function testAPI() {
                 console.error('Response data:', error.response.data);
             }
         }
-        
+
         console.log('\nAPI testing completed.');
     } catch (error) {
         console.error('Unexpected error during API testing:', error.message);
