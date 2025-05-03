@@ -1,15 +1,27 @@
-# Enable rewrite engine
-RewriteEngine On
+# Ensure mod_rewrite, mod_proxy, and mod_headers are loaded
+<IfModule mod_rewrite.c>
+    # Enable rewrite engine
+    RewriteEngine On
+    
+    # Add HTTP authorization support
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+    
+    # Proxy all API requests to Node.js
+    RewriteCond %{REQUEST_URI} ^/api/ [NC]
+    RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+</IfModule>
 
-# Add HTTP authorization support (if needed)
-RewriteCond %{HTTP:Authorization} ^(.*)
-RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
-
-# Proxy all API requests to Node.js
-RewriteCond %{REQUEST_URI} ^/api/ [NC]
-RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+# Ensure mod_proxy is loaded
+<IfModule mod_proxy.c>
+    <IfModule mod_proxy_http.c>
+        # Add ProxyPassReverse directive
+        ProxyPassReverse /api/ http://localhost:8080/api/
+    </IfModule>
+</IfModule>
 
 # Handle proxy errors with custom error page
+# Make sure these files exist in your web root
 ErrorDocument 503 /503.html
 ErrorDocument 502 /503.html
 ErrorDocument 504 /503.html
@@ -20,10 +32,16 @@ ErrorDocument 504 /503.html
     Deny from all
 </Files>
 
-# Optional: Enable CORS for all routes
+# Enable CORS for API routes only with proper security
 <IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "*"
-    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
-    Header set Access-Control-Allow-Credentials "true"
+    <LocationMatch "^/api/">
+        # Use a specific origin instead of wildcard when using credentials
+        # Header set Access-Control-Allow-Origin "https://yourdomain.com"
+        # Or use environment variable to set the origin dynamically
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+        Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+        # Don't use Allow-Credentials with wildcard origin
+        # Header set Access-Control-Allow-Credentials "true"
+    </LocationMatch>
 </IfModule>
