@@ -70,7 +70,16 @@ const HTTPS_PORT = process.env.HTTPS_PORT || 8443;
 let httpServer, httpsServer;
 
 // Connect to MongoDB first, then set up routes and start server
-mongoose.connect(process.env.MONGODB_URI)
+// In server.js or database connection file
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('MongoDB connected successfully'))
+.catch((err) => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);  // Exit process with failure
+});
   .then(() => {
     console.log('Connected to MongoDB');
 
@@ -207,6 +216,15 @@ process.on('unhandledRejection', (err) => {
   process.exit(1);
 });
 
+// Add to server.js or main app file
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
 // Graceful shutdown
 process.on('SIGTERM', gracefulShutdown);
 process.on('SIGINT', gracefulShutdown);
@@ -245,3 +263,12 @@ function gracefulShutdown() {
     process.exit(1);
   }, 10000);
 }
+
+// Example global error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  res.status(500).json({
+    message: 'Unexpected server error',
+    error: process.env.NODE_ENV !== 'production' ? err.message : 'Internal Server Error'
+  });
+});

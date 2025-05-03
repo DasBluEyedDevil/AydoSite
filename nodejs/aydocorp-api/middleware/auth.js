@@ -10,14 +10,26 @@ module.exports = function(req, res, next) {
         return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    try {
-        // Verify token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET is not defined');
+        return res.status(500).json({ message: 'Server configuration error' });
+    }
 
-        // Add user from payload
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        
+        // Add additional validation
+        if (!decoded.user || !decoded.user.id) {
+            return res.status(401).json({ message: 'Invalid token structure' });
+        }
+
         req.user = decoded;
         next();
     } catch (err) {
-        res.status(401).json({ message: 'Token is not valid' });
+        console.error('Token verification error:', err.message);
+        res.status(401).json({ 
+            message: 'Token is not valid',
+            error: process.env.NODE_ENV !== 'production' ? err.message : undefined
+        });
     }
 };
