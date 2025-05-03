@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node server.js",
-    "stop": "pkill -f 'node server.js' || true",
-    "restart": "npm run stop && npm run start"
+    "dev": "nodemon server.js"
   }
 }
