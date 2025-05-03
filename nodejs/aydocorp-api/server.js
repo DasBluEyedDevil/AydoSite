@@ -62,6 +62,22 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'API is working correctly' });
 });
 
+// Add this alongside your other basic routes
+app.get('/api/health-check', (req, res) => {
+  res.json({ 
+    status: 'ok',
+    message: 'Server is running normally'
+  });
+});
+
+// Add this alongside your other basic routes
+app.post('/api/test-post', (req, res) => {
+  res.json({ 
+    message: 'POST request received successfully',
+    receivedData: req.body
+  });
+});
+
 // MongoDB connection with proper error handling
 async function connectToMongoDB() {
   try {
