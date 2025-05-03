@@ -78,6 +78,29 @@ mongoose.connect(process.env.MONGODB_URI)
     app.use('/api/auth', require('./routes/auth'));
     app.use('/api/forum', require('./routes/forum'));
 
+    // Add a health check endpoint
+    app.get('/api/health-check', (req, res) => {
+      res.json({ status: 'ok', message: 'API is healthy' });
+    });
+
+    // Add a test post endpoint
+    app.post('/api/test-post', (req, res) => {
+      res.json({ 
+        status: 'ok', 
+        message: 'Test post received',
+        body: req.body || {}
+      });
+    });
+
+    // Catch-all route for undefined API routes
+    app.all('/api/*', (req, res) => {
+      res.status(404).json({ 
+        message: 'API endpoint not found',
+        path: req.originalUrl,
+        method: req.method
+      });
+    });
+
     // Error handling middleware - must be last
     app.use((err, req, res, next) => {
       // Log the error with context

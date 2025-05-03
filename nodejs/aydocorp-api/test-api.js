@@ -77,6 +77,45 @@ async function testAPI() {
             }
         }
 
+        // Test health check endpoint
+        console.log('\nTesting health check endpoint:');
+        try {
+            const healthCheckResponse = await axios.get(`${baseURL}/api/health-check`);
+            console.log('Health check response:', healthCheckResponse.status, healthCheckResponse.data);
+        } catch (error) {
+            console.error('Error testing health check:', error.response ? error.response.status : error.message);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
+        }
+
+        // Test test-post endpoint
+        console.log('\nTesting test-post endpoint:');
+        try {
+            const testPostResponse = await axios.post(`${baseURL}/api/test-post`, {
+                test: 'data',
+                hello: 'world'
+            });
+            console.log('Test post response:', testPostResponse.status, testPostResponse.data);
+        } catch (error) {
+            console.error('Error testing test-post:', error.response ? error.response.status : error.message);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
+        }
+
+        // Test non-existent endpoint to verify 404 handling
+        console.log('\nTesting non-existent endpoint:');
+        try {
+            const nonExistentResponse = await axios.get(`${baseURL}/api/non-existent-endpoint`);
+            console.log('Non-existent endpoint response:', nonExistentResponse.status, nonExistentResponse.data);
+        } catch (error) {
+            console.error('Error testing non-existent endpoint:', error.response ? error.response.status : error.message);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+            }
+        }
+
         console.log('\nAPI testing completed.');
     } catch (error) {
         console.error('Unexpected error during API testing:', error.message);
