@@ -1,11 +1,23 @@
-# Proxy API requests to Node.js application
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
-</IfModule>
+# Enable rewrite engine
+RewriteEngine On
 
-# If needed, add proxy headers
+# Set the proxy flag only once - ensures all subsequent flags inherit it
+RewriteOptions Inherit
+
+# Make sure authorization headers are passed through
+SetEnvIfNoCase ^Authorization$ "(.+)" HTTP_AUTHORIZATION=$1
+
+# Proxy all API requests to the Node.js server
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+
+# Add proper proxy headers
 <IfModule mod_headers.c>
   RequestHeader set X-Forwarded-Proto "https"
   RequestHeader set X-Forwarded-For %{REMOTE_ADDR}e
+  RequestHeader set X-Forwarded-Host %{HTTP_HOST}e
 </IfModule>
+
+# If the proxy module fails, handle the error
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule .* - [F]
