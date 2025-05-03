@@ -6,6 +6,11 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 
+// Basic route to confirm auth routes are working
+router.get('/', (req, res) => {
+  res.json({ message: 'Auth routes are working' });
+});
+
 // @route   POST api/auth/register
 // @desc    Register a user
 // @access  Public

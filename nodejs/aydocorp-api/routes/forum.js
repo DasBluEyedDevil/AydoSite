@@ -3,7 +3,13 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Post = require('../models/Post');
-const User = require('../models/User');
+// Remove or comment out this line since it's not used in this file:
+// const User = require('../models/User');
+
+// Basic route to confirm forum routes are working
+router.get('/', (req, res) => {
+  res.json({ message: 'Forum routes are working' });
+});
 
 // @route   GET api/forum/posts
 // @desc    Get all posts
