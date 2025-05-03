@@ -1,0 +1,9 @@
+nohup: ignoring input
+
+> aydocorp-api@1.0.0 start
+> node server.js
+
+Connected to MongoDB
+SSL certificates not found or invalid: ENOENT: no such file or directory, open '/path/to/your/privkey.pem'
+HTTPS server not started.
+HTTP Server running on port 8080
