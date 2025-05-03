@@ -2,13 +2,11 @@
     // API and Authentication Utilities
     // ==================================
     function getApiBaseUrl() {
-        // Check if we're in development or production
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            // Direct connection for local development
-            return 'http://localhost:8080';  // Updated port from 5000 to 8080
+            return 'http://localhost:8080';
         } else {
-            // Use the Node.js app URL directly instead of proxy.php
-            return '';  // Empty string for relative URLs in production
+            // Use the direct server IP that your domain points to
+            return 'http://31.22.7.56:8080';
         }
     }
 
