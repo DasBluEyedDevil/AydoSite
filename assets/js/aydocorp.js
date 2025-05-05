@@ -1266,27 +1266,27 @@
             checkLoginStatus();
         });
 
-        // Back to forum button
-        $('#back-to-forum').on('click', function () {
-            window.location.href = '#forum';
+        // Back to employee portal button
+        $('#back-to-employee-portal').on('click', function () {
+            window.location.href = '#employee-portal';
         });
 
         // Initial API test
         testApiConnection();
 
-        // New Post button click handler
+        // New Operation button click handler
         $('#new-post-button').on('click', function(event) {
             event.preventDefault();
 
             // Hide other containers
-            $('#post-list-container').hide();
-            $('#single-post-container').hide();
+            $('#operations-list-container').hide();
+            $('#operation-details-container').hide();
 
-            // Show the new post form
+            // Show the new operation form
             $('#new-post-form-container').show();
         });
 
-        // Update your post submission handler
+        // Operation submission handler
         $('#new-post-form').on('submit', async function(event) {
             event.preventDefault();
 
@@ -1303,39 +1303,54 @@
                 // Show loading state
                 const $submitButton = $(this).find('button[type="submit"]');
                 const originalButtonText = $submitButton.text();
-                $submitButton.text('Posting...').prop('disabled', true);
+                $submitButton.text('Creating Operation...').prop('disabled', true);
 
                 const apiBase = getApiBaseUrl();
                 const token = localStorage.getItem('aydocorpToken');
 
-                const response = await fetch(`${apiBase}/api/forum/posts`, {
+                const response = await fetch(`${apiBase}/api/employee-portal/operations`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'x-auth-token': token
                     },
-                    body: JSON.stringify({ title, content })
+                    body: JSON.stringify({ 
+                        title, 
+                        description: 'Created from portal',
+                        content,
+                        category: 'document',
+                        classification: 'internal'
+                    })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    alert('Failed to create post: ' + (errorData.message || 'Unknown error'));
+                    alert('Failed to create operation: ' + (errorData.message || 'Unknown error'));
                     return;
                 }
 
-                // Post created successfully
-                alert('Post created successfully!');
+                // Operation created successfully
+                alert('Operation created successfully!');
 
                 // Clear form fields
                 $('#post-title').val('');
                 $('#post-content').val('');
 
-                // Redirect to forum
-                window.location.href = '#forum';
+                // Redirect to employee portal operations section
+                window.location.href = '#employee-portal';
+
+                // Show the operations section
+                $('.portal-section').hide();
+                $('#operations-section').show();
+                $('.portal-tab').removeClass('active');
+                $('.portal-tab[data-section="operations"]').addClass('active');
+
+                // Reload operations data
+                loadOperations();
 
             } catch (error) {
-                alert('Error creating post: ' + (error.message || 'Network error'));
-                console.error('Post creation error:', error);
+                alert('Error creating operation: ' + (error.message || 'Network error'));
+                console.error('Operation creation error:', error);
             } finally {
                 // Reset button state
                 $submitButton.text(originalButtonText).prop('disabled', false);

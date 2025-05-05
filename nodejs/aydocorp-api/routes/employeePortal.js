@@ -48,11 +48,11 @@ router.get('/employees/:id', auth, async (req, res) => {
     res.json(employee);
   } catch (err) {
     console.error('Error fetching employee:', err.message);
-    
+
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Employee not found' });
     }
-    
+
     res.status(500).json({
       message: 'Server error while fetching employee',
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
@@ -143,6 +143,46 @@ router.get('/career-paths', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/employee-portal/career-paths
+// @desc    Create a new career path
+// @access  Private
+router.post('/career-paths', auth, async (req, res) => {
+  try {
+    const {
+      department,
+      description,
+      ranks,
+      certifications,
+      trainingGuides
+    } = req.body;
+
+    // Check if career path already exists for this department
+    let careerPath = await CareerPath.findOne({ department });
+
+    if (careerPath) {
+      return res.status(400).json({ message: 'Career path for this department already exists' });
+    }
+
+    // Create new career path
+    careerPath = new CareerPath({
+      department,
+      description,
+      ranks: ranks || [],
+      certifications: certifications || [],
+      trainingGuides: trainingGuides || []
+    });
+
+    await careerPath.save();
+    res.json(careerPath);
+  } catch (err) {
+    console.error('Error creating career path:', err.message);
+    res.status(500).json({
+      message: 'Server error while creating career path',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    });
+  }
+});
+
 // @route   GET api/employee-portal/career-paths/:id
 // @desc    Get career path by ID
 // @access  Private
@@ -157,11 +197,11 @@ router.get('/career-paths/:id', auth, async (req, res) => {
     res.json(careerPath);
   } catch (err) {
     console.error('Error fetching career path:', err.message);
-    
+
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Career path not found' });
     }
-    
+
     res.status(500).json({
       message: 'Server error while fetching career path',
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
@@ -191,6 +231,56 @@ router.get('/events', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/employee-portal/events
+// @desc    Create a new event
+// @access  Private
+router.post('/events', auth, async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      eventType,
+      location,
+      startDate,
+      endDate,
+      isRecurring,
+      recurrencePattern,
+      maxAttendees,
+      requirements,
+      isPrivate
+    } = req.body;
+
+    // Create new event
+    const newEvent = new Event({
+      title,
+      description,
+      eventType: eventType || 'other',
+      location,
+      startDate,
+      endDate,
+      isRecurring: isRecurring || false,
+      recurrencePattern: recurrencePattern || '',
+      organizer: req.user.user.id,
+      maxAttendees: maxAttendees || 0,
+      requirements: requirements || '',
+      isPrivate: isPrivate || false,
+      attendees: [{ user: req.user.user.id }] // Add creator as first attendee
+    });
+
+    const event = await newEvent.save();
+    await event.populate('organizer', 'username');
+    await event.populate('attendees.user', 'username');
+
+    res.json(event);
+  } catch (err) {
+    console.error('Error creating event:', err.message);
+    res.status(500).json({
+      message: 'Server error while creating event',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    });
+  }
+});
+
 // @route   GET api/employee-portal/events/:id
 // @desc    Get event by ID
 // @access  Private
@@ -207,11 +297,11 @@ router.get('/events/:id', auth, async (req, res) => {
     res.json(event);
   } catch (err) {
     console.error('Error fetching event:', err.message);
-    
+
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Event not found' });
     }
-    
+
     res.status(500).json({
       message: 'Server error while fetching event',
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
@@ -240,6 +330,56 @@ router.get('/operations', auth, async (req, res) => {
   }
 });
 
+// @route   POST api/employee-portal/operations
+// @desc    Create a new operation
+// @access  Private
+router.post('/operations', auth, async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      content,
+      category,
+      classification,
+      attachments,
+      relatedOperations,
+      version,
+      status,
+      accessRoles
+    } = req.body;
+
+    // Create new operation
+    const newOperation = new Operation({
+      title,
+      description,
+      content,
+      category: category || 'document',
+      classification: classification || 'internal',
+      author: req.user.user.id,
+      attachments: attachments || [],
+      relatedOperations: relatedOperations || [],
+      version: version || '1.0',
+      status: status || 'active',
+      accessRoles: accessRoles || ['admin']
+    });
+
+    const operation = await newOperation.save();
+    await operation.populate('author', 'username');
+
+    if (operation.attachments.length > 0) {
+      await operation.populate('attachments.uploadedBy', 'username');
+    }
+
+    res.json(operation);
+  } catch (err) {
+    console.error('Error creating operation:', err.message);
+    res.status(500).json({
+      message: 'Server error while creating operation',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    });
+  }
+});
+
 // @route   GET api/employee-portal/operations/:id
 // @desc    Get operation by ID
 // @access  Private
@@ -256,11 +396,11 @@ router.get('/operations/:id', auth, async (req, res) => {
     res.json(operation);
   } catch (err) {
     console.error('Error fetching operation:', err.message);
-    
+
     if (err.kind === 'ObjectId') {
       return res.status(404).json({ message: 'Operation not found' });
     }
-    
+
     res.status(500).json({
       message: 'Server error while fetching operation',
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
