@@ -8,6 +8,7 @@ class GoogleSheetsUtil {
     this.sheets = null;
     this.initialized = false;
     this.employeeSheetId = process.env.GOOGLE_SHEETS_EMPLOYEE_ID;
+    this.employeeSheetName = process.env.GOOGLE_SHEETS_EMPLOYEE_SHEET_NAME || 'Employees';
   }
 
   /**
@@ -67,6 +68,26 @@ class GoogleSheetsUtil {
   }
 
   /**
+   * Get sheet names from the spreadsheet
+   * @returns {Array} Array of sheet names
+   */
+  async getSheetNames() {
+    await this.ensureInitialized();
+
+    try {
+      const response = await this.sheets.spreadsheets.get({
+        spreadsheetId: this.employeeSheetId,
+        fields: 'sheets.properties'
+      });
+
+      return response.data.sheets.map(sheet => sheet.properties.title);
+    } catch (error) {
+      console.error('Error getting sheet names:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get all employees from the Google Sheet
    * @returns {Array} Array of employee objects
    */
@@ -74,10 +95,28 @@ class GoogleSheetsUtil {
     await this.ensureInitialized();
 
     try {
+      // Get all sheet names
+      const sheetNames = await this.getSheetNames();
+      console.log('Available sheets:', sheetNames);
+
+      // Check if the configured sheet name exists
+      let sheetName = this.employeeSheetName;
+      if (!sheetNames.includes(sheetName)) {
+        console.warn(`Sheet "${sheetName}" not found. Available sheets: ${sheetNames.join(', ')}`);
+
+        // Use the first sheet if the specified one doesn't exist
+        if (sheetNames.length > 0) {
+          sheetName = sheetNames[0];
+          console.log(`Using first available sheet: "${sheetName}"`);
+        } else {
+          throw new Error('No sheets found in the spreadsheet');
+        }
+      }
+
       // Get the header row to determine column mapping
       const headerResponse = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.employeeSheetId,
-        range: 'Employees!A1:Z1',
+        range: `${sheetName}!A1:Z1`,
       });
 
       const headers = headerResponse.data.values[0];
@@ -85,7 +124,7 @@ class GoogleSheetsUtil {
       // Get all data rows
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.employeeSheetId,
-        range: 'Employees!A2:Z',
+        range: `${sheetName}!A2:Z`,
       });
 
       const rows = response.data.values || [];
@@ -138,6 +177,23 @@ class GoogleSheetsUtil {
     await this.ensureInitialized();
 
     try {
+      // Get all sheet names
+      const sheetNames = await this.getSheetNames();
+
+      // Check if the configured sheet name exists
+      let sheetName = this.employeeSheetName;
+      if (!sheetNames.includes(sheetName)) {
+        console.warn(`Sheet "${sheetName}" not found for updating. Available sheets: ${sheetNames.join(', ')}`);
+
+        // Use the first sheet if the specified one doesn't exist
+        if (sheetNames.length > 0) {
+          sheetName = sheetNames[0];
+          console.log(`Using first available sheet for updating: "${sheetName}"`);
+        } else {
+          throw new Error('No sheets found in the spreadsheet for updating');
+        }
+      }
+
       // Define headers based on the Employee model
       const headers = [
         '_id', 'user', 'fullName', 'photo', 'backgroundStory', 'rank', 
@@ -170,7 +226,7 @@ class GoogleSheetsUtil {
       // Update the sheet
       await this.sheets.spreadsheets.values.update({
         spreadsheetId: this.employeeSheetId,
-        range: 'Employees!A1',
+        range: `${sheetName}!A1`,
         valueInputOption: 'RAW',
         resource: { values },
       });
