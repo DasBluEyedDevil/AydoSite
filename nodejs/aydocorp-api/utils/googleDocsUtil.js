@@ -80,7 +80,7 @@ class GoogleDocsUtil {
   /**
    * Get document content from Google Docs
    * @param {string} documentId - Google Docs document ID
-   * @returns {string} Document content as HTML
+   * @returns {string} Document content as plain text with preserved line breaks
    */
   async getDocumentContent(documentId) {
     await this.ensureInitialized();
@@ -94,43 +94,110 @@ class GoogleDocsUtil {
       // Extract text content from the document
       const document = response.data;
       let content = '';
+      let lastEndIndex = -1;
 
       if (document.body && document.body.content) {
         // Process each structural element in the document
         document.body.content.forEach(element => {
+          // Handle paragraphs (most common element)
           if (element.paragraph) {
-            // Process paragraphs
+            // Add a newline between paragraphs, but not before the first one
+            if (lastEndIndex !== -1) {
+              content += '\n';
+            }
+
+            // Process paragraph elements (text runs)
             element.paragraph.elements.forEach(paraElement => {
               if (paraElement.textRun && paraElement.textRun.content) {
                 content += paraElement.textRun.content;
               }
             });
-          } else if (element.table) {
-            // Process tables (simplified)
-            content += '<table>';
+
+            lastEndIndex = content.length;
+          } 
+          // Handle tables
+          else if (element.table) {
+            // Add a newline before the table if not at the beginning
+            if (lastEndIndex !== -1) {
+              content += '\n';
+            }
+
+            // Process table rows and cells
             element.table.tableRows.forEach(row => {
-              content += '<tr>';
-              row.tableCells.forEach(cell => {
-                content += '<td>';
+              let rowContent = '';
+
+              // Extract text from each cell
+              row.tableCells.forEach((cell, cellIndex) => {
+                let cellContent = '';
+
                 if (cell.content) {
                   cell.content.forEach(cellElement => {
                     if (cellElement.paragraph) {
                       cellElement.paragraph.elements.forEach(paraElement => {
                         if (paraElement.textRun && paraElement.textRun.content) {
-                          content += paraElement.textRun.content;
+                          cellContent += paraElement.textRun.content.trim();
                         }
                       });
                     }
                   });
                 }
-                content += '</td>';
+
+                // Add cell content with separator
+                rowContent += cellContent;
+                if (cellIndex < row.tableCells.length - 1) {
+                  rowContent += ' | ';
+                }
               });
-              content += '</tr>';
+
+              // Add row content
+              content += rowContent + '\n';
             });
-            content += '</table>';
+
+            lastEndIndex = content.length;
+          }
+          // Handle lists
+          else if (element.list) {
+            // Add a newline before the list if not at the beginning
+            if (lastEndIndex !== -1) {
+              content += '\n';
+            }
+
+            // Process list items
+            if (element.list.listItems) {
+              element.list.listItems.forEach(item => {
+                let itemContent = '';
+
+                // Add bullet or number
+                if (item.bullet) {
+                  itemContent += '• ';
+                } else if (item.number) {
+                  itemContent += item.number + '. ';
+                }
+
+                // Add item text
+                if (item.text) {
+                  itemContent += item.text;
+                }
+
+                content += itemContent + '\n';
+              });
+            }
+
+            lastEndIndex = content.length;
+          }
+          // Handle section breaks
+          else if (element.sectionBreak) {
+            content += '\n---\n';
+            lastEndIndex = content.length;
           }
         });
       }
+
+      // Ensure consistent line breaks and remove extra whitespace
+      content = content.replace(/\r\n/g, '\n')
+                       .replace(/\r/g, '\n')
+                       .replace(/\n{3,}/g, '\n\n')
+                       .trim();
 
       return content;
     } catch (error) {
@@ -151,20 +218,32 @@ class GoogleDocsUtil {
         return Promise.reject(new Error('Operations document ID not configured'));
       }
 
+      console.log(`Fetching operations content from Google Doc ID: ${documentId}`);
       const content = await this.getDocumentContent(documentId);
 
+      // Log a sample of the content for debugging (first 200 chars)
+      console.log(`Retrieved document content (first 200 chars): ${content.substring(0, 200)}...`);
+      console.log(`Total content length: ${content.length} characters`);
+
       // Parse the content into operation objects
-      // This is a simplified example - actual parsing would depend on document structure
       const operations = [];
       const sections = content.split('---OPERATION---').filter(Boolean);
 
-      sections.forEach(section => {
+      console.log(`Found ${sections.length} operation sections in the document`);
+
+      sections.forEach((section, index) => {
+        console.log(`Processing operation section ${index + 1}:`);
+        console.log(`Section length: ${section.length} characters`);
+
         const lines = section.split('\n').filter(line => line.trim());
+        console.log(`Found ${lines.length} non-empty lines in section ${index + 1}`);
 
         if (lines.length >= 3) {
           const title = lines[0].trim();
           const description = lines[1].trim();
           const content = lines.slice(2).join('\n').trim();
+
+          console.log(`Parsed operation: "${title}" (description: ${description.substring(0, 30)}...)`);
 
           operations.push({
             title,
@@ -174,9 +253,13 @@ class GoogleDocsUtil {
             classification: 'internal',
             status: 'active'
           });
+        } else {
+          console.warn(`Skipping section ${index + 1} because it has fewer than 3 lines (found ${lines.length})`);
+          console.warn(`Section content preview: ${section.substring(0, 100)}...`);
         }
       });
 
+      console.log(`Successfully parsed ${operations.length} operations from the document`);
       return operations;
     } catch (error) {
       console.error('Error getting operations content:', error);

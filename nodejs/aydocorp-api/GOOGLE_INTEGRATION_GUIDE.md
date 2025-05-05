@@ -85,13 +85,27 @@ This two-way sync ensures that changes made in either system are reflected in th
 #### Operations Document
 
 1. Create a new Google Doc for operations
-2. Format the document with sections separated by "---OPERATION---"
+2. Format the document with sections separated by "---OPERATION---" (make sure to include this exact text with the dashes)
 3. For each operation section, include:
    - Title (first line)
    - Description (second line)
    - Content (remaining lines)
 4. Share the document with the service account email (with Editor permissions)
 5. Copy the Document ID from the URL
+
+**Important Notes About Operations Document Format:**
+
+- Each section must be separated by exactly "---OPERATION---" on its own line
+- Each section must have at least 3 lines (title, description, and content)
+- The system will preserve formatting like paragraphs, line breaks, and basic tables
+- Avoid using complex formatting features like columns, text boxes, or embedded objects
+- If you're having issues with automatic formatting:
+  - Go to Tools > Preferences in Google Docs
+  - Disable "Automatically detect links" and "Automatically capitalize words"
+  - Disable "Automatically correct spelling"
+  - Disable "Automatically format as you type"
+- After making changes to the document, you need to access the `/api/employee-portal/operations` endpoint to trigger the sync
+- Changes may take a few moments to appear as they need to be processed and saved to the database
 
 #### Career Paths Document
 
