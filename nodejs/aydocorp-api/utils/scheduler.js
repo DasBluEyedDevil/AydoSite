@@ -26,13 +26,13 @@ class Scheduler {
     }
 
     console.log('Initializing data sync scheduler...');
-    
+
     // Schedule jobs
     this.scheduleEmployeeSync();
     this.scheduleCareerPathSync();
     this.scheduleEventSync();
     this.scheduleOperationSync();
-    
+
     this.initialized = true;
     console.log('Data sync scheduler initialized successfully');
   }
@@ -41,8 +41,8 @@ class Scheduler {
    * Schedule employee data synchronization
    */
   scheduleEmployeeSync() {
-    // Run every hour at minute 0 (e.g., 1:00, 2:00, etc.)
-    this.jobs.employeeSync = cron.schedule('0 * * * *', async () => {
+    // Run every 5 minutes
+    this.jobs.employeeSync = cron.schedule('*/5 * * * *', async () => {
       console.log('Running scheduled employee data sync...');
       try {
         // Get employees from database
@@ -104,15 +104,15 @@ class Scheduler {
       }
     });
 
-    console.log('Employee sync job scheduled (hourly)');
+    console.log('Employee sync job scheduled (every 5 minutes)');
   }
 
   /**
    * Schedule career path data synchronization
    */
   scheduleCareerPathSync() {
-    // Run every 2 hours at minute 15 (e.g., 1:15, 3:15, etc.)
-    this.jobs.careerPathSync = cron.schedule('15 */2 * * *', async () => {
+    // Run every 5 minutes
+    this.jobs.careerPathSync = cron.schedule('*/5 * * * *', async () => {
       console.log('Running scheduled career path data sync...');
       try {
         // Get career paths from database
@@ -170,15 +170,15 @@ class Scheduler {
       }
     });
 
-    console.log('Career path sync job scheduled (every 2 hours)');
+    console.log('Career path sync job scheduled (every 5 minutes)');
   }
 
   /**
    * Schedule event data synchronization
    */
   scheduleEventSync() {
-    // Run every 3 hours at minute 30 (e.g., 0:30, 3:30, 6:30, etc.)
-    this.jobs.eventSync = cron.schedule('30 */3 * * *', async () => {
+    // Run every 5 minutes
+    this.jobs.eventSync = cron.schedule('*/5 * * * *', async () => {
       console.log('Running scheduled event data sync...');
       try {
         // Get events from database
@@ -225,7 +225,7 @@ class Scheduler {
               } else {
                 // Create new event with a default organizer (first admin user)
                 const adminUser = await require('mongoose').model('User').findOne({ role: 'admin' });
-                
+
                 if (!adminUser) {
                   console.warn('No admin user found for event creation, skipping new event');
                   continue;
@@ -263,15 +263,15 @@ class Scheduler {
       }
     });
 
-    console.log('Event sync job scheduled (every 3 hours)');
+    console.log('Event sync job scheduled (every 5 minutes)');
   }
 
   /**
    * Schedule operation data synchronization
    */
   scheduleOperationSync() {
-    // Run every 4 hours at minute 45 (e.g., 0:45, 4:45, 8:45, etc.)
-    this.jobs.operationSync = cron.schedule('45 */4 * * *', async () => {
+    // Run every 5 minutes
+    this.jobs.operationSync = cron.schedule('*/5 * * * *', async () => {
       console.log('Running scheduled operation data sync...');
       try {
         // Get operations from database
@@ -305,7 +305,7 @@ class Scheduler {
               } else {
                 // Create new operation with a default author (first admin user)
                 const adminUser = await require('mongoose').model('User').findOne({ role: 'admin' });
-                
+
                 if (!adminUser) {
                   console.warn('No admin user found for operation creation, skipping new operation');
                   continue;
@@ -339,7 +339,7 @@ class Scheduler {
       }
     });
 
-    console.log('Operation sync job scheduled (every 4 hours)');
+    console.log('Operation sync job scheduled (every 5 minutes)');
   }
 
   /**

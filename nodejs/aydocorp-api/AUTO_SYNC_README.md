@@ -10,10 +10,10 @@ The Employee Portal now includes an automatic data synchronization system that p
 
 The system uses a scheduler (powered by node-cron) that runs in the background on the server. The scheduler automatically syncs data at regular intervals:
 
-1. **Employee Data**: Synced with Google Sheets every hour
-2. **Career Paths**: Synced with Google Docs every 2 hours
-3. **Events**: Synced with Google Docs every 3 hours
-4. **Operations**: Synced with Google Docs every 4 hours
+1. **Employee Data**: Synced with Google Sheets every 5 minutes
+2. **Career Paths**: Synced with Google Docs every 5 minutes
+3. **Events**: Synced with Google Docs every 5 minutes
+4. **Operations**: Synced with Google Docs every 5 minutes
 
 This means that when users visit the employee portal, they'll always see the latest data from your Google Sheets and Google Docs, even if no one has manually accessed the API endpoints.
 
@@ -31,17 +31,17 @@ The automatic synchronization is enabled by default when the server starts. No a
 The sync schedule is defined in the `utils/scheduler.js` file and can be modified if needed:
 
 ```javascript
-// Employee data sync (every hour at minute 0)
-cron.schedule('0 * * * *', async () => { ... });
+// Employee data sync (every 5 minutes)
+cron.schedule('*/5 * * * *', async () => { ... });
 
-// Career paths sync (every 2 hours at minute 15)
-cron.schedule('15 */2 * * *', async () => { ... });
+// Career paths sync (every 5 minutes)
+cron.schedule('*/5 * * * *', async () => { ... });
 
-// Events sync (every 3 hours at minute 30)
-cron.schedule('30 */3 * * *', async () => { ... });
+// Events sync (every 5 minutes)
+cron.schedule('*/5 * * * *', async () => { ... });
 
-// Operations sync (every 4 hours at minute 45)
-cron.schedule('45 */4 * * *', async () => { ... });
+// Operations sync (every 5 minutes)
+cron.schedule('*/5 * * * *', async () => { ... });
 ```
 
 ## Testing
@@ -68,10 +68,10 @@ Example log messages:
 
 ```
 Initializing data sync scheduler...
-Employee sync job scheduled (hourly)
-Career path sync job scheduled (every 2 hours)
-Event sync job scheduled (every 3 hours)
-Operation sync job scheduled (every 4 hours)
+Employee sync job scheduled (every 5 minutes)
+Career path sync job scheduled (every 5 minutes)
+Event sync job scheduled (every 5 minutes)
+Operation sync job scheduled (every 5 minutes)
 Data sync scheduler initialized successfully
 Automatic data synchronization scheduler started
 

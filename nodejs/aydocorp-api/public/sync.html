@@ -81,7 +81,7 @@
 </head>
 <body>
     <h1>AydoCorp Data Synchronization</h1>
-    
+
     <div class="card">
         <h2>Sync All Data</h2>
         <p>Synchronize all data (employees, career paths, events, operations) with Google Sheets and Google Docs.</p>
@@ -96,7 +96,7 @@
     <div class="card">
         <h2>Sync Individual Data</h2>
         <p>Synchronize specific data types with their respective Google sources.</p>
-        
+
         <div>
             <button id="syncEmployeesBtn">Sync Employees</button>
             <span id="syncEmployeesLoading" class="loading" style="display: none;"></span>
@@ -105,7 +105,7 @@
                 <pre id="syncEmployeesOutput"></pre>
             </div>
         </div>
-        
+
         <div>
             <button id="syncCareerPathsBtn">Sync Career Paths</button>
             <span id="syncCareerPathsLoading" class="loading" style="display: none;"></span>
@@ -114,7 +114,7 @@
                 <pre id="syncCareerPathsOutput"></pre>
             </div>
         </div>
-        
+
         <div>
             <button id="syncEventsBtn">Sync Events</button>
             <span id="syncEventsLoading" class="loading" style="display: none;"></span>
@@ -123,7 +123,7 @@
                 <pre id="syncEventsOutput"></pre>
             </div>
         </div>
-        
+
         <div>
             <button id="syncOperationsBtn">Sync Operations</button>
             <span id="syncOperationsLoading" class="loading" style="display: none;"></span>
@@ -138,10 +138,10 @@
         <h2>About Auto Sync</h2>
         <p>The system automatically syncs data on the following schedule:</p>
         <ul>
-            <li><strong>Employees:</strong> Every hour</li>
-            <li><strong>Career Paths:</strong> Every 2 hours</li>
-            <li><strong>Events:</strong> Every 3 hours</li>
-            <li><strong>Operations:</strong> Every 4 hours</li>
+            <li><strong>Employees:</strong> Every 5 minutes</li>
+            <li><strong>Career Paths:</strong> Every 5 minutes</li>
+            <li><strong>Events:</strong> Every 5 minutes</li>
+            <li><strong>Operations:</strong> Every 5 minutes</li>
         </ul>
         <p>Use this page to manually trigger synchronization if you need immediate updates.</p>
     </div>
@@ -166,14 +166,14 @@
                 document.getElementById(btnId).disabled = false;
                 document.getElementById(loadingId).style.display = 'none';
                 document.getElementById(resultId).style.display = 'block';
-                
+
                 const resultElement = document.getElementById(resultId);
                 if (!data.success && !data.overallSuccess) {
                     resultElement.classList.add('error');
                 } else {
                     resultElement.classList.remove('error');
                 }
-                
+
                 document.getElementById(outputId).textContent = JSON.stringify(data, null, 2);
             }
 
@@ -182,7 +182,7 @@
                 this.disabled = true;
                 document.getElementById('syncAllLoading').style.display = 'inline-block';
                 document.getElementById('syncAllResult').style.display = 'none';
-                
+
                 const data = await makeRequest('all');
                 updateUI('syncAllBtn', 'syncAllLoading', 'syncAllResult', 'syncAllOutput', data);
             });
@@ -192,7 +192,7 @@
                 this.disabled = true;
                 document.getElementById('syncEmployeesLoading').style.display = 'inline-block';
                 document.getElementById('syncEmployeesResult').style.display = 'none';
-                
+
                 const data = await makeRequest('employees');
                 updateUI('syncEmployeesBtn', 'syncEmployeesLoading', 'syncEmployeesResult', 'syncEmployeesOutput', data);
             });
@@ -202,7 +202,7 @@
                 this.disabled = true;
                 document.getElementById('syncCareerPathsLoading').style.display = 'inline-block';
                 document.getElementById('syncCareerPathsResult').style.display = 'none';
-                
+
                 const data = await makeRequest('career-paths');
                 updateUI('syncCareerPathsBtn', 'syncCareerPathsLoading', 'syncCareerPathsResult', 'syncCareerPathsOutput', data);
             });
@@ -212,7 +212,7 @@
                 this.disabled = true;
                 document.getElementById('syncEventsLoading').style.display = 'inline-block';
                 document.getElementById('syncEventsResult').style.display = 'none';
-                
+
                 const data = await makeRequest('events');
                 updateUI('syncEventsBtn', 'syncEventsLoading', 'syncEventsResult', 'syncEventsOutput', data);
             });
@@ -222,7 +222,7 @@
                 this.disabled = true;
                 document.getElementById('syncOperationsLoading').style.display = 'inline-block';
                 document.getElementById('syncOperationsResult').style.display = 'none';
-                
+
                 const data = await makeRequest('operations');
                 updateUI('syncOperationsBtn', 'syncOperationsLoading', 'syncOperationsResult', 'syncOperationsOutput', data);
             });
