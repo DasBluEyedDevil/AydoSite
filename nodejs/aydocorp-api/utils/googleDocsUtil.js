@@ -8,7 +8,7 @@ class GoogleDocsUtil {
     this.docs = null;
     this.drive = null;
     this.initialized = false;
-    
+
     // Map of document IDs for different content types
     this.documentIds = {
       operations: process.env.GOOGLE_DOCS_OPERATIONS_ID,
@@ -24,12 +24,28 @@ class GoogleDocsUtil {
     try {
       // Check if credentials exist
       if (!process.env.GOOGLE_CREDENTIALS_JSON) {
-        throw new Error('Google API credentials not found in environment variables');
+        console.error('Google API credentials not found in environment variables');
+        return Promise.reject(new Error('Google API credentials not found in environment variables'));
       }
 
       // Parse credentials from environment variable
-      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-      
+      let credentials;
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        console.log('Successfully parsed Google credentials JSON for Docs API');
+      } catch (parseError) {
+        console.error('Error parsing Google credentials JSON for Docs API:', parseError);
+        return Promise.reject(new Error('Invalid Google credentials JSON format. Please check your .env file.'));
+      }
+
+      // Validate required credential fields
+      if (!credentials.client_email || !credentials.private_key) {
+        console.error('Missing required fields in Google credentials for Docs API:', 
+          !credentials.client_email ? 'client_email is missing' : '',
+          !credentials.private_key ? 'private_key is missing' : '');
+        return Promise.reject(new Error('Google credentials are missing required fields (client_email and/or private_key)'));
+      }
+
       // Create JWT client with scopes for both Docs and Drive
       const auth = new google.auth.JWT(
         credentials.client_email,
@@ -131,24 +147,25 @@ class GoogleDocsUtil {
     try {
       const documentId = this.documentIds.operations;
       if (!documentId) {
-        throw new Error('Operations document ID not configured');
+        console.error('Operations document ID not configured');
+        return Promise.reject(new Error('Operations document ID not configured'));
       }
 
       const content = await this.getDocumentContent(documentId);
-      
+
       // Parse the content into operation objects
       // This is a simplified example - actual parsing would depend on document structure
       const operations = [];
       const sections = content.split('---OPERATION---').filter(Boolean);
-      
+
       sections.forEach(section => {
         const lines = section.split('\n').filter(line => line.trim());
-        
+
         if (lines.length >= 3) {
           const title = lines[0].trim();
           const description = lines[1].trim();
           const content = lines.slice(2).join('\n').trim();
-          
+
           operations.push({
             title,
             description,
@@ -159,7 +176,7 @@ class GoogleDocsUtil {
           });
         }
       });
-      
+
       return operations;
     } catch (error) {
       console.error('Error getting operations content:', error);
@@ -175,27 +192,28 @@ class GoogleDocsUtil {
     try {
       const documentId = this.documentIds.careerPaths;
       if (!documentId) {
-        throw new Error('Career paths document ID not configured');
+        console.error('Career paths document ID not configured');
+        return Promise.reject(new Error('Career paths document ID not configured'));
       }
 
       const content = await this.getDocumentContent(documentId);
-      
+
       // Parse the content into career path objects
       // This is a simplified example - actual parsing would depend on document structure
       const careerPaths = [];
       const sections = content.split('---CAREER-PATH---').filter(Boolean);
-      
+
       sections.forEach(section => {
         const lines = section.split('\n').filter(line => line.trim());
-        
+
         if (lines.length >= 3) {
           const department = lines[0].trim();
           const description = lines[1].trim();
-          
+
           // Parse ranks
           const ranksSection = section.split('---RANKS---')[1];
           const ranks = [];
-          
+
           if (ranksSection) {
             const rankLines = ranksSection.split('---RANK---').filter(Boolean);
             rankLines.forEach(rankLine => {
@@ -212,7 +230,7 @@ class GoogleDocsUtil {
               }
             });
           }
-          
+
           careerPaths.push({
             department,
             description,
@@ -220,7 +238,7 @@ class GoogleDocsUtil {
           });
         }
       });
-      
+
       return careerPaths;
     } catch (error) {
       console.error('Error getting career paths content:', error);
@@ -236,19 +254,20 @@ class GoogleDocsUtil {
     try {
       const documentId = this.documentIds.events;
       if (!documentId) {
-        throw new Error('Events document ID not configured');
+        console.error('Events document ID not configured');
+        return Promise.reject(new Error('Events document ID not configured'));
       }
 
       const content = await this.getDocumentContent(documentId);
-      
+
       // Parse the content into event objects
       // This is a simplified example - actual parsing would depend on document structure
       const events = [];
       const sections = content.split('---EVENT---').filter(Boolean);
-      
+
       sections.forEach(section => {
         const lines = section.split('\n').filter(line => line.trim());
-        
+
         if (lines.length >= 5) {
           const title = lines[0].trim();
           const description = lines[1].trim();
@@ -256,7 +275,7 @@ class GoogleDocsUtil {
           const location = lines[3].trim();
           const startDate = new Date(lines[4].trim());
           const endDate = lines[5] ? new Date(lines[5].trim()) : null;
-          
+
           events.push({
             title,
             description,
@@ -271,7 +290,7 @@ class GoogleDocsUtil {
           });
         }
       });
-      
+
       return events;
     } catch (error) {
       console.error('Error getting events content:', error);

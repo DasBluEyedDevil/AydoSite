@@ -1,6 +1,4 @@
 const { google } = require('googleapis');
-const fs = require('fs');
-const path = require('path');
 
 /**
  * Google Sheets utility for reading and writing employee data
@@ -19,12 +17,28 @@ class GoogleSheetsUtil {
     try {
       // Check if credentials exist
       if (!process.env.GOOGLE_CREDENTIALS_JSON) {
-        throw new Error('Google API credentials not found in environment variables');
+        console.error('Google API credentials not found in environment variables');
+        return Promise.reject(new Error('Google API credentials not found in environment variables'));
       }
 
       // Parse credentials from environment variable
-      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
-      
+      let credentials;
+      try {
+        credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS_JSON);
+        console.log('Successfully parsed Google credentials JSON');
+      } catch (parseError) {
+        console.error('Error parsing Google credentials JSON:', parseError);
+        return Promise.reject(new Error('Invalid Google credentials JSON format. Please check your .env file.'));
+      }
+
+      // Validate required credential fields
+      if (!credentials.client_email || !credentials.private_key) {
+        console.error('Missing required fields in Google credentials:', 
+          !credentials.client_email ? 'client_email is missing' : '',
+          !credentials.private_key ? 'private_key is missing' : '');
+        return Promise.reject(new Error('Google credentials are missing required fields (client_email and/or private_key)'));
+      }
+
       // Create JWT client
       const auth = new google.auth.JWT(
         credentials.client_email,
@@ -67,7 +81,7 @@ class GoogleSheetsUtil {
       });
 
       const headers = headerResponse.data.values[0];
-      
+
       // Get all data rows
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.employeeSheetId,
@@ -75,7 +89,7 @@ class GoogleSheetsUtil {
       });
 
       const rows = response.data.values || [];
-      
+
       // Convert rows to objects using headers as keys
       return rows.map(row => {
         const employee = {};
@@ -177,7 +191,7 @@ class GoogleSheetsUtil {
     try {
       // Get employees from Google Sheet
       const sheetEmployees = await this.getAllEmployees();
-      
+
       // Create a map of database employees by ID for quick lookup
       const dbEmployeeMap = new Map();
       dbEmployees.forEach(employee => {
@@ -194,16 +208,16 @@ class GoogleSheetsUtil {
 
       // Update database employees with data from sheet
       const updatedEmployees = [];
-      
+
       // Process database employees
       dbEmployees.forEach(dbEmployee => {
         const id = dbEmployee._id.toString();
         const sheetEmployee = sheetEmployeeMap.get(id);
-        
+
         if (sheetEmployee) {
           // Update database employee with sheet data
           const updatedEmployee = { ...dbEmployee.toObject() };
-          
+
           // Update fields that can be edited in the sheet
           updatedEmployee.fullName = sheetEmployee.fullName || dbEmployee.fullName;
           updatedEmployee.backgroundStory = sheetEmployee.backgroundStory || dbEmployee.backgroundStory;
@@ -211,7 +225,7 @@ class GoogleSheetsUtil {
           updatedEmployee.department = sheetEmployee.department || dbEmployee.department;
           updatedEmployee.specializations = sheetEmployee.specializations || dbEmployee.specializations;
           updatedEmployee.certifications = sheetEmployee.certifications || dbEmployee.certifications;
-          
+
           // Handle contactInfo separately as it's an object
           if (sheetEmployee.contactInfo) {
             updatedEmployee.contactInfo = {
@@ -219,28 +233,28 @@ class GoogleSheetsUtil {
               ...sheetEmployee.contactInfo
             };
           }
-          
+
           updatedEmployees.push(updatedEmployee);
         } else {
           // No changes from sheet, keep database version
           updatedEmployees.push(dbEmployee.toObject());
         }
       });
-      
+
       // Find new employees from sheet that don't exist in database
       sheetEmployees.forEach(sheetEmployee => {
         // Skip if no ID or already in database
         if (!sheetEmployee._id || dbEmployeeMap.has(sheetEmployee._id)) {
           return;
         }
-        
+
         // This is a new employee from the sheet, add to the list
         updatedEmployees.push(sheetEmployee);
       });
-      
+
       // Update the sheet with the latest data
       await this.updateEmployeeSheet(updatedEmployees);
-      
+
       return updatedEmployees;
     } catch (error) {
       console.error('Error syncing employees:', error);

@@ -103,7 +103,7 @@ Update your `.env` file with the following variables:
 
 ```
 # Google API Configuration
-GOOGLE_CREDENTIALS_JSON={"type":"service_account",...} # Paste the entire contents of your service account JSON key file
+GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"your-project-id","private_key_id":"your-private-key-id","private_key":"-----BEGIN PRIVATE KEY-----\nYOUR_PRIVATE_KEY_HERE\n-----END PRIVATE KEY-----\n","client_email":"your-service-account@your-project-id.iam.gserviceaccount.com","client_id":"your-client-id","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/your-service-account%40your-project-id.iam.gserviceaccount.com"}
 
 # Google Sheets Document IDs
 GOOGLE_SHEETS_EMPLOYEE_ID=your-google-sheets-id
@@ -112,6 +112,23 @@ GOOGLE_SHEETS_EMPLOYEE_ID=your-google-sheets-id
 GOOGLE_DOCS_OPERATIONS_ID=your-operations-doc-id
 GOOGLE_DOCS_CAREER_PATHS_ID=your-career-paths-doc-id
 GOOGLE_DOCS_EVENTS_ID=your-events-doc-id
+```
+
+#### Important Notes About Credentials Format:
+
+1. The `GOOGLE_CREDENTIALS_JSON` value must be a valid JSON string containing all required fields, especially `client_email` and `private_key`.
+2. Do NOT enclose the JSON in quotes (either single or double).
+3. The `private_key` field must include the full private key, including the `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----` lines.
+4. Line breaks in the private key must be represented as `\n` characters.
+5. If you're copying from the downloaded JSON file, make sure to:
+   - Remove any extra spaces or line breaks
+   - Replace actual line breaks in the private key with `\n` characters
+   - Remove any enclosing quotes around the entire JSON
+
+#### Example of Properly Formatted Credentials:
+
+```
+GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"my-project-123456","private_key_id":"abcdef1234567890abcdef1234567890abcdef12","private_key":"-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC7VJTUt9Us8cKj\nMzEfYyjiWA4R4/M2bS1GB4t7NXp98C3SC6dVMvDuictGeurT8jNbvJZHtCSuYEvu\nNMoSfm76oqFvAp8Gy0iz5sxjZmSnXyCdPEovGhLa0VzMaQ8s+CLOyS56YyCFGeJZ\n...[rest of the key]...\nHBrawmOICeX0FyqmM8GQV8pn5LpPjzoUYuEA9UI9kkz8tQYHZALQUv4QCOXgnYmO\nPwIDAQAB\n-----END PRIVATE KEY-----\n","client_email":"my-service-account@my-project-123456.iam.gserviceaccount.com","client_id":"123456789012345678901","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"https://www.googleapis.com/robot/v1/metadata/x509/my-service-account%40my-project-123456.iam.gserviceaccount.com"}
 ```
 
 ## Usage
@@ -130,14 +147,115 @@ To update content:
 1. **Employee Data**: Edit the Google Sheet directly. Changes will be reflected in the application the next time the employees endpoint is accessed.
 2. **Operations, Career Paths, Events**: Edit the respective Google Docs. Changes will be reflected in the application the next time the corresponding endpoint is accessed.
 
+### Testing the Integration
+
+After setting up the integration, follow these steps to verify that everything is working correctly:
+
+1. **Test Employee Data Integration**:
+   - Add or modify an employee record in your Google Sheet
+   - Access the `/api/employee-portal/employees` endpoint
+   - Verify that the changes appear in the response
+   - Example test command:
+     ```
+     curl -X GET http://your-server:8080/api/employee-portal/employees -H "Authorization: Bearer your-jwt-token"
+     ```
+
+2. **Test Operations Content Integration**:
+   - Add or modify an operation in your Google Doc
+   - Access the `/api/employee-portal/operations` endpoint
+   - Verify that the changes appear in the response
+   - Example test command:
+     ```
+     curl -X GET http://your-server:8080/api/employee-portal/operations -H "Authorization: Bearer your-jwt-token"
+     ```
+
+3. **Test Career Paths Integration**:
+   - Add or modify a career path in your Google Doc
+   - Access the `/api/employee-portal/career-paths` endpoint
+   - Verify that the changes appear in the response
+   - Example test command:
+     ```
+     curl -X GET http://your-server:8080/api/employee-portal/career-paths -H "Authorization: Bearer your-jwt-token"
+     ```
+
+4. **Test Events Integration**:
+   - Add or modify an event in your Google Doc
+   - Access the `/api/employee-portal/events` endpoint
+   - Verify that the changes appear in the response
+   - Example test command:
+     ```
+     curl -X GET http://your-server:8080/api/employee-portal/events -H "Authorization: Bearer your-jwt-token"
+     ```
+
+5. **Verify Two-Way Sync for Employee Data**:
+   - The system should not only read from Google Sheets but also update the sheet with any changes made through the API
+   - Create or update an employee through the API:
+     ```
+     curl -X POST http://your-server:8080/api/employee-portal/employees -H "Authorization: Bearer your-jwt-token" -H "Content-Type: application/json" -d '{"fullName":"Test Employee","rank":"Recruit","department":"Testing"}'
+     ```
+   - Check your Google Sheet to verify the changes were synced back
+
 ## Troubleshooting
 
-If you encounter issues with the integration:
+If you encounter issues with the integration, follow these steps to diagnose and fix common problems:
 
-1. Check that the service account has the correct permissions on the Google Sheets and Google Docs
-2. Verify that the document IDs in the `.env` file are correct
-3. Ensure the documents are formatted correctly according to the guidelines above
-4. Check the server logs for any error messages related to the Google API integration
+### Common Issues and Solutions
+
+1. **API Endpoints Not Working**
+   - Check server logs for specific error messages
+   - Verify that the server is running and accessible
+   - Test the basic API endpoint at `/api/employee-portal` to confirm the routes are working
+   - Make sure you're accessing the correct endpoints:
+     - `/api/employee-portal/employees` for employee data
+     - `/api/employee-portal/operations` for operations content
+     - `/api/employee-portal/career-paths` for career paths content
+     - `/api/employee-portal/events` for events content
+
+2. **Authentication Errors**
+   - Ensure the `GOOGLE_CREDENTIALS_JSON` in your `.env` file is properly formatted (see notes above)
+   - Check that the service account has the correct permissions on the Google Sheets and Google Docs
+   - Verify that the service account is active in your Google Cloud Console
+   - Make sure the APIs (Sheets, Docs, Drive) are enabled in your Google Cloud project
+
+3. **Document Access Issues**
+   - Confirm that all document IDs in the `.env` file are correct
+   - Ensure each document is shared with the service account email address
+   - Check that the service account has Editor permissions on the documents
+   - Verify that the documents exist and are accessible
+
+4. **Content Not Updating**
+   - Make sure your documents follow the exact formatting guidelines described above
+   - Check that the sheet has a tab named "Employees" with the correct column headers
+   - Verify that the Google Docs use the correct section separators (e.g., "---OPERATION---")
+   - Remember that content is only synced when the corresponding endpoint is accessed
+
+### Debugging Steps
+
+1. **Check Server Logs**
+   - Look for error messages related to Google API initialization or authentication
+   - Common error patterns include:
+     - "Error parsing Google credentials JSON" - indicates malformed credentials
+     - "Missing required fields in Google credentials" - indicates incomplete credentials
+     - "Error initializing Google Sheets/Docs API" - indicates authentication issues
+     - "Error fetching document content" - indicates document access or format issues
+
+2. **Test API Endpoints Directly**
+   - Use a tool like Postman or curl to test the API endpoints directly
+   - Example curl command:
+     ```
+     curl -X GET http://your-server:8080/api/employee-portal/employees -H "Authorization: Bearer your-jwt-token"
+     ```
+   - Check the response for any error messages
+
+3. **Verify Document Access**
+   - Log in to Google Drive with the service account credentials to verify access
+   - Use the Google API Explorer to test API calls directly:
+     - [Sheets API Explorer](https://developers.google.com/sheets/api/reference/rest)
+     - [Docs API Explorer](https://developers.google.com/docs/api/reference/rest)
+
+4. **Restart the Server**
+   - After making changes to the `.env` file, restart the server to apply the changes
+   - Use the provided scripts: `npm run pm2-restart` or `./simple-start.sh`
 
 ## Security Considerations
 
