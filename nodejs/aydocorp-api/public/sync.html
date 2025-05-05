@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AydoCorp Data Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-left: 4px solid #4CAF50;
+            background-color: #e7f3e8;
+            display: none;
+        }
+        .error {
+            border-left-color: #f44336;
+            background-color: #ffebee;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,.3);
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1>AydoCorp Data Synchronization</h1>
+    
+    <div class="card">
+        <h2>Sync All Data</h2>
+        <p>Synchronize all data (employees, career paths, events, operations) with Google Sheets and Google Docs.</p>
+        <button id="syncAllBtn">Sync All Data</button>
+        <span id="syncAllLoading" class="loading" style="display: none;"></span>
+        <div id="syncAllResult" class="result">
+            <h3>Result:</h3>
+            <pre id="syncAllOutput"></pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Sync Individual Data</h2>
+        <p>Synchronize specific data types with their respective Google sources.</p>
+        
+        <div>
+            <button id="syncEmployeesBtn">Sync Employees</button>
+            <span id="syncEmployeesLoading" class="loading" style="display: none;"></span>
+            <div id="syncEmployeesResult" class="result">
+                <h3>Result:</h3>
+                <pre id="syncEmployeesOutput"></pre>
+            </div>
+        </div>
+        
+        <div>
+            <button id="syncCareerPathsBtn">Sync Career Paths</button>
+            <span id="syncCareerPathsLoading" class="loading" style="display: none;"></span>
+            <div id="syncCareerPathsResult" class="result">
+                <h3>Result:</h3>
+                <pre id="syncCareerPathsOutput"></pre>
+            </div>
+        </div>
+        
+        <div>
+            <button id="syncEventsBtn">Sync Events</button>
+            <span id="syncEventsLoading" class="loading" style="display: none;"></span>
+            <div id="syncEventsResult" class="result">
+                <h3>Result:</h3>
+                <pre id="syncEventsOutput"></pre>
+            </div>
+        </div>
+        
+        <div>
+            <button id="syncOperationsBtn">Sync Operations</button>
+            <span id="syncOperationsLoading" class="loading" style="display: none;"></span>
+            <div id="syncOperationsResult" class="result">
+                <h3>Result:</h3>
+                <pre id="syncOperationsOutput"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>About Auto Sync</h2>
+        <p>The system automatically syncs data on the following schedule:</p>
+        <ul>
+            <li><strong>Employees:</strong> Every hour</li>
+            <li><strong>Career Paths:</strong> Every 2 hours</li>
+            <li><strong>Events:</strong> Every 3 hours</li>
+            <li><strong>Operations:</strong> Every 4 hours</li>
+        </ul>
+        <p>Use this page to manually trigger synchronization if you need immediate updates.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Helper function to make API requests
+            async function makeRequest(endpoint) {
+                try {
+                    const response = await fetch(`/api/employee-portal/sync/${endpoint}`);
+                    return await response.json();
+                } catch (error) {
+                    return { 
+                        success: false, 
+                        message: `Error: ${error.message}` 
+                    };
+                }
+            }
+
+            // Helper function to update UI
+            function updateUI(btnId, loadingId, resultId, outputId, data) {
+                document.getElementById(btnId).disabled = false;
+                document.getElementById(loadingId).style.display = 'none';
+                document.getElementById(resultId).style.display = 'block';
+                
+                const resultElement = document.getElementById(resultId);
+                if (!data.success && !data.overallSuccess) {
+                    resultElement.classList.add('error');
+                } else {
+                    resultElement.classList.remove('error');
+                }
+                
+                document.getElementById(outputId).textContent = JSON.stringify(data, null, 2);
+            }
+
+            // Sync All
+            document.getElementById('syncAllBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                document.getElementById('syncAllLoading').style.display = 'inline-block';
+                document.getElementById('syncAllResult').style.display = 'none';
+                
+                const data = await makeRequest('all');
+                updateUI('syncAllBtn', 'syncAllLoading', 'syncAllResult', 'syncAllOutput', data);
+            });
+
+            // Sync Employees
+            document.getElementById('syncEmployeesBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                document.getElementById('syncEmployeesLoading').style.display = 'inline-block';
+                document.getElementById('syncEmployeesResult').style.display = 'none';
+                
+                const data = await makeRequest('employees');
+                updateUI('syncEmployeesBtn', 'syncEmployeesLoading', 'syncEmployeesResult', 'syncEmployeesOutput', data);
+            });
+
+            // Sync Career Paths
+            document.getElementById('syncCareerPathsBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                document.getElementById('syncCareerPathsLoading').style.display = 'inline-block';
+                document.getElementById('syncCareerPathsResult').style.display = 'none';
+                
+                const data = await makeRequest('career-paths');
+                updateUI('syncCareerPathsBtn', 'syncCareerPathsLoading', 'syncCareerPathsResult', 'syncCareerPathsOutput', data);
+            });
+
+            // Sync Events
+            document.getElementById('syncEventsBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                document.getElementById('syncEventsLoading').style.display = 'inline-block';
+                document.getElementById('syncEventsResult').style.display = 'none';
+                
+                const data = await makeRequest('events');
+                updateUI('syncEventsBtn', 'syncEventsLoading', 'syncEventsResult', 'syncEventsOutput', data);
+            });
+
+            // Sync Operations
+            document.getElementById('syncOperationsBtn').addEventListener('click', async function() {
+                this.disabled = true;
+                document.getElementById('syncOperationsLoading').style.display = 'inline-block';
+                document.getElementById('syncOperationsResult').style.display = 'none';
+                
+                const data = await makeRequest('operations');
+                updateUI('syncOperationsBtn', 'syncOperationsLoading', 'syncOperationsResult', 'syncOperationsOutput', data);
+            });
+        });
+    </script>
+</body>
+</html>

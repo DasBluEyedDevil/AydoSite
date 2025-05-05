@@ -24,6 +24,9 @@ app.use(helmet({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Configure logging
 const logsDir = path.join(__dirname, 'logs');
 // Ensure logs directory exists
