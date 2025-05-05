@@ -175,6 +175,27 @@ To update content:
 1. **Employee Data**: Edit the Google Sheet directly. Changes will be reflected in the application the next time the employees endpoint is accessed.
 2. **Operations, Career Paths, Events**: Edit the respective Google Docs. Changes will be reflected in the application the next time the corresponding endpoint is accessed.
 
+### Authentication
+
+The API requires authentication for most endpoints. You can authenticate your requests in one of two ways:
+
+1. **Using the Authorization header with Bearer token** (recommended):
+   ```
+   Authorization: Bearer your-jwt-token
+   ```
+
+2. **Using the x-auth-token header**:
+   ```
+   x-auth-token: your-jwt-token
+   ```
+
+You can obtain a JWT token by logging in through the `/api/auth/login` endpoint:
+```
+curl -X POST http://your-server:8080/api/auth/login -H "Content-Type: application/json" -d '{"username":"your-username","password":"your-password"}'
+```
+
+The response will include a token that you can use for subsequent requests.
+
 ### Testing the Integration
 
 After setting up the integration, follow these steps to verify that everything is working correctly:
