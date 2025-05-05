@@ -31,13 +31,13 @@ try {
   if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir, { recursive: true });
   }
-  
+
   // Create access log stream
   const accessLogStream = fs.createWriteStream(
     path.join(logsDir, 'access.log'),
     { flags: 'a' }
   );
-  
+
   // Setup morgan logging
   app.use(morgan('combined', { stream: accessLogStream }));
 } catch (error) {
@@ -48,10 +48,12 @@ try {
 // Define routes
 const authRoutes = require('./routes/auth');
 const forumRoutes = require('./routes/forum');
+const employeePortalRoutes = require('./routes/employeePortal');
 
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/forum', forumRoutes);
+app.use('/api/employee-portal', employeePortalRoutes);
 
 // Basic routes
 app.get('/', (req, res) => {
@@ -84,12 +86,12 @@ async function connectToMongoDB() {
     if (!process.env.MONGODB_URI) {
       throw new Error('MONGODB_URI environment variable is not defined');
     }
-    
+
     await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     });
-    
+
     console.log('MongoDB connected successfully');
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
@@ -110,7 +112,7 @@ app.use((err, req, res, next) => {
 // Start server function
 function startServer() {
   const PORT = process.env.PORT || 8080;
-  
+
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   }).on('error', handleServerError(PORT, 'HTTP'));
