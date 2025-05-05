@@ -5,10 +5,12 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js",
-    "restart": "npm stop --if-present && npm start"
+    "pm2-start": "pm2 start server.js --name aydocorp-api",
+    "pm2-stop": "pm2 stop aydocorp-api",
+    "pm2-restart": "pm2 restart aydocorp-api"
   },
   "dependencies": {
+    "pm2": "^5.3.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
