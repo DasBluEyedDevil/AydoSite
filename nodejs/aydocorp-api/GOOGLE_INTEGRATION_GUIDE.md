@@ -175,12 +175,33 @@ GOOGLE_CREDENTIALS_JSON={"type":"service_account","project_id":"my-project-12345
 
 ## Usage
 
-Once the integration is set up, the application will automatically:
+### Automatic Data Synchronization
+
+The application now includes an automatic data synchronization system that periodically refreshes data from Google Sheets and Google Docs without requiring manual API calls. This ensures that your employee portal always displays the most up-to-date information.
+
+The synchronization schedule is as follows:
+
+1. **Employee Data**: Synced with Google Sheets every hour
+2. **Career Paths**: Synced with Google Docs every 2 hours
+3. **Events**: Synced with Google Docs every 3 hours
+4. **Operations**: Synced with Google Docs every 4 hours
+
+This automatic synchronization happens in the background on the server, so there's no need to manually access the API endpoints to trigger updates. When users visit the employee portal, they'll always see the latest data from your Google Sheets and Google Docs.
+
+### Manual Synchronization
+
+In addition to the automatic synchronization, the application will still synchronize data when the corresponding API endpoints are accessed:
 
 1. Fetch employee data from the Google Sheet when the `/api/employee-portal/employees` endpoint is accessed
 2. Fetch operations content from the Google Doc when the `/api/employee-portal/operations` endpoint is accessed
 3. Fetch career paths content from the Google Doc when the `/api/employee-portal/career-paths` endpoint is accessed
 4. Fetch events content from the Google Doc when the `/api/employee-portal/events` endpoint is accessed
+
+> **Note on API Endpoints**: The API supports both URL formats for accessing employee portal resources:
+> - With a slash: `/api/employee-portal/operations` (recommended)
+> - Without a slash: `/api/employee-portal-operations` (redirects to the format with a slash)
+>
+> Both formats will work, but using the format with a slash is recommended for consistency.
 
 ### Updating Content
 

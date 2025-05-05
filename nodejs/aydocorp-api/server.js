@@ -80,6 +80,24 @@ app.post('/api/test-post', (req, res) => {
     });
 });
 
+// Special routes to handle requests without the slash between portal and the resource
+// Redirect to the correct endpoints with a slash
+app.get('/api/employee-portal-operations', (req, res) => {
+    res.redirect('/api/employee-portal/operations');
+});
+
+app.get('/api/employee-portal-employees', (req, res) => {
+    res.redirect('/api/employee-portal/employees');
+});
+
+app.get('/api/employee-portal-career-paths', (req, res) => {
+    res.redirect('/api/employee-portal/career-paths');
+});
+
+app.get('/api/employee-portal-events', (req, res) => {
+    res.redirect('/api/employee-portal/events');
+});
+
 // Catch-all route for undefined API routes (added based on 500-ERROR-FIX-UPDATE.md)
 app.all('/api/*', (req, res) => {
     res.status(404).json({
@@ -189,11 +207,18 @@ function handleServerError(port, serverType) {
 }
 
 
+// Import the scheduler for periodic data synchronization
+const scheduler = require('./utils/scheduler');
+
 // Connect to MongoDB then start server
 connectToMongoDB()
     .then(() => {
         // Only start the HTTP server if the database connection is successful
         startServer();
+
+        // Initialize the scheduler for periodic data synchronization
+        scheduler.initialize();
+        console.log('Automatic data synchronization scheduler started');
     })
     .catch(error => {
         // This catch handles errors from connectToMongoDB's initial connection
