@@ -196,13 +196,24 @@ curl -X POST http://your-server:8080/api/auth/login -H "Content-Type: applicatio
 
 The response will include a token that you can use for subsequent requests.
 
+### Accessing the Employee Portal
+
+The Employee Portal is designed to be accessed through the main website interface, not by directly accessing the API endpoints in a browser. Here's how to properly access the Employee Portal:
+
+1. Navigate to the main website (e.g., http://aydocorp.space)
+2. Click on the "Employee Portal" link in the navigation menu
+3. Log in with your credentials when prompted
+4. Once logged in, you'll have access to the Employee Database, Career Paths, Events, and Operations
+
+If you try to access the API endpoints directly in a browser (e.g., by visiting http://aydocorp.space/api/employee-portal/employees), you'll receive an authentication error because these endpoints require proper authentication headers that browsers don't automatically provide.
+
 ### Testing the Integration
 
 After setting up the integration, follow these steps to verify that everything is working correctly:
 
 1. **Test Employee Data Integration**:
    - Add or modify an employee record in your Google Sheet
-   - Access the `/api/employee-portal/employees` endpoint
+   - Access the `/api/employee-portal/employees` endpoint through the proper authentication method
    - Verify that the changes appear in the response
    - Example test command:
      ```
