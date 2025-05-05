@@ -23,11 +23,11 @@
             const apiBase = getApiBaseUrl();
             const url = `${apiBase}/api/test`;
             console.log('Testing API connection to:', url);
-            
+
             const response = await fetch(url);
             const status = response.status;
             console.log('API test response status:', status);
-            
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('API test response data:', data);
@@ -46,7 +46,7 @@
         try {
             const apiBase = getApiBaseUrl();
             console.log('Checking server status at:', apiBase);
-            
+
             // First try /api/test endpoint
             let response = await fetch(`${apiBase}/api/test`, {
                 method: 'GET',
@@ -55,12 +55,12 @@
                     'Accept': 'application/json'
                 }
             });
-            
+
             if (response.ok) {
                 console.log('Server is online at /api/test');
                 return true;
             }
-            
+
             // If that fails, try /api/auth endpoint
             response = await fetch(`${apiBase}/api/auth`, {
                 method: 'GET',
@@ -69,12 +69,12 @@
                     'Accept': 'application/json'
                 }
             });
-            
+
             if (response.ok) {
                 console.log('Server is online at /api/auth');
                 return true;
             }
-            
+
             console.error('Server check failed - all endpoints unreachable');
             return false;
         } catch (error) {
@@ -146,8 +146,8 @@
                 // Show success message
                 alert(`Welcome back, ${data.user.username}!`);
 
-                // Redirect to forum
-                window.location.href = '#forum';
+                // Redirect to employee portal
+                window.location.href = '#employee-portal';
             } else {
                 // Login failed with error message from server
                 throw new Error(data.message || 'Login failed. Please check your credentials.');
@@ -187,9 +187,9 @@
             try {
                 const user = JSON.parse(userJson);
 
-                // Show forum content
-                $('#forum-login-required').hide();
-                $('#forum-content').show();
+                // Show employee portal content
+                $('#employee-portal-login-required').hide();
+                $('#employee-portal-content').show();
 
                 // Add user status indicator to the top right
                 $('.user-status').remove();
@@ -210,8 +210,8 @@
             }
         } else {
             // User is not logged in
-            $('#forum-content').hide();
-            $('#forum-login-required').show();
+            $('#employee-portal-content').hide();
+            $('#employee-portal-login-required').show();
 
             // Ensure login link is correct
             $('header nav ul li a.logout').text('Member Login').attr('href', '#login').removeClass('logout').closest('li').removeAttr('id');
@@ -219,71 +219,716 @@
         }
     }
 
-    // Forum Functions
+    // Employee Portal Functions
     // ==================================
-    async function loadBulletinBoard() {
+
+    // Career Paths Functions
+    async function loadCareerPaths() {
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
 
-            const response = await fetch(`${apiBase}/api/forum/posts`, {
+            const response = await fetch(`${apiBase}/api/employee-portal/career-paths`, {
                 headers: {
                     'x-auth-token': token
                 }
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load posts');
+                throw new Error('Failed to load career paths');
             }
 
-            const posts = await response.json();
+            const careerPaths = await response.json();
 
-            if (posts.length === 0) {
-                $('#post-list-container').html('<p>No posts found. Be the first to create one!</p>');
+            if (careerPaths.length === 0) {
+                $('.career-path-list').html('<p>No career paths found.</p>');
                 return;
             }
 
-            // Render posts
-            let html = '<div class="post-list">';
+            // Render career paths
+            let html = '<div class="career-paths">';
 
-            posts.forEach(post => {
+            careerPaths.forEach(careerPath => {
                 html += `
-                    <div class="post-item ${post.pinned ? 'pinned' : ''}">
-                        ${post.pinned ? '<div class="pin-indicator">📌 Pinned</div>' : ''}
-                        <h3><a href="#forum/post/${post._id}">${post.title}</a></h3>
-                        <div class="post-meta">
-                            Posted by <strong>${post.author.username}</strong>
-                            on ${new Date(post.createdAt).toLocaleDateString()}
-                        </div>
-                        <div class="post-preview">${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}</div>
-                        <div class="post-stats">
-                            <span>${post.replies ? post.replies.length : 0} replies</span>
-                        </div>
+                    <div class="career-path-item" data-id="${careerPath._id}">
+                        <h4>${careerPath.department}</h4>
+                        <p>${careerPath.description.substring(0, 100)}${careerPath.description.length > 100 ? '...' : ''}</p>
+                        <button class="view-career-path button small" data-id="${careerPath._id}">View Details</button>
                     </div>
                 `;
             });
 
             html += '</div>';
-            $('#post-list-container').html(html);
+            $('.career-path-list').html(html);
+
+            // Add event listeners to the view buttons
+            $('.view-career-path').on('click', function() {
+                const careerPathId = $(this).data('id');
+                loadCareerPathDetails(careerPathId);
+            });
         } catch (error) {
-            console.error('Error loading bulletin board:', error);
-            $('#post-list-container').html(`
+            console.error('Error loading career paths:', error);
+            $('.career-path-list').html(`
                 <div class="error-message">
-                    <h3>Error Loading Posts</h3>
+                    <h3>Error Loading Career Paths</h3>
                     <p>${error.message}</p>
                 </div>
             `);
         }
     }
 
-    async function loadSinglePost(postId) {
-        // Load and display a single post (implementation details omitted)
-        console.log('Loading post:', postId);
+    async function loadCareerPathDetails(careerPathId) {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/career-paths/${careerPathId}`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load career path details');
+            }
+
+            const careerPath = await response.json();
+
+            // Render career path details
+            let html = `
+                <div class="career-path-detail">
+                    <h3>${careerPath.department}</h3>
+                    <p>${careerPath.description}</p>
+
+                    <h4>Ranks</h4>
+                    <div class="ranks-list">
+            `;
+
+            if (careerPath.ranks && careerPath.ranks.length > 0) {
+                careerPath.ranks.forEach(rank => {
+                    html += `
+                        <div class="rank-item">
+                            <h5>${rank.title} (Level ${rank.level})</h5>
+                            <p><strong>Paygrade:</strong> ${rank.paygrade}</p>
+                            <p>${rank.description}</p>
+
+                            <div class="rank-details">
+                                <div class="rank-responsibilities">
+                                    <h6>Responsibilities:</h6>
+                                    <ul>
+                                        ${rank.responsibilities.map(resp => `<li>${resp}</li>`).join('')}
+                                    </ul>
+                                </div>
+
+                                <div class="rank-requirements">
+                                    <h6>Requirements:</h6>
+                                    <ul>
+                                        ${rank.requirements.map(req => `<li>${req}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p>No ranks defined for this career path.</p>';
+            }
+
+            html += `
+                    </div>
+
+                    <h4>Certifications</h4>
+                    <div class="certifications-list">
+            `;
+
+            if (careerPath.certifications && careerPath.certifications.length > 0) {
+                careerPath.certifications.forEach(cert => {
+                    html += `
+                        <div class="certification-item">
+                            <h5>${cert.name}</h5>
+                            <p>${cert.description}</p>
+
+                            <div class="certification-details">
+                                <div class="certification-requirements">
+                                    <h6>Requirements:</h6>
+                                    <ul>
+                                        ${cert.requirements.map(req => `<li>${req}</li>`).join('')}
+                                    </ul>
+                                </div>
+
+                                <div class="certification-benefits">
+                                    <h6>Benefits:</h6>
+                                    <ul>
+                                        ${cert.benefits.map(benefit => `<li>${benefit}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p>No certifications defined for this career path.</p>';
+            }
+
+            html += `
+                    </div>
+
+                    <h4>Training Guides</h4>
+                    <div class="training-guides-list">
+            `;
+
+            if (careerPath.trainingGuides && careerPath.trainingGuides.length > 0) {
+                careerPath.trainingGuides.forEach(guide => {
+                    html += `
+                        <div class="training-guide-item">
+                            <h5>${guide.title}</h5>
+                            <p><strong>For Rank:</strong> ${guide.forRank}</p>
+                            <div class="training-guide-content">
+                                ${guide.content}
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                html += '<p>No training guides defined for this career path.</p>';
+            }
+
+            html += `
+                    </div>
+
+                    <button class="back-to-career-paths button">Back to Career Paths</button>
+                </div>
+            `;
+
+            $('.career-path-details').html(html).show();
+            $('.career-path-list').hide();
+
+            // Add event listener to the back button
+            $('.back-to-career-paths').on('click', function() {
+                $('.career-path-details').hide();
+                $('.career-path-list').show();
+            });
+        } catch (error) {
+            console.error('Error loading career path details:', error);
+            $('.career-path-details').html(`
+                <div class="error-message">
+                    <h3>Error Loading Career Path Details</h3>
+                    <p>${error.message}</p>
+                    <button class="back-to-career-paths button">Back to Career Paths</button>
+                </div>
+            `).show();
+            $('.career-path-list').hide();
+
+            // Add event listener to the back button
+            $('.back-to-career-paths').on('click', function() {
+                $('.career-path-details').hide();
+                $('.career-path-list').show();
+            });
+        }
     }
 
-    async function loadTopic(topicId) {
-        // Legacy function for backward compatibility
-        console.log('Loading topic:', topicId);
+    // Employee Database Functions
+    async function loadEmployees() {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/employees`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load employees');
+            }
+
+            const employees = await response.json();
+
+            if (employees.length === 0) {
+                $('.employee-list-container').html('<p>No employees found.</p>');
+                return;
+            }
+
+            // Render employees
+            let html = '<div class="employee-grid">';
+
+            employees.forEach(employee => {
+                html += `
+                    <div class="employee-card" data-id="${employee._id}">
+                        <div class="employee-photo">
+                            <img src="${employee.photo}" alt="${employee.fullName}" />
+                        </div>
+                        <div class="employee-info">
+                            <h4>${employee.fullName}</h4>
+                            <p class="employee-rank">${employee.rank}</p>
+                            <p class="employee-department">${employee.department}</p>
+                            <button class="view-employee button small" data-id="${employee._id}">View Profile</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            $('.employee-list-container').html(html);
+
+            // Add event listeners to the view buttons
+            $('.view-employee').on('click', function() {
+                const employeeId = $(this).data('id');
+                loadEmployeeProfile(employeeId);
+            });
+        } catch (error) {
+            console.error('Error loading employees:', error);
+            $('.employee-list-container').html(`
+                <div class="error-message">
+                    <h3>Error Loading Employees</h3>
+                    <p>${error.message}</p>
+                </div>
+            `);
+        }
+    }
+
+    async function loadEmployeeProfile(employeeId) {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/employees/${employeeId}`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load employee profile');
+            }
+
+            const employee = await response.json();
+
+            // Render employee profile
+            let html = `
+                <div class="employee-profile">
+                    <div class="profile-header">
+                        <div class="profile-photo">
+                            <img src="${employee.photo}" alt="${employee.fullName}" />
+                        </div>
+                        <div class="profile-basic-info">
+                            <h3>${employee.fullName}</h3>
+                            <p class="profile-rank">${employee.rank}</p>
+                            <p class="profile-department">${employee.department}</p>
+                            <p class="profile-join-date">Joined: ${new Date(employee.joinDate).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-details">
+                        <div class="profile-background">
+                            <h4>Background</h4>
+                            <p>${employee.backgroundStory || 'No background story provided.'}</p>
+                        </div>
+
+                        <div class="profile-specializations">
+                            <h4>Specializations</h4>
+                            ${employee.specializations && employee.specializations.length > 0 
+                                ? `<ul>${employee.specializations.map(spec => `<li>${spec}</li>`).join('')}</ul>`
+                                : '<p>No specializations listed.</p>'
+                            }
+                        </div>
+
+                        <div class="profile-certifications">
+                            <h4>Certifications</h4>
+                            ${employee.certifications && employee.certifications.length > 0 
+                                ? `<ul>${employee.certifications.map(cert => `<li>${cert}</li>`).join('')}</ul>`
+                                : '<p>No certifications listed.</p>'
+                            }
+                        </div>
+
+                        <div class="profile-contact">
+                            <h4>Contact Information</h4>
+                            <ul>
+                                ${employee.contactInfo && employee.contactInfo.discord ? `<li><strong>Discord:</strong> ${employee.contactInfo.discord}</li>` : ''}
+                                ${employee.contactInfo && employee.contactInfo.rsiHandle ? `<li><strong>RSI Handle:</strong> ${employee.contactInfo.rsiHandle}</li>` : ''}
+                                ${employee.contactInfo && employee.contactInfo.email ? `<li><strong>Email:</strong> ${employee.contactInfo.email}</li>` : ''}
+                            </ul>
+                        </div>
+                    </div>
+
+                    <button class="back-to-employees button">Back to Employee List</button>
+                </div>
+            `;
+
+            $('.employee-profile-container').html(html).show();
+            $('.employee-list-container').hide();
+            $('.employee-edit-form-container').hide();
+
+            // Add event listener to the back button
+            $('.back-to-employees').on('click', function() {
+                $('.employee-profile-container').hide();
+                $('.employee-list-container').show();
+            });
+        } catch (error) {
+            console.error('Error loading employee profile:', error);
+            $('.employee-profile-container').html(`
+                <div class="error-message">
+                    <h3>Error Loading Employee Profile</h3>
+                    <p>${error.message}</p>
+                    <button class="back-to-employees button">Back to Employee List</button>
+                </div>
+            `).show();
+            $('.employee-list-container').hide();
+
+            // Add event listener to the back button
+            $('.back-to-employees').on('click', function() {
+                $('.employee-profile-container').hide();
+                $('.employee-list-container').show();
+            });
+        }
+    }
+
+    // Events Functions
+    async function loadEvents() {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/events`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load events');
+            }
+
+            const events = await response.json();
+
+            if (events.length === 0) {
+                $('.events-list-container').html('<p>No events found.</p>');
+                return;
+            }
+
+            // Render events
+            let html = '<div class="events-list">';
+
+            events.forEach(event => {
+                const startDate = new Date(event.startDate);
+                const endDate = event.endDate ? new Date(event.endDate) : null;
+
+                html += `
+                    <div class="event-item ${event.eventType}" data-id="${event._id}">
+                        <div class="event-date">
+                            <span class="event-day">${startDate.getDate()}</span>
+                            <span class="event-month">${startDate.toLocaleString('default', { month: 'short' })}</span>
+                        </div>
+                        <div class="event-details">
+                            <h4>${event.title}</h4>
+                            <p class="event-time">
+                                ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                ${endDate ? ` - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                            </p>
+                            <p class="event-location">${event.location}</p>
+                            <p class="event-organizer">Organized by: ${event.organizer.username}</p>
+                            <button class="view-event button small" data-id="${event._id}">View Details</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            $('.events-list-container').html(html);
+
+            // Add event listeners to the view buttons
+            $('.view-event').on('click', function() {
+                const eventId = $(this).data('id');
+                loadEventDetails(eventId);
+            });
+        } catch (error) {
+            console.error('Error loading events:', error);
+            $('.events-list-container').html(`
+                <div class="error-message">
+                    <h3>Error Loading Events</h3>
+                    <p>${error.message}</p>
+                </div>
+            `);
+        }
+    }
+
+    async function loadEventDetails(eventId) {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/events/${eventId}`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load event details');
+            }
+
+            const event = await response.json();
+            const startDate = new Date(event.startDate);
+            const endDate = event.endDate ? new Date(event.endDate) : null;
+
+            // Render event details
+            let html = `
+                <div class="event-detail">
+                    <h3>${event.title}</h3>
+                    <div class="event-meta">
+                        <p class="event-type">${event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1)}</p>
+                        <p class="event-datetime">
+                            <strong>Date:</strong> ${startDate.toLocaleDateString()}
+                            <br>
+                            <strong>Time:</strong> ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            ${endDate ? ` - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                        </p>
+                        <p class="event-location"><strong>Location:</strong> ${event.location}</p>
+                        <p class="event-organizer"><strong>Organized by:</strong> ${event.organizer.username}</p>
+                    </div>
+
+                    <div class="event-description">
+                        <h4>Description</h4>
+                        <p>${event.description}</p>
+                    </div>
+
+                    ${event.requirements ? `
+                    <div class="event-requirements">
+                        <h4>Requirements</h4>
+                        <p>${event.requirements}</p>
+                    </div>
+                    ` : ''}
+
+                    <div class="event-attendees">
+                        <h4>Attendees (${event.attendees.length}${event.maxAttendees > 0 ? '/' + event.maxAttendees : ''})</h4>
+                        ${event.attendees.length > 0 ? `
+                        <ul class="attendees-list">
+                            ${event.attendees.map(attendee => `
+                                <li class="attendee ${attendee.status}">
+                                    <span class="attendee-name">${attendee.user.username}</span>
+                                    <span class="attendee-status">${attendee.status}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        ` : '<p>No attendees yet.</p>'}
+                    </div>
+
+                    <div class="event-actions">
+                        <button class="join-event button small">Attend Event</button>
+                        <button class="maybe-event button small">Maybe</button>
+                        <button class="decline-event button small">Decline</button>
+                    </div>
+
+                    <button class="back-to-events button">Back to Events</button>
+                </div>
+            `;
+
+            $('.event-details-container').html(html).show();
+            $('.events-list-container').hide();
+
+            // Add event listener to the back button
+            $('.back-to-events').on('click', function() {
+                $('.event-details-container').hide();
+                $('.events-list-container').show();
+            });
+        } catch (error) {
+            console.error('Error loading event details:', error);
+            $('.event-details-container').html(`
+                <div class="error-message">
+                    <h3>Error Loading Event Details</h3>
+                    <p>${error.message}</p>
+                    <button class="back-to-events button">Back to Events</button>
+                </div>
+            `).show();
+            $('.events-list-container').hide();
+
+            // Add event listener to the back button
+            $('.back-to-events').on('click', function() {
+                $('.event-details-container').hide();
+                $('.events-list-container').show();
+            });
+        }
+    }
+
+    // Operations Functions
+    async function loadOperations() {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/operations`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load operations');
+            }
+
+            const operations = await response.json();
+
+            if (operations.length === 0) {
+                $('.operations-list-container').html('<p>No operations found.</p>');
+                return;
+            }
+
+            // Render operations
+            let html = '<div class="operations-list">';
+
+            operations.forEach(operation => {
+                html += `
+                    <div class="operation-item ${operation.category}" data-id="${operation._id}">
+                        <div class="operation-header">
+                            <h4>${operation.title}</h4>
+                            <span class="operation-classification ${operation.classification}">${operation.classification}</span>
+                        </div>
+                        <div class="operation-meta">
+                            <span class="operation-category">${operation.category}</span>
+                            <span class="operation-version">v${operation.version}</span>
+                            <span class="operation-status">${operation.status}</span>
+                        </div>
+                        <p class="operation-description">${operation.description.substring(0, 100)}${operation.description.length > 100 ? '...' : ''}</p>
+                        <div class="operation-footer">
+                            <span class="operation-author">By: ${operation.author.username}</span>
+                            <span class="operation-date">Updated: ${new Date(operation.updatedAt).toLocaleDateString()}</span>
+                            <button class="view-operation button small" data-id="${operation._id}">View Details</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            $('.operations-list-container').html(html);
+
+            // Add event listeners to the view buttons
+            $('.view-operation').on('click', function() {
+                const operationId = $(this).data('id');
+                loadOperationDetails(operationId);
+            });
+        } catch (error) {
+            console.error('Error loading operations:', error);
+            $('.operations-list-container').html(`
+                <div class="error-message">
+                    <h3>Error Loading Operations</h3>
+                    <p>${error.message}</p>
+                </div>
+            `);
+        }
+    }
+
+    async function loadOperationDetails(operationId) {
+        try {
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+
+            const response = await fetch(`${apiBase}/api/employee-portal/operations/${operationId}`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load operation details');
+            }
+
+            const operation = await response.json();
+
+            // Render operation details
+            let html = `
+                <div class="operation-detail">
+                    <div class="operation-detail-header">
+                        <h3>${operation.title}</h3>
+                        <span class="operation-detail-classification ${operation.classification}">${operation.classification}</span>
+                    </div>
+
+                    <div class="operation-detail-meta">
+                        <span class="operation-detail-category">${operation.category}</span>
+                        <span class="operation-detail-version">Version ${operation.version}</span>
+                        <span class="operation-detail-status">${operation.status}</span>
+                        <span class="operation-detail-author">Author: ${operation.author.username}</span>
+                        <span class="operation-detail-date">Last Updated: ${new Date(operation.updatedAt).toLocaleDateString()}</span>
+                    </div>
+
+                    <div class="operation-detail-description">
+                        <h4>Description</h4>
+                        <p>${operation.description}</p>
+                    </div>
+
+                    <div class="operation-detail-content">
+                        <h4>Content</h4>
+                        <div class="content-body">
+                            ${operation.content}
+                        </div>
+                    </div>
+
+                    ${operation.attachments && operation.attachments.length > 0 ? `
+                    <div class="operation-detail-attachments">
+                        <h4>Attachments</h4>
+                        <ul class="attachments-list">
+                            ${operation.attachments.map(attachment => `
+                                <li class="attachment">
+                                    <a href="${attachment.filePath}" target="_blank" class="attachment-link">
+                                        <span class="attachment-name">${attachment.name}</span>
+                                        <span class="attachment-type">${attachment.fileType}</span>
+                                    </a>
+                                    <span class="attachment-uploader">Uploaded by: ${attachment.uploadedBy.username}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+
+                    ${operation.relatedOperations && operation.relatedOperations.length > 0 ? `
+                    <div class="operation-detail-related">
+                        <h4>Related Operations</h4>
+                        <ul class="related-operations-list">
+                            ${operation.relatedOperations.map(related => `
+                                <li class="related-operation">
+                                    <a href="#" class="related-operation-link" data-id="${related._id}">${related.title}</a>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+
+                    <button class="back-to-operations button">Back to Operations</button>
+                </div>
+            `;
+
+            $('.operation-details-container').html(html).show();
+            $('.operations-list-container').hide();
+
+            // Add event listener to the back button
+            $('.back-to-operations').on('click', function() {
+                $('.operation-details-container').hide();
+                $('.operations-list-container').show();
+            });
+
+            // Add event listeners to related operations links
+            $('.related-operation-link').on('click', function(e) {
+                e.preventDefault();
+                const relatedId = $(this).data('id');
+                loadOperationDetails(relatedId);
+            });
+        } catch (error) {
+            console.error('Error loading operation details:', error);
+            $('.operation-details-container').html(`
+                <div class="error-message">
+                    <h3>Error Loading Operation Details</h3>
+                    <p>${error.message}</p>
+                    <button class="back-to-operations button">Back to Operations</button>
+                </div>
+            `).show();
+            $('.operations-list-container').hide();
+
+            // Add event listener to the back button
+            $('.back-to-operations').on('click', function() {
+                $('.operation-details-container').hide();
+                $('.operations-list-container').show();
+            });
+        }
     }
 
     // Initialize on document ready
@@ -307,19 +952,193 @@
             }
         });
 
+        // Employee Portal tab navigation
+        $('.portal-tab').on('click', function(e) {
+            e.preventDefault();
+
+            // Get the section to show
+            const section = $(this).data('section');
+
+            // Update active tab
+            $('.portal-tab').removeClass('active');
+            $(this).addClass('active');
+
+            // Hide all sections and show the selected one
+            $('.portal-section').hide();
+            $(`#${section}-section`).show();
+
+            // Load data for the selected section
+            switch(section) {
+                case 'career-paths':
+                    loadCareerPaths();
+                    break;
+                case 'employee-database':
+                    loadEmployees();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'operations':
+                    loadOperations();
+                    break;
+            }
+        });
+
+        // Edit profile button handler
+        $('#edit-profile-button').on('click', function() {
+            // Hide other containers
+            $('.employee-list-container').hide();
+            $('.employee-profile-container').hide();
+
+            // Get current user data
+            const apiBase = getApiBaseUrl();
+            const token = localStorage.getItem('aydocorpToken');
+            const userId = JSON.parse(localStorage.getItem('aydocorpUser')).id;
+
+            // Try to load existing profile data
+            fetch(`${apiBase}/api/employee-portal/employees`, {
+                headers: {
+                    'x-auth-token': token
+                }
+            })
+            .then(response => response.json())
+            .then(employees => {
+                const currentEmployee = employees.find(emp => emp.user._id === userId);
+
+                if (currentEmployee) {
+                    // Pre-fill form with existing data
+                    $('#employee-fullname').val(currentEmployee.fullName);
+                    $('#employee-photo').val(currentEmployee.photo);
+                    $('#employee-background').val(currentEmployee.backgroundStory);
+                    $('#employee-rank').val(currentEmployee.rank);
+                    $('#employee-department').val(currentEmployee.department);
+                    $('#employee-specializations').val(currentEmployee.specializations.join(', '));
+                    $('#employee-certifications').val(currentEmployee.certifications.join(', '));
+
+                    if (currentEmployee.contactInfo) {
+                        $('#employee-discord').val(currentEmployee.contactInfo.discord || '');
+                        $('#employee-rsi').val(currentEmployee.contactInfo.rsiHandle || '');
+                    }
+                }
+
+                // Show the edit form
+                $('.employee-edit-form-container').show();
+            })
+            .catch(error => {
+                console.error('Error loading employee data:', error);
+                // Show the edit form anyway
+                $('.employee-edit-form-container').show();
+            });
+        });
+
+        // Cancel profile edit button handler
+        $('#cancel-profile-edit').on('click', function() {
+            $('.employee-edit-form-container').hide();
+            $('.employee-list-container').show();
+        });
+
+        // Employee edit form submission handler
+        $('#employee-edit-form').on('submit', async function(event) {
+            event.preventDefault();
+
+            const fullName = $('#employee-fullname').val();
+            const photo = $('#employee-photo').val();
+            const backgroundStory = $('#employee-background').val();
+            const rank = $('#employee-rank').val();
+            const department = $('#employee-department').val();
+            const specializations = $('#employee-specializations').val().split(',').map(s => s.trim()).filter(s => s);
+            const certifications = $('#employee-certifications').val().split(',').map(s => s.trim()).filter(s => s);
+            const discord = $('#employee-discord').val();
+            const rsiHandle = $('#employee-rsi').val();
+
+            // Validation
+            if (!fullName) {
+                alert('Please enter your full name.');
+                return;
+            }
+
+            try {
+                const apiBase = getApiBaseUrl();
+                const token = localStorage.getItem('aydocorpToken');
+
+                const response = await fetch(`${apiBase}/api/employee-portal/employees`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-auth-token': token
+                    },
+                    body: JSON.stringify({
+                        fullName,
+                        photo,
+                        backgroundStory,
+                        rank,
+                        department,
+                        specializations,
+                        certifications,
+                        contactInfo: {
+                            discord,
+                            rsiHandle
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert('Failed to save profile: ' + (errorData.message || 'Unknown error'));
+                    return;
+                }
+
+                // Profile saved successfully
+                alert('Profile saved successfully!');
+
+                // Hide the edit form and reload employees
+                $('.employee-edit-form-container').hide();
+                $('.employee-list-container').show();
+                loadEmployees();
+
+            } catch (error) {
+                alert('Error saving profile: ' + (error.message || 'Network error'));
+                console.error('Profile save error:', error);
+            }
+        });
+
+        // Event filter handler
+        $('#event-filter').on('change', function() {
+            const filter = $(this).val();
+
+            if (filter === 'all') {
+                $('.event-item').show();
+            } else {
+                $('.event-item').hide();
+                $(`.event-item.${filter}`).show();
+            }
+        });
+
+        // Operations filter handler
+        $('#operations-filter').on('change', function() {
+            const filter = $(this).val();
+
+            if (filter === 'all') {
+                $('.operation-item').show();
+            } else {
+                $('.operation-item').hide();
+                $(`.operation-item.${filter}`).show();
+            }
+        });
+
         // Authentication event handlers
         $('#login-form').on('submit', async function (event) {
             event.preventDefault();
-            
+
             const username = $('#username').val();
             const password = $('#password').val();
-            
+
             // Show loading state
             const $loginButton = $(this).find('input[type="submit"]');
             const originalButtonText = $loginButton.val();
-            
+
             $loginButton.val('Checking connection...').prop('disabled', true);
-            
+
             // Check server status first
             const serverOnline = await checkServerStatus();
             if (!serverOnline) {
@@ -327,9 +1146,9 @@
                 $loginButton.val(originalButtonText).prop('disabled', false);
                 return;
             }
-            
+
             $loginButton.val('Logging in...').prop('disabled', true);
-            
+
             try {
                 await handleLogin(username, password);
             } catch (error) {
@@ -388,20 +1207,20 @@
                     },
                     body: JSON.stringify({username, email, password})
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     alert('Registration failed: ' + (errorData.message || 'Unknown error'));
                     return;
                 }
-                
+
                 const data = await response.json();
                 alert('Account created successfully! You can now log in.');
-                
+
                 // Switch to login form
                 $('#register-container').hide();
                 $('#login-container').show();
-                
+
             } catch (error) {
                 alert('Registration failed: ' + (error.message || 'Network error'));
                 console.error('Registration error:', error);
@@ -423,37 +1242,18 @@
 
             const hash = window.location.hash;
 
-            // Check for forum-related URLs
-            if (hash === '#forum') {
-                // Show the post list if logged in
+            // Check for employee portal URLs
+            if (hash === '#employee-portal') {
+                // Show the employee portal if logged in
                 if (localStorage.getItem('aydocorpLoggedIn') === 'true') {
-                    $('#single-post-container').hide();
-                    $('#new-post-form-container').hide();
-                    $('#post-list-container').show();
-                    loadBulletinBoard();
-                }
-            } else if (hash === '#forum/new') {
-                // NEW CASE: Handle new post form
-                if (localStorage.getItem('aydocorpLoggedIn') === 'true') {
-                    $('#single-post-container').hide();
-                    $('#post-list-container').hide();
-                    $('#new-post-form-container').show();
-                } else {
-                    window.location.href = '#login';
-                }
-            } else if (hash.match(/#forum\/post\/(.+)/)) {
-                // Handle single post view
-                const postMatch = hash.match(/#forum\/post\/(.+)/);
-                if (postMatch && postMatch[1]) {
-                    const postId = postMatch[1];
-                    loadSinglePost(postId);
-                }
-            } else if (hash.match(/#forum\/topic\/(.+)/)) {
-                // Handle topic view (for compatibility)
-                const topicMatch = hash.match(/#forum\/topic\/(.+)/);
-                if (topicMatch && topicMatch[1]) {
-                    const topicId = topicMatch[1];
-                    loadTopic(topicId);
+                    // Default to showing the Career Paths section
+                    $('.portal-section').hide();
+                    $('#career-paths-section').show();
+                    $('.portal-tab').removeClass('active');
+                    $('.portal-tab[data-section="career-paths"]').addClass('active');
+
+                    // Load career paths data
+                    loadCareerPaths();
                 }
             }
         });
@@ -477,11 +1277,11 @@
         // New Post button click handler
         $('#new-post-button').on('click', function(event) {
             event.preventDefault();
-            
+
             // Hide other containers
             $('#post-list-container').hide();
             $('#single-post-container').hide();
-            
+
             // Show the new post form
             $('#new-post-form-container').show();
         });
@@ -489,25 +1289,25 @@
         // Update your post submission handler
         $('#new-post-form').on('submit', async function(event) {
             event.preventDefault();
-            
+
             const title = $('#post-title').val();
             const content = $('#post-content').val();
-            
+
             // Validation
             if (!title || !content) {
                 alert('Please fill in both title and content.');
                 return;
             }
-            
+
             try {
                 // Show loading state
                 const $submitButton = $(this).find('button[type="submit"]');
                 const originalButtonText = $submitButton.text();
                 $submitButton.text('Posting...').prop('disabled', true);
-                
+
                 const apiBase = getApiBaseUrl();
                 const token = localStorage.getItem('aydocorpToken');
-                
+
                 const response = await fetch(`${apiBase}/api/forum/posts`, {
                     method: 'POST',
                     headers: {
@@ -516,23 +1316,23 @@
                     },
                     body: JSON.stringify({ title, content })
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     alert('Failed to create post: ' + (errorData.message || 'Unknown error'));
                     return;
                 }
-                
+
                 // Post created successfully
                 alert('Post created successfully!');
-                
+
                 // Clear form fields
                 $('#post-title').val('');
                 $('#post-content').val('');
-                
+
                 // Redirect to forum
                 window.location.href = '#forum';
-                
+
             } catch (error) {
                 alert('Error creating post: ' + (error.message || 'Network error'));
                 console.error('Post creation error:', error);

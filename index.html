@@ -37,7 +37,7 @@
             <li><a href="#about">About Us</a></li>
             <li><a href="#services">Services</a></li>
             <li><a href="#subsidiaries">Subsidiaries</a></li>
-            <li><a href="#forum">Forum</a></li>
+            <li><a href="#employee-portal">Employee Portal</a></li>
             <li><a href="#contact">Contact</a></li>
             <li><a href="#login">Member Login</a></li>
         </ul>
@@ -91,62 +91,158 @@
     </div>
 </article>
 
-						<!-- Forum -->
-<article id="forum">
-    <h2 class="major">Bulletin Board</h2>
-    <p>Access to the AydoCorp Bulletin Board is restricted to registered members. Please log in to access our internal communications and mission boards.</p>
-    
-    <div id="forum-login-required">
+      <!-- Employee Portal -->
+<article id="employee-portal">
+    <h2 class="major">Employee Portal</h2>
+    <p>Access to the AydoCorp Employee Portal is restricted to registered members. Please log in to access our internal resources and employee information.</p>
+
+    <div id="employee-portal-login-required">
         <p>You are not currently logged in. <a href="#login">Click here to login</a> or contact us for membership information.</p>
     </div>
-    
-    <div id="forum-content" style="display: none;">
-        <!-- Forum navigation -->
-        <div class="bulletin-controls">
-            <button id="new-post-button" class="button">New Post</button>
-            <select id="category-filter" class="dropdown">
-                <option value="all">All Categories</option>
-                <option value="announcements">Announcements</option>
-                <option value="missions">Mission Boards</option>
-                <option value="lounge">Member Lounge</option>
-                <option value="general">General Discussion</option>
-            </select>
+
+    <div id="employee-portal-content" style="display: none;">
+        <!-- Portal navigation -->
+        <div class="portal-navigation">
+            <ul class="portal-tabs">
+                <li><a href="#" class="portal-tab active" data-section="career-paths">Career Paths</a></li>
+                <li><a href="#" class="portal-tab" data-section="employee-database">Employee Database</a></li>
+                <li><a href="#" class="portal-tab" data-section="events">Events</a></li>
+                <li><a href="#" class="portal-tab" data-section="operations">Operations</a></li>
+            </ul>
         </div>
-        
-        <!-- Post list will be loaded here -->
-        <div id="post-list-container"></div>
-        
-        <!-- Single post view (hidden by default) -->
-        <div id="single-post-container" style="display: none;"></div>
-        
-        <!-- New post form (hidden by default) -->
-        <div id="new-post-form-container" style="display: none;">
-            <h3>Create New Post</h3>
-            <form id="new-post-form">
-                <div class="fields">
-                    <div class="field">
-                        <label for="post-title">Title</label>
-                        <input type="text" id="post-title" name="post-title" required />
-                    </div>
-                    <div class="field">
-                        <label for="post-category">Category</label>
-                        <select id="post-category" name="post-category">
-                            <option value="General">General Discussion</option>
-                            <option value="Announcements">Announcements</option>
-                            <option value="Missions">Mission Boards</option>
-                            <option value="Member Lounge">Member Lounge</option>
-                        </select>
-                    </div>
-                    <div class="field">
-                        <label for="post-content">Content</label>
-                        <textarea id="post-content" name="post-content" rows="6" required></textarea>
-                    </div>
+
+        <!-- Career Paths Section -->
+        <div id="career-paths-section" class="portal-section">
+            <h3>Career Paths</h3>
+            <p>Explore training and promotion guides, hierarchy/rank structure, paygrades, and certifications.</p>
+
+            <div class="career-paths-container">
+                <div class="career-path-list">
+                    <!-- Career paths will be loaded here -->
                 </div>
-                <ul class="actions">
-                    <li><input type="submit" value="Submit Post" class="primary" /></li>
-                    <li><button type="button" id="cancel-post" class="button">Cancel</button></li>
-                </ul>
-            </form>
+
+                <div class="career-path-details" style="display: none;">
+                    <!-- Selected career path details will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Database Section -->
+        <div id="employee-database-section" class="portal-section" style="display: none;">
+            <h3>Employee Database</h3>
+            <p>View and manage employee profiles and information.</p>
+
+            <div class="employee-controls">
+                <button id="edit-profile-button" class="button">Edit My Profile</button>
+                <input type="text" id="employee-search" placeholder="Search employees..." />
+            </div>
+
+            <div class="employee-list-container">
+                <!-- Employee list will be loaded here -->
+            </div>
+
+            <div class="employee-profile-container" style="display: none;">
+                <!-- Selected employee profile will be shown here -->
+            </div>
+
+            <div class="employee-edit-form-container" style="display: none;">
+                <h3>Edit Profile</h3>
+                <form id="employee-edit-form">
+                    <div class="fields">
+                        <div class="field">
+                            <label for="employee-fullname">Full Name</label>
+                            <input type="text" id="employee-fullname" name="fullName" required />
+                        </div>
+                        <div class="field">
+                            <label for="employee-photo">Photo URL</label>
+                            <input type="text" id="employee-photo" name="photo" />
+                        </div>
+                        <div class="field">
+                            <label for="employee-background">Background Story</label>
+                            <textarea id="employee-background" name="backgroundStory" rows="4"></textarea>
+                        </div>
+                        <div class="field half">
+                            <label for="employee-rank">Rank</label>
+                            <input type="text" id="employee-rank" name="rank" />
+                        </div>
+                        <div class="field half">
+                            <label for="employee-department">Department</label>
+                            <input type="text" id="employee-department" name="department" />
+                        </div>
+                        <div class="field">
+                            <label for="employee-specializations">Specializations (comma separated)</label>
+                            <input type="text" id="employee-specializations" name="specializations" />
+                        </div>
+                        <div class="field">
+                            <label for="employee-certifications">Certifications (comma separated)</label>
+                            <input type="text" id="employee-certifications" name="certifications" />
+                        </div>
+                        <div class="field half">
+                            <label for="employee-discord">Discord</label>
+                            <input type="text" id="employee-discord" name="discord" />
+                        </div>
+                        <div class="field half">
+                            <label for="employee-rsi">RSI Handle</label>
+                            <input type="text" id="employee-rsi" name="rsiHandle" />
+                        </div>
+                    </div>
+                    <ul class="actions">
+                        <li><input type="submit" value="Save Profile" class="primary" /></li>
+                        <li><button type="button" id="cancel-profile-edit" class="button">Cancel</button></li>
+                    </ul>
+                </form>
+            </div>
+        </div>
+
+        <!-- Events Section -->
+        <div id="events-section" class="portal-section" style="display: none;">
+            <h3>Events</h3>
+            <p>View upcoming organization events and activities.</p>
+
+            <div class="events-controls">
+                <button id="new-event-button" class="button">Create Event</button>
+                <select id="event-filter" class="dropdown">
+                    <option value="all">All Event Types</option>
+                    <option value="mission">Missions</option>
+                    <option value="training">Training</option>
+                    <option value="social">Social</option>
+                    <option value="meeting">Meetings</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="events-list-container">
+                <!-- Events will be loaded here -->
+            </div>
+
+            <div class="event-details-container" style="display: none;">
+                <!-- Selected event details will be shown here -->
+            </div>
+        </div>
+
+        <!-- Operations Section -->
+        <div id="operations-section" class="portal-section" style="display: none;">
+            <h3>Operations</h3>
+            <p>Access operational documents, diagrams, and tactical plans.</p>
+
+            <div class="operations-controls">
+                <select id="operations-filter" class="dropdown">
+                    <option value="all">All Categories</option>
+                    <option value="document">Documents</option>
+                    <option value="diagram">Diagrams</option>
+                    <option value="tactical-plan">Tactical Plans</option>
+                    <option value="procedure">Procedures</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="operations-list-container">
+                <!-- Operations will be loaded here -->
+            </div>
+
+            <div class="operation-details-container" style="display: none;">
+                <!-- Selected operation details will be shown here -->
+            </div>
         </div>
     </div>
 </article>
@@ -186,7 +282,7 @@
 						<!-- Login -->
 							<article id="login">
     <h2 class="major">Member Access</h2>
-    
+
     <!-- Login Container -->
     <div id="login-container">
         <h3>Login</h3>
@@ -208,7 +304,7 @@
         </form>
         <p>Not a member yet? <a href="#" class="show-register">Create an account</a> or <a href="#contact">contact us</a> for more information.</p>
     </div>
-    
+
     <!-- Registration Container -->
     <div id="register-container" style="display: none;">
         <h3>Create Account</h3>
