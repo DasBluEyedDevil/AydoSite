@@ -2,27 +2,21 @@
 
 # Application directory
 APP_DIR="/home/aydocorp/public_html/nodejs/aydocorp-api"
-LOG_FILE="$APP_DIR/pm2.log"
+LOG_FILE="$APP_DIR/app.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 # Navigate to application directory
 cd $APP_DIR
 
 # Log startup attempt
-echo "[$TIMESTAMP] Starting application with PM2..." >> $LOG_FILE
+echo "[$TIMESTAMP] Starting Node.js application..." >> $LOG_FILE
 
-# Use relative path to node_modules/.bin/pm2
-# This is important in cPanel environments
-export PATH="$APP_DIR/node_modules/.bin:$PATH"
+# Start the application with nohup to keep it running
+# Use & to run in the background
+nohup node server.js >> $LOG_FILE 2>&1 &
 
-# Stop any existing instances
-./node_modules/.bin/pm2 delete aydocorp-api 2>/dev/null || true
-
-# Start the application with PM2
-./node_modules/.bin/pm2 start server.js --name aydocorp-api
-
-# Save PM2 process list so it survives server restarts
-./node_modules/.bin/pm2 save
+# Save the PID to a file
+echo $! > $APP_DIR/app.pid
 
 # Log completion
-echo "[$TIMESTAMP] PM2 startup completed" >> $LOG_FILE
+echo "[$TIMESTAMP] Started Node.js process with PID $!" >> $LOG_FILE

@@ -1,22 +1,22 @@
 #!/bin/bash
 
-# Set path to your Node.js app
-APP_DIR=/home/aydocorp/public_html/nodejs/aydocorp-api
-LOG_FILE=$APP_DIR/app.log
+# Application directory
+APP_DIR="/home/aydocorp/public_html/nodejs/aydocorp-api"
+LOG_FILE="$APP_DIR/monitor.log"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 # Check if the Node.js process is running
 if pgrep -f "node server.js" > /dev/null
 then
-    echo "[$TIMESTAMP] Node.js process is running." >> $APP_DIR/monitor.log
+    echo "[$TIMESTAMP] Node.js process is running." >> $LOG_FILE
 else
-    echo "[$TIMESTAMP] Node.js process is not running. Restarting..." >> $APP_DIR/monitor.log
+    echo "[$TIMESTAMP] Node.js process is not running. Restarting..." >> $LOG_FILE
     
     # Change to the app directory
     cd $APP_DIR
     
-    # Restart using npm
-    npm restart >> $APP_DIR/monitor.log 2>&1
+    # Run the start script
+    ./start.sh
     
-    echo "[$TIMESTAMP] Node.js process restarted via npm restart" >> $APP_DIR/monitor.log
+    echo "[$TIMESTAMP] Node.js process restarted" >> $LOG_FILE
 fi
