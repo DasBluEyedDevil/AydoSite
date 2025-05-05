@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Application directory
 APP_DIR="/home/aydocorp/public_html/nodejs/aydocorp-api"
 LOG_FILE="$APP_DIR/monitor.log"
