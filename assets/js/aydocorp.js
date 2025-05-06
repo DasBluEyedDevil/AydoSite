@@ -43,81 +43,40 @@
     }
 
     /**
-     * Test the API connection using secure request
-     * @returns {Promise<boolean>} True if connection is successful
+     * Debug helper for API connectivity issues
      */
-    async function testApiConnection() {
-        try {
-            const url = getApiUrl('test');
-            if (!url) return false;
-
-            console.log('Testing API connection to:', url);
-
-            // Use the secure request utility
-            const response = await AuthUtils.secureRequest(url);
-            const status = response.status;
-            console.log('API test response status:', status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('API test response data:', data);
-                return true;
-            } else {
-                console.error('API test failed with status:', status);
-                return false;
-            }
-        } catch (error) {
-            console.error('API connection test failed with error:', error);
-            return false;
-        }
-    }
-
-    /**
-     * Check server status with optimized requests
-     * @returns {Promise<boolean>} True if server is online
-     */
-    async function checkServerStatus() {
-        try {
-            console.log('Checking server status');
-
+    function debugApiConnection() {
+        console.group('API Connection Debug');
+        
+        const baseUrl = getApiBaseUrl();
+        console.log('Base URL:', baseUrl);
+        
+        // Test various endpoints
+        const testEndpoints = [
+            'api/test',
+            'api/auth',
+            'test',
+            'auth'
+        ];
+        
+        console.log('Testing endpoints:');
             // Use Promise.race to try both endpoints simultaneously
             // This is more efficient than sequential requests
-            const testUrl = getApiUrl('test');
-            const authUrl = getApiUrl('auth');
-
-            if (!testUrl || !authUrl) return false;
-
-            const result = await Promise.race([
-                AuthUtils.secureRequest(testUrl)
-                    .then(response => {
-                        if (response.ok) {
-                            console.log('Server is online at /test');
-                            return true;
-                        }
-                        return false;
-                    }),
-                AuthUtils.secureRequest(authUrl)
-                    .then(response => {
-                        if (response.ok) {
-                            console.log('Server is online at /auth');
-                            return true;
-                        }
-                        return false;
-                    }),
-                // Add a timeout to avoid hanging if both requests are slow
-                new Promise(resolve => setTimeout(() => resolve(false), 5000))
-            ]);
-
-            if (!result) {
-                console.error('Server check failed - all endpoints unreachable or timed out');
-            }
-
-            return result;
-        } catch (error) {
-            console.error('Server status check failed with error:', error);
-            return false;
-        }
+        testEndpoints.forEach(endpoint => {
+            const url = getApiUrl(endpoint);
+            console.log(`${endpoint} -> ${url}`);
+        });
+        
+        // Show server info
+        console.log('Server Info:');
+        console.log('  Hostname:', window.location.hostname);
+        console.log('  Origin:', window.location.origin);
+        console.log('  Protocol:', window.location.protocol);
+        
+        console.groupEnd();
     }
+    
+    // Call the debug function immediately
 
     /**
      * Validate the authentication token with better token handling
@@ -194,11 +153,12 @@
                 throw new Error('Cannot connect to the server. Please try again later.');
             }
             
-            console.log('Attempting login at:', getApiUrl('api/auth/login'));
-            
+            // In your handleLogin function
+            console.log('Attempting login at:', getApiUrl('api/auth/login')); // Make sure 'api/' is included
+                        
             // Attempt login
             // Use secure request with CSRF protection
-            const response = await fetch(getApiUrl('api/auth/login'), {
+            const response = await fetch(getApiUrl('api/auth/login'), { // Make sure 'api/' is included
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -2338,7 +2298,7 @@
         });
 
         // Initial API test
-        testApiConnection();
+        debugApiConnection();
 
         // New Operation button click handler
         $('#new-post-button').on('click', function(event) {

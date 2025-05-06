@@ -1,28 +1,33 @@
 <?php
-// Simple PHP API Proxy with improved token handling
+// Simple PHP API Proxy - Debug version with logging
+
+// Enable debug mode 
+define('DEBUG', true);
+
+// Function to log debug messages
+function debug_log($message) {
+    if (DEBUG) {
+        error_log("[API Proxy] " . $message);
+    }
+}
 
 // Set appropriate headers for CORS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, x-auth-token");
 
-// Handle preflight OPTIONS request
+// Handle preflight OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
-}
-
-// Log function (for debugging)
-function log_debug($message) {
-    if (defined('DEBUG') && DEBUG) {
-        error_log("[API Proxy] " . $message);
-    }
 }
 
 // Get current path info
 $request_uri = $_SERVER["REQUEST_URI"];
 $path = parse_url($request_uri, PHP_URL_PATH);
 $query = parse_url($request_uri, PHP_URL_QUERY);
+
+debug_log("Request path: " . $path);
 
 // Only process requests that start with /api/
 if (strpos($path, "/api/") === 0) {
@@ -35,13 +40,13 @@ if (strpos($path, "/api/") === 0) {
         $node_url .= "?" . $query;
     }
     
-    log_debug("Forwarding to: " . $node_url);
+    debug_log("Forwarding to: " . $node_url);
     
     // Get request method and headers
     $method = $_SERVER["REQUEST_METHOD"];
     $headers = getallheaders();
     
-    log_debug("Method: " . $method);
+    debug_log("Method: " . $method);
     
     // Set up cURL options
     $options = [
@@ -49,6 +54,8 @@ if (strpos($path, "/api/") === 0) {
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_FOLLOWLOCATION => true,
         CURLOPT_CUSTOMREQUEST => $method,
+        CURLOPT_TIMEOUT => 10, // Set timeout to 10 seconds
+        CURLOPT_CONNECTTIMEOUT => 5, // Connection timeout of 5 seconds
     ];
     
     // Add headers
@@ -56,36 +63,15 @@ if (strpos($path, "/api/") === 0) {
     foreach ($headers as $key => $value) {
         if (!in_array(strtolower($key), ["host", "connection", "content-length"])) {
             $curl_headers[] = "$key: $value";
-            log_debug("Forward header: $key: $value");
+            debug_log("Forward header: $key: $value");
         }
-    }
-    
-    // Extract token from cookies or auth header if present
-    $token = null;
-    if (isset($_COOKIE['aydocorpToken'])) {
-        $token = $_COOKIE['aydocorpToken'];
-    } else if (isset($headers['Authorization'])) {
-        // Extract token from Authorization header if it's a Bearer token
-        $auth = $headers['Authorization'];
-        if (strpos($auth, 'Bearer ') === 0) {
-            $token = substr($auth, 7);
-        }
-    } else if (isset($headers['x-auth-token'])) {
-        $token = $headers['x-auth-token'];
-    }
-    
-    // Add token to headers if found
-    if ($token) {
-        $curl_headers[] = "Authorization: Bearer " . $token;
-        $curl_headers[] = "x-auth-token: " . $token;
-        log_debug("Added token to headers");
     }
     
     // Add request body for POST/PUT/PATCH
     if ($method === "POST" || $method === "PUT" || $method === "PATCH") {
         $input = file_get_contents("php://input");
         $options[CURLOPT_POSTFIELDS] = $input;
-        log_debug("Request body: " . substr($input, 0, 100) . (strlen($input) > 100 ? "..." : ""));
+        debug_log("Request body: " . substr($input, 0, 100) . (strlen($input) > 100 ? "..." : ""));
     }
     
     // Set headers if we have any
@@ -102,16 +88,18 @@ if (strpos($path, "/api/") === 0) {
     $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $content_type = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
     
-    log_debug("Response status: " . $status_code);
+    debug_log("Response status: " . $status_code);
     
     // Check for errors
     if ($error = curl_error($ch)) {
-        log_debug("cURL error: " . $error);
+        debug_log("cURL error: " . $error);
         header("HTTP/1.1 500 Internal Server Error");
         echo json_encode([
             "error" => "Failed to connect to Node.js server",
-            "details" => $error
+            "details" => $error,
+            "url" => $node_url
         ]);
+        curl_close($ch);
         exit;
     }
     
@@ -130,6 +118,7 @@ if (strpos($path, "/api/") === 0) {
     echo $response;
 } else {
     // Request does not match our proxy path
+    debug_log("Invalid API path: " . $path);
     header("HTTP/1.1 404 Not Found");
-    echo json_encode(["error" => "Invalid API endpoint"]);
+    echo json_encode(["error" => "Invalid API endpoint", "path" => $path]);
 }
