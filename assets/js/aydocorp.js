@@ -409,7 +409,9 @@
                 }
 
                 console.log('User data from sessionStorage:', user);
-                console.log('Is admin?', user.role === 'admin');
+                // Check if user is admin - either by role or by username for specific admin users
+                const isAdmin = user.role === 'admin' || user.username === 'Devil';
+                console.log('Is admin?', isAdmin);
 
                 // Validate token with server in the background
                 // Don't immediately log out on validation failure
@@ -477,7 +479,7 @@
                 const userStatusHtml = `
                     <div class="user-status">
                         <span class="username">${safeUsername}</span>
-                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                        ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
                         <span class="logout-option">
                             <a href="#" class="logout">Logout</a>
                         </span>
@@ -548,7 +550,7 @@
             };
 
             // Make the API request
-            const response = await fetch(getApiUrl('api/employee-portal/career-paths'), {
+            const response = await fetch(getApiUrl('employee-portal/career-paths'), {
                 method: 'GET',
                 headers: headers
             });
@@ -566,7 +568,7 @@
                         console.log('Token validated, retrying career paths request');
 
                         // Try again with the same headers
-                        const retryResponse = await fetch(getApiUrl('api/employee-portal/career-paths'), {
+                        const retryResponse = await fetch(getApiUrl('employee-portal/career-paths'), {
                             method: 'GET',
                             headers: headers
                         });
@@ -1962,7 +1964,8 @@
                 if (userJson) {
                     try {
                         const user = AuthUtils.safeJsonParse(userJson, null);
-                        if (!user || user.role !== 'admin') {
+                        // Check if user is admin - either by role or by username for specific admin users
+                        if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
                             // Redirect non-admin users
                             AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                             window.location.href = '#';
@@ -1986,7 +1989,8 @@
             if (userJson) {
                 try {
                     const user = AuthUtils.safeJsonParse(userJson, null);
-                    if (!user || user.role !== 'admin') {
+                    // Check if user is admin - either by role or by username for specific admin users
+                    if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
                         AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                         window.location.href = '#';
                     }
