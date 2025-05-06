@@ -1823,13 +1823,37 @@
             const altText = $imageAlt.val() || 'Image';
 
             if (imageUrl) {
-                const imageHtml = `<img src="${imageUrl}" alt="${altText}" />`;
-                document.execCommand('insertHTML', false, imageHtml);
+                // Get the textarea element
+                const $textarea = $('#element-content');
+
+                // Get current cursor position
+                const cursorPos = $textarea[0].selectionStart;
+
+                // Get current content
+                const content = $textarea.val();
+
+                // Create markdown-style image syntax
+                const imageSyntax = `![${altText}](${imageUrl})`;
+
+                // Insert the image syntax at cursor position
+                const newContent = content.substring(0, cursorPos) + imageSyntax + content.substring(cursorPos);
+
+                // Update the textarea content
+                $textarea.val(newContent);
+
+                // Set focus back to the textarea
+                $textarea.focus();
+
+                // Set cursor position after the inserted image syntax
+                $textarea[0].setSelectionRange(cursorPos + imageSyntax.length, cursorPos + imageSyntax.length);
 
                 // Clear fields and hide container
                 $imageUrl.val('');
                 $imageAlt.val('');
                 $imageUploadContainer.hide();
+
+                // Show success message
+                AuthUtils.showNotification('Image inserted successfully. It will appear as markdown syntax in the editor.', 'success');
             } else {
                 alert('Please enter an image URL.');
             }
@@ -2035,6 +2059,15 @@
                             // Redirect non-admin users
                             AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                             window.location.href = '#';
+                        } else {
+                            // User is admin, explicitly show the admin dashboard
+                            // This prevents conflicts with the main.js hashchange handler
+                            $('#main').children('article').hide();
+                            $('#admin-dashboard').show().addClass('active');
+                            $('body').addClass('is-article-visible');
+                            $('#header').hide();
+                            $('#footer').hide();
+                            $('#main').show();
                         }
                     } catch (error) {
                         console.error('Error parsing user data:', error);
@@ -2046,6 +2079,9 @@
                     AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
                     window.location.href = '#login';
                 }
+
+                // Prevent the default hashchange handler in main.js from running
+                return false;
             }
         });
 
@@ -2059,6 +2095,17 @@
                     if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
                         AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                         window.location.href = '#';
+                    } else {
+                        // User is admin, explicitly show the admin dashboard
+                        // This prevents conflicts with the main.js hashchange handler
+                        setTimeout(function() {
+                            $('#main').children('article').hide();
+                            $('#admin-dashboard').show().addClass('active');
+                            $('body').addClass('is-article-visible');
+                            $('#header').hide();
+                            $('#footer').hide();
+                            $('#main').show();
+                        }, 100); // Small delay to ensure DOM is ready
                     }
                 } catch (error) {
                     console.error('Error parsing user data:', error);
