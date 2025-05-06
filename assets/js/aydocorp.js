@@ -456,7 +456,7 @@
 
                 console.log('User data from sessionStorage:', user);
                 // Check if user is admin - either by role or by username for specific admin users
-                const isAdmin = user.role === 'admin' || user.username === 'Devil';
+                const isAdmin = user.role === 'admin';
                 console.log('Is admin?', isAdmin);
 
                 // Validate token with server in the background
@@ -2171,8 +2171,8 @@
                 if (userJson) {
                     try {
                         const user = AuthUtils.safeJsonParse(userJson, null);
-                        // Check if user is admin - either by role or by username for specific admin users
-                        if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
+                        // Check if user is admin
+                        if (!user || user.role !== 'admin') {
                             // Redirect non-admin users
                             AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                             window.location.href = '#';
@@ -2208,8 +2208,8 @@
             if (userJson) {
                 try {
                     const user = AuthUtils.safeJsonParse(userJson, null);
-                    // Check if user is admin - either by role or by username for specific admin users
-                    if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
+                    // Check if user is admin
+                    if (!user || user.role !== 'admin') {
                         AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                         window.location.href = '#';
                     } else {

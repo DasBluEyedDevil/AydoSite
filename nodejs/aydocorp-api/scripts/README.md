@@ -1,67 +1,80 @@
-# AydoCorp API Scripts
+# User Management Scripts
 
-This directory contains utility scripts for the AydoCorp API.
+This directory contains scripts for managing users in the MongoDB database.
 
-## populate-career-paths.js
+## Prerequisites
 
-This script populates the database with certification and rank information for the Employee Portal.
-
-### Prerequisites
-
-Before running the script, make sure you have:
+Before running these scripts, make sure you have:
 
 1. Node.js installed
-2. The required dependencies installed (`axios`)
-3. A running instance of the AydoCorp API
-4. An admin user account with appropriate permissions
+2. MongoDB connection string in the `.env` file (MONGODB_URI)
+3. All dependencies installed (`npm install` in the project root)
 
-### Configuration
+## Available Scripts
 
-The script uses environment variables from the `.env` file in the parent directory. Make sure the following variables are set:
+### 1. List Users
 
-- `API_URL`: The base URL of the API (defaults to `http://localhost:8080` if not set)
-- `ADMIN_USERNAME`: The username of an admin account
-- `ADMIN_PASSWORD`: The password for the admin account
-
-### Running the Script
-
-To run the script:
+This script lists all users in the database:
 
 ```bash
-cd nodejs/aydocorp-api/scripts
-npm install axios
-node populate-career-paths.js
+node scripts/list-users.js
 ```
 
-### What the Script Does
+It will display the ID, username, email, role, and creation date for each user in the database.
 
-The script creates three career paths:
+### 2. Ensure Devil Admin
 
-1. **General**: Contains general certifications applicable to all members
-2. **AydoExpress**: Contains certifications specific to the AydoExpress subsidiary
-3. **Empyrion Industries**: Contains certifications specific to the Empyrion Industries subsidiary
+This script ensures that the "Devil" user exists and has admin privileges:
 
-Each career path includes:
+```bash
+node scripts/ensure-devil-admin.js
+```
 
-- A description of the department
-- The rank hierarchy with detailed information about each rank
-- Certifications with descriptions, requirements, and benefits
+It will:
+- Check if a user with the username "Devil" exists
+  - If the user exists but is not an admin, update the role to "admin"
+  - If the user doesn't exist, create a new user with the username "Devil", email "shatteredobsidian@yahoo.com", and role "admin"
+- Check if a user with the username "Udonman" exists
+  - If the user doesn't exist, create a new user with the username "Udonman", email "udonman@aydocorp.space", and role "employee"
+- List all users in the database
 
-### Testing
+### 3. Create Admin
 
-After running the script, you can verify that the data was added correctly by:
+This script creates an admin user with the username "Devil":
 
-1. Logging into the Employee Portal
-2. Navigating to the Career Paths section
-3. Checking that all three career paths are listed
-4. Clicking on each career path to view its details
-5. Verifying that the ranks, certifications, and other information are displayed correctly
+```bash
+node scripts/create-admin.js
+```
+
+It will:
+- Check if a user with the username "Devil" exists
+  - If the user exists but is not an admin, update the role to "admin"
+  - If the user doesn't exist, create a new user with the username "Devil", email "admin@example.com", and role "admin"
+
+## Verifying Users in the Admin Dashboard
+
+After running these scripts, you can verify that the users are being correctly retrieved and displayed in the admin dashboard:
+
+1. Start the server: `npm start` (in the project root)
+2. Open the website in a browser
+3. Log in as "Devil" (or another admin user)
+4. Navigate to the Admin Dashboard by clicking on the "Admin" link or going to `#admin-dashboard`
+5. Click on "View All Website Users" to see the list of users
+
+If the users are not displayed, check the browser console for error messages. You may see errors like:
+
+```
+GET https://aydocorp.space/api/auth/users 404 (Not Found)
+```
+
+If this happens, try clicking the "Load Sample Data" button to see a mock list of users.
 
 ## Troubleshooting
 
-If you encounter any issues:
+If you encounter issues:
 
-1. Check that the API is running and accessible
-2. Verify that your admin credentials are correct
-3. Check the console output for error messages
-4. Ensure you have the necessary permissions to create career paths
+1. Check the MongoDB connection string in the `.env` file
+2. Make sure the server is running
+3. Check the browser console for error messages
+4. Verify that the user you're logged in as has admin privileges
+5. Try running the `ensure-devil-admin.js` script to make sure the admin user exists

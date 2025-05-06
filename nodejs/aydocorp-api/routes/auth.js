@@ -172,11 +172,10 @@ router.get('/users', auth, async (req, res) => {
         // Log the request for debugging
         console.log(`[${new Date().toISOString()}] GET /auth/users - User: ${req.user.user.id}, Role: ${req.user.user.role}`);
 
-        // Check if user is admin or has a special username (for testing)
+        // Check if user is admin
         const isAdmin = req.user.user.role === 'admin';
-        const isSpecialUser = ['Devil', 'admin'].includes(req.user.user.username);
 
-        if (!isAdmin && !isSpecialUser) {
+        if (!isAdmin) {
             console.log(`Access denied for user ${req.user.user.username} (${req.user.user.id})`);
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
