@@ -328,6 +328,9 @@ router.get('/users', auth, async (req, res) => {
     // This endpoint is available to all authenticated users, but only returns limited data
     const users = await User.find().select('username email role createdAt');
 
+    // Log the request and response for debugging
+    console.log(`[${new Date().toISOString()}] GET /users - Found ${users.length} users`);
+
     // Map to a simplified format with less sensitive information
     const simplifiedUsers = users.map(user => ({
       id: user._id,

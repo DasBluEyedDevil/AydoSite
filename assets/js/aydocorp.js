@@ -1951,25 +1951,36 @@
         $userListContainer.html('<p>Loading website users...</p>');
 
         try {
-            // Fetch users from the server
+            // For debugging - log the API base URL
+            console.log('API Base URL:', getApiBaseUrl());
+
+            // Fetch users from the server - use direct endpoints without 'api/' prefix
+            // since getApiBaseUrl() already includes '/api'
             const url = getApiUrl('auth/users');
+            console.log('Trying primary URL:', url);
             const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
+                console.log('Primary endpoint failed with status:', response.status);
+
                 // If the endpoint doesn't exist or returns an error, try an alternative endpoint
                 const altUrl = getApiUrl('employee-portal/users');
+                console.log('Trying alternative URL:', altUrl);
                 const altResponse = await AuthUtils.secureRequest(altUrl);
 
                 if (!altResponse.ok) {
+                    console.log('Alternative endpoint failed with status:', altResponse.status);
                     throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
                 }
 
                 const users = await altResponse.json();
+                console.log('Users loaded from alternative endpoint:', users.length);
                 renderUserList(users, $userListContainer);
                 return;
             }
 
             const users = await response.json();
+            console.log('Users loaded from primary endpoint:', users.length);
             renderUserList(users, $userListContainer);
         } catch (error) {
             console.error('Error loading website users:', error);
@@ -1979,6 +1990,10 @@
                 <div class="error-message">
                     <p>Failed to load website users: ${error.message}</p>
                     <button id="retry-load-users" class="button">Retry</button>
+                    <div class="mock-data-option">
+                        <button id="load-mock-users" class="button">Load Sample Data</button>
+                        <p class="small-text">Use sample data for testing</p>
+                    </div>
                 </div>
             `);
 
@@ -1986,7 +2001,49 @@
             $('#retry-load-users').on('click', function() {
                 loadUserList();
             });
+
+            // Add event listener to load mock data button
+            $('#load-mock-users').on('click', function() {
+                loadMockUsers($userListContainer);
+            });
         }
+    }
+
+    // Function to load mock user data for testing
+    function loadMockUsers($container) {
+        const mockUsers = [
+            {
+                id: '1',
+                username: 'admin',
+                email: 'admin@aydocorp.space',
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: '2',
+                username: 'Devil',
+                email: 'shatteredobsidian@yahoo.com',
+                role: 'admin',
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: '3',
+                username: 'Udonman',
+                email: 'udonman@aydocorp.space',
+                role: 'employee',
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: '4',
+                username: 'TestUser',
+                email: 'test@aydocorp.space',
+                role: 'employee',
+                createdAt: new Date().toISOString()
+            }
+        ];
+
+        console.log('Loaded mock users:', mockUsers.length);
+        renderUserList(mockUsers, $container);
     }
 
     // Function to render the website user list (not employees)
