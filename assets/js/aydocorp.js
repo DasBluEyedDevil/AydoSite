@@ -1,30 +1,59 @@
 (function ($) {
     // API and Authentication Utilities
     // ==================================
+    /**
+     * Get the base URL for API requests
+     * @returns {string} The base URL for API requests
+     */
     function getApiBaseUrl() {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
         } else {
-            // Use proxy.php on the current domain, without trailing slash
-            return window.location.origin + '/proxy.php?url=';
+            // Use a secure approach instead of proxy.php with direct URL parameter
+            // This prevents open redirect vulnerabilities
+            return window.location.origin + '/api';
         }
     }
 
-    // Then create a helper function to construct API URLs correctly
+    /**
+     * Construct a proper API URL with validation
+     * @param {string} endpoint - The API endpoint to call
+     * @returns {string} The complete API URL
+     */
     function getApiUrl(endpoint) {
+        if (!endpoint) {
+            console.error('Invalid endpoint provided to getApiUrl');
+            return null;
+        }
+
         const baseUrl = getApiBaseUrl();
-        // If the endpoint starts with a slash, remove it to prevent double slashes
+
+        // Ensure baseUrl ends with a slash and endpoint doesn't start with one
+        const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
         const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-        return `${baseUrl}${cleanEndpoint}`;
+
+        // Validate the endpoint to prevent injection
+        if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
+            console.error('Invalid characters in API endpoint');
+            return null;
+        }
+
+        return baseWithSlash + cleanEndpoint;
     }
 
+    /**
+     * Test the API connection using secure request
+     * @returns {Promise<boolean>} True if connection is successful
+     */
     async function testApiConnection() {
         try {
-            const apiBase = getApiBaseUrl();
-            const url = `${apiBase}/api/test`;
+            const url = getApiUrl('test');
+            if (!url) return false;
+
             console.log('Testing API connection to:', url);
 
-            const response = await fetch(url);
+            // Use the secure request utility
+            const response = await AuthUtils.secureRequest(url);
             const status = response.status;
             console.log('API test response status:', status);
 
@@ -42,57 +71,64 @@
         }
     }
 
+    /**
+     * Check server status with optimized requests
+     * @returns {Promise<boolean>} True if server is online
+     */
     async function checkServerStatus() {
         try {
-            const apiBase = getApiBaseUrl();
-            console.log('Checking server status at:', apiBase);
+            console.log('Checking server status');
 
-            // First try /api/test endpoint
-            let response = await fetch(`${apiBase}/api/test`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
+            // Use Promise.race to try both endpoints simultaneously
+            // This is more efficient than sequential requests
+            const testUrl = getApiUrl('test');
+            const authUrl = getApiUrl('auth');
 
-            if (response.ok) {
-                console.log('Server is online at /api/test');
-                return true;
+            if (!testUrl || !authUrl) return false;
+
+            const result = await Promise.race([
+                AuthUtils.secureRequest(testUrl)
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Server is online at /test');
+                            return true;
+                        }
+                        return false;
+                    }),
+                AuthUtils.secureRequest(authUrl)
+                    .then(response => {
+                        if (response.ok) {
+                            console.log('Server is online at /auth');
+                            return true;
+                        }
+                        return false;
+                    }),
+                // Add a timeout to avoid hanging if both requests are slow
+                new Promise(resolve => setTimeout(() => resolve(false), 5000))
+            ]);
+
+            if (!result) {
+                console.error('Server check failed - all endpoints unreachable or timed out');
             }
 
-            // If that fails, try /api/auth endpoint
-            response = await fetch(`${apiBase}/api/auth`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                console.log('Server is online at /api/auth');
-                return true;
-            }
-
-            console.error('Server check failed - all endpoints unreachable');
-            return false;
+            return result;
         } catch (error) {
             console.error('Server status check failed with error:', error);
             return false;
         }
     }
 
+    /**
+     * Validate the authentication token using secure cookies
+     * @returns {Promise<boolean>} True if token is valid
+     */
     async function validateToken() {
         try {
-            const token = localStorage.getItem('aydocorpToken');
-            if (!token) return false;
+            // No need to get token from localStorage as it's in the cookie
+            const url = getApiUrl('auth/validate');
+            if (!url) return false;
 
-            const apiBase = getApiBaseUrl();
-            const response = await fetch(`${apiBase}/api/auth/validate`, {
-                headers: {'x-auth-token': token}
-            });
-
+            const response = await AuthUtils.secureRequest(url);
             return response.ok;
         } catch (error) {
             console.error('Token validation error:', error);
@@ -102,101 +138,171 @@
 
     // Authentication Functions
     // ==================================
+    /**
+     * Handle user login with secure authentication
+     * @param {string} username - The username
+     * @param {string} password - The password
+     * @returns {Promise<void>}
+     */
     async function handleLogin(username, password) {
-        if (!username || !password) {
-            throw new Error('Please enter both username and password.');
+        // Input validation
+        if (!username || !username.trim()) {
+            AuthUtils.showNotification('Please enter a username', 'error');
+            throw new Error('Username is required');
         }
 
-        // First test connection
-        const connectionTest = await testApiConnection();
-        if (!connectionTest) {
-            throw new Error('Cannot connect to the server. Please try again later.');
+        if (!password) {
+            AuthUtils.showNotification('Please enter a password', 'error');
+            throw new Error('Password is required');
         }
 
-        const apiBase = getApiBaseUrl();
-        console.log('Attempting login at:', `${apiBase}/api/auth/login`);
-
-        // Instead of:
-        // const response = await fetch(`${apiBase}/api/auth/login`, {
-        // Use:
-        const response = await fetch(getApiUrl('api/auth/login'), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({username, password})
-        });
-
-        // Check response type and handle accordingly
-        const contentType = response.headers.get('content-type');
-
-        if (contentType && contentType.includes('application/json')) {
-            // Handle JSON response
-            const data = await response.json();
-
-            if (response.ok) {
-                // Login success
-                console.log('Login successful:', data);
-                console.log('User data from server:', data.user);
-                console.log('User role from server:', data.user.role);
-
-                // Store token and user info
-                localStorage.setItem('aydocorpToken', data.token);
-                localStorage.setItem('aydocorpUser', JSON.stringify(data.user));
-                localStorage.setItem('aydocorpLoggedIn', 'true');
-
-                // Log stored user data for debugging
-                console.log('Stored user data in localStorage:', JSON.parse(localStorage.getItem('aydocorpUser')));
-
-                // Show success message
-                alert(`Welcome back, ${data.user.username}!`);
-
-                // Update UI to show admin badge if applicable
-                checkLoginStatus();
-
-                // Redirect to employee portal
-                window.location.href = '#employee-portal';
-            } else {
-                // Login failed with error message from server
-                throw new Error(data.message || 'Login failed. Please check your credentials.');
+        try {
+            // First test connection and initialize CSRF protection
+            const connectionTest = await testApiConnection();
+            if (!connectionTest) {
+                AuthUtils.showNotification('Cannot connect to the server. Please try again later.', 'error');
+                throw new Error('Server connection failed');
             }
-        } else {
-            // Non-JSON response (likely HTML error page)
-            const text = await response.text();
-            console.error('Received non-JSON response:', text.substring(0, 500));
-            throw new Error('Unexpected response from server. Please try again later.');
+
+            // Initialize CSRF protection
+            await AuthUtils.initCsrf();
+
+            const loginUrl = getApiUrl('auth/login');
+            if (!loginUrl) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                throw new Error('Invalid API URL');
+            }
+
+            console.log('Attempting login at:', loginUrl);
+
+            // Use secure request with CSRF protection
+            const response = await AuthUtils.secureRequest(loginUrl, {
+                method: 'POST',
+                body: JSON.stringify({username, password})
+            });
+
+            // Check response type and handle accordingly
+            const contentType = response.headers.get('content-type');
+
+            if (contentType && contentType.includes('application/json')) {
+                // Handle JSON response
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Login success - token is now stored in HttpOnly cookie by the server
+                    console.log('Login successful');
+
+                    // Store minimal user info for UI purposes only (no sensitive data)
+                    // We'll store this in sessionStorage which is cleared when the browser is closed
+                    sessionStorage.setItem('aydocorpUser', JSON.stringify({
+                        username: data.user.username,
+                        role: data.user.role,
+                        id: data.user.id
+                    }));
+                    sessionStorage.setItem('aydocorpLoggedIn', 'true');
+
+                    // Show success message with non-blocking notification
+                    AuthUtils.showNotification(`Welcome back, ${data.user.username}!`, 'success');
+
+                    // Update UI to show admin badge if applicable
+                    checkLoginStatus();
+
+                    // Redirect to employee portal
+                    window.location.href = '#employee-portal';
+                } else {
+                    // Login failed with error message from server
+                    AuthUtils.showNotification(data.message || 'Login failed. Please check your credentials.', 'error');
+                    throw new Error(data.message || 'Login failed');
+                }
+            } else {
+                // Non-JSON response (likely HTML error page)
+                const text = await response.text();
+                console.error('Received non-JSON response:', text.substring(0, 500));
+                AuthUtils.showNotification('Unexpected response from server. Please try again later.', 'error');
+                throw new Error('Unexpected response format');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            // Only show notification if it hasn't been shown already
+            if (error.message !== 'Server connection failed' && 
+                error.message !== 'Invalid API URL' && 
+                error.message !== 'Login failed' &&
+                error.message !== 'Unexpected response format' &&
+                error.message !== 'Username is required' &&
+                error.message !== 'Password is required') {
+                AuthUtils.showNotification('An error occurred during login. Please try again.', 'error');
+            }
+            throw error;
         }
     }
 
-    function handleLogout() {
-        // Clear authentication data
-        localStorage.removeItem('aydocorpToken');
-        localStorage.removeItem('aydocorpUser');
-        localStorage.removeItem('aydocorpLoggedIn');
+    /**
+     * Handle user logout with secure authentication
+     */
+    async function handleLogout() {
+        try {
+            // Call logout endpoint to clear the secure cookie
+            const logoutUrl = getApiUrl('auth/logout');
+            if (logoutUrl) {
+                await AuthUtils.secureRequest(logoutUrl, {
+                    method: 'POST'
+                });
+            }
 
-        // Update UI
-        $('.user-status').remove();
-        $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
+            // Clear session storage
+            sessionStorage.removeItem('aydocorpUser');
+            sessionStorage.removeItem('aydocorpLoggedIn');
 
-        // Redirect to home
-        alert('You have been logged out.');
-        window.location.href = '#';
+            // Update UI
+            $('.user-status').remove();
+            $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
 
-        // Update UI state
-        checkLoginStatus();
+            // Show notification
+            AuthUtils.showNotification('You have been logged out successfully.', 'info');
+
+            // Redirect to home
+            window.location.href = '#';
+
+            // Update UI state
+            checkLoginStatus();
+        } catch (error) {
+            console.error('Logout error:', error);
+            AuthUtils.showNotification('An error occurred during logout.', 'error');
+        }
     }
 
-    function checkLoginStatus() {
+    /**
+     * Check user login status and update UI accordingly
+     * Uses sessionStorage for UI state and validates with the server
+     */
+    async function checkLoginStatus() {
         console.log('checkLoginStatus called');
-        const isLoggedIn = localStorage.getItem('aydocorpLoggedIn') === 'true';
-        const token = localStorage.getItem('aydocorpToken');
-        const userJson = localStorage.getItem('aydocorpUser');
 
-        if (isLoggedIn && token && userJson) {
-            try {
-                const user = JSON.parse(userJson);
-                console.log('User data from localStorage:', user);
+        try {
+            // First check sessionStorage for quick UI updates
+            const isLoggedIn = sessionStorage.getItem('aydocorpLoggedIn') === 'true';
+            const userJson = sessionStorage.getItem('aydocorpUser');
+
+            if (isLoggedIn && userJson) {
+                // Parse user data safely
+                const user = AuthUtils.safeJsonParse(userJson, null);
+
+                if (!user) {
+                    console.error('Invalid user data in session storage');
+                    await handleLogout();
+                    return;
+                }
+
+                console.log('User data from sessionStorage:', user);
                 console.log('Is admin?', user.role === 'admin');
+
+                // Validate token with server in the background
+                validateToken().then(isValid => {
+                    if (!isValid) {
+                        console.warn('Token validation failed, logging out');
+                        handleLogout();
+                    }
+                });
 
                 // Show employee portal content
                 $('#employee-portal-login-required').hide();
@@ -205,9 +311,12 @@
                 // Add user status indicator to the top right
                 $('.user-status').remove();
 
+                // Sanitize username before inserting into HTML
+                const safeUsername = AuthUtils.sanitizeHtml(user.username);
+
                 const userStatusHtml = `
                     <div class="user-status">
-                        <span class="username">${user.username}</span>
+                        <span class="username">${safeUsername}</span>
                         ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
                         <span class="logout-option">
                             <a href="#" class="logout">Logout</a>
@@ -215,23 +324,40 @@
                     </div>
                 `;
 
-                console.log('User status HTML:', userStatusHtml);
+                // Append to body
                 $('body').append(userStatusHtml);
 
                 // Replace the "Member Login" link with just "Logout"
-                $('header nav ul li a[href="#login"]').text('Logout').attr('href', '#').addClass('logout').closest('li').attr('id', 'logout-nav');
-            } catch (error) {
-                console.error('Error checking login status:', error);
-                handleLogout();
+                const $loginLink = $('header nav ul li a[href="#login"]');
+                if ($loginLink.length) {
+                    $loginLink.text('Logout')
+                             .attr('href', '#')
+                             .addClass('logout')
+                             .closest('li')
+                             .attr('id', 'logout-nav');
+                }
+            } else {
+                // User is not logged in
+                $('#employee-portal-content').hide();
+                $('#employee-portal-login-required').show();
+
+                // Ensure login link is correct
+                const $logoutLink = $('header nav ul li a.logout');
+                if ($logoutLink.length) {
+                    $logoutLink.text('Member Login')
+                              .attr('href', '#login')
+                              .removeClass('logout')
+                              .closest('li')
+                              .removeAttr('id');
+                }
+                $('.user-status').remove();
             }
-        } else {
-            // User is not logged in
+        } catch (error) {
+            console.error('Error checking login status:', error);
+            // Handle error gracefully
             $('#employee-portal-content').hide();
             $('#employee-portal-login-required').show();
-
-            // Ensure login link is correct
-            $('header nav ul li a.logout').text('Member Login').attr('href', '#login').removeClass('logout').closest('li').removeAttr('id');
-            $('.user-status').remove();
+            AuthUtils.showNotification('An error occurred while checking login status.', 'error');
         }
     }
 
@@ -239,17 +365,20 @@
     // ==================================
 
     // Career Paths Functions
+    /**
+     * Load career paths from the API
+     */
     async function loadCareerPaths() {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $careerPathList = $('.career-path-list');
+            const url = getApiUrl('employee-portal/career-paths');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/career-paths`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load career paths');
@@ -301,18 +430,28 @@
         }
     }
 
+    /**
+     * Load details for a specific career path
+     * @param {string} careerPathId - The ID of the career path to load
+     */
     async function loadCareerPathDetails(careerPathId) {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $careerPathDetails = $('.career-path-details');
             const $careerPathList = $('.career-path-list');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/career-paths/${careerPathId}`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            // Input validation
+            if (!careerPathId) {
+                AuthUtils.showNotification('Invalid career path ID', 'error');
+                return;
+            }
+
+            const url = getApiUrl(`employee-portal/career-paths/${careerPathId}`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load career path details');
@@ -469,17 +608,20 @@
     }
 
     // Employee Database Functions
+    /**
+     * Load all employees from the API
+     */
     async function loadEmployees() {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $employeeListContainer = $('.employee-list-container');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/employees`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            const url = getApiUrl('employee-portal/employees');
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load employees');
@@ -537,18 +679,28 @@
         }
     }
 
+    /**
+     * Load profile for a specific employee
+     * @param {string} employeeId - The ID of the employee to load
+     */
     async function loadEmployeeProfile(employeeId) {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $employeeProfileContainer = $('.employee-profile-container');
             const $employeeListContainer = $('.employee-list-container');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/employees/${employeeId}`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            // Input validation
+            if (!employeeId) {
+                AuthUtils.showNotification('Invalid employee ID', 'error');
+                return;
+            }
+
+            const url = getApiUrl(`employee-portal/employees/${employeeId}`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load employee profile');
@@ -650,17 +802,20 @@
     }
 
     // Events Functions
+    /**
+     * Load all events from the API
+     */
     async function loadEvents() {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $eventsListContainer = $('.events-list-container');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/events`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            const url = getApiUrl('employee-portal/events');
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load events');
@@ -726,18 +881,28 @@
         }
     }
 
+    /**
+     * Load details for a specific event
+     * @param {string} eventId - The ID of the event to load
+     */
     async function loadEventDetails(eventId) {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $eventDetailsContainer = $('.event-details-container');
             const $eventsListContainer = $('.events-list-container');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/events/${eventId}`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            // Input validation
+            if (!eventId) {
+                AuthUtils.showNotification('Invalid event ID', 'error');
+                return;
+            }
+
+            const url = getApiUrl(`employee-portal/events/${eventId}`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load event details');
@@ -844,17 +1009,20 @@
     }
 
     // Operations Functions
+    /**
+     * Load all operations from the API
+     */
     async function loadOperations() {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $operationsListContainer = $('.operations-list-container');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/operations`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            const url = getApiUrl('employee-portal/operations');
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load operations');
@@ -918,18 +1086,28 @@
         }
     }
 
+    /**
+     * Load details for a specific operation
+     * @param {string} operationId - The ID of the operation to load
+     */
     async function loadOperationDetails(operationId) {
         try {
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
             const $operationDetailsContainer = $('.operation-details-container');
             const $operationsListContainer = $('.operations-list-container');
 
-            const response = await fetch(`${apiBase}/api/employee-portal/operations/${operationId}`, {
-                headers: {
-                    'x-auth-token': token
-                }
-            });
+            // Input validation
+            if (!operationId) {
+                AuthUtils.showNotification('Invalid operation ID', 'error');
+                return;
+            }
+
+            const url = getApiUrl(`employee-portal/operations/${operationId}`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
 
             if (!response.ok) {
                 console.error('Failed to load operation details');
@@ -1294,22 +1472,23 @@
         $(window).on('hashchange', function() {
             if (window.location.hash === '#admin-dashboard') {
                 // Check if user is admin before showing dashboard
-                const userJson = localStorage.getItem('aydocorpUser');
+                const userJson = sessionStorage.getItem('aydocorpUser');
                 if (userJson) {
                     try {
-                        const user = JSON.parse(userJson);
-                        if (user.role !== 'admin') {
+                        const user = AuthUtils.safeJsonParse(userJson, null);
+                        if (!user || user.role !== 'admin') {
                             // Redirect non-admin users
-                            alert('You do not have permission to access the Admin Dashboard.');
+                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                             window.location.href = '#';
                         }
                     } catch (error) {
                         console.error('Error parsing user data:', error);
+                        AuthUtils.showNotification('An error occurred while checking permissions.', 'error');
                         window.location.href = '#';
                     }
                 } else {
                     // Redirect users who are not logged in
-                    alert('Please log in with an admin account to access the Admin Dashboard.');
+                    AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
                     window.location.href = '#login';
                 }
             }
@@ -1317,20 +1496,21 @@
 
         // Check admin access on initial load if hash is #admin-dashboard
         if (window.location.hash === '#admin-dashboard') {
-            const userJson = localStorage.getItem('aydocorpUser');
+            const userJson = sessionStorage.getItem('aydocorpUser');
             if (userJson) {
                 try {
-                    const user = JSON.parse(userJson);
-                    if (user.role !== 'admin') {
-                        alert('You do not have permission to access the Admin Dashboard.');
+                    const user = AuthUtils.safeJsonParse(userJson, null);
+                    if (!user || user.role !== 'admin') {
+                        AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                         window.location.href = '#';
                     }
                 } catch (error) {
                     console.error('Error parsing user data:', error);
+                    AuthUtils.showNotification('An error occurred while checking permissions.', 'error');
                     window.location.href = '#';
                 }
             } else {
-                alert('Please log in with an admin account to access the Admin Dashboard.');
+                AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
                 window.location.href = '#login';
             }
         }
@@ -1391,45 +1571,63 @@
             $('.employee-list-container').hide();
             $('.employee-profile-container').hide();
 
-            // Get current user data
-            const apiBase = getApiBaseUrl();
-            const token = localStorage.getItem('aydocorpToken');
-            const userId = JSON.parse(localStorage.getItem('aydocorpUser')).id;
-
-            // Try to load existing profile data
-            fetch(`${apiBase}/api/employee-portal/employees`, {
-                headers: {
-                    'x-auth-token': token
+            try {
+                // Get current user data
+                const userJson = sessionStorage.getItem('aydocorpUser');
+                if (!userJson) {
+                    AuthUtils.showNotification('You must be logged in to edit your profile.', 'error');
+                    return;
                 }
-            })
-            .then(response => response.json())
-            .then(employees => {
-                const currentEmployee = employees.find(emp => emp.user._id === userId);
 
-                if (currentEmployee) {
-                    // Pre-fill form with existing data
-                    $('#employee-fullname').val(currentEmployee.fullName);
-                    $('#employee-photo').val(currentEmployee.photo);
-                    $('#employee-background').val(currentEmployee.backgroundStory);
-                    $('#employee-rank').val(currentEmployee.rank);
-                    $('#employee-department').val(currentEmployee.department);
-                    $('#employee-specializations').val(currentEmployee.specializations.join(', '));
-                    $('#employee-certifications').val(currentEmployee.certifications.join(', '));
+                const user = AuthUtils.safeJsonParse(userJson, null);
+                if (!user || !user.id) {
+                    AuthUtils.showNotification('Invalid user data. Please log in again.', 'error');
+                    return;
+                }
 
-                    if (currentEmployee.contactInfo) {
-                        $('#employee-discord').val(currentEmployee.contactInfo.discord || '');
-                        $('#employee-rsi').val(currentEmployee.contactInfo.rsiHandle || '');
+                const userId = user.id;
+                const url = getApiUrl('employee-portal/employees');
+
+                if (!url) {
+                    AuthUtils.showNotification('Invalid API configuration', 'error');
+                    return;
+                }
+
+                // Try to load existing profile data
+                AuthUtils.secureRequest(url)
+                .then(response => response.json())
+                .then(employees => {
+                    const currentEmployee = employees.find(emp => emp.user._id === userId);
+
+                    if (currentEmployee) {
+                        // Pre-fill form with existing data
+                        $('#employee-fullname').val(currentEmployee.fullName);
+                        $('#employee-photo').val(currentEmployee.photo);
+                        $('#employee-background').val(currentEmployee.backgroundStory);
+                        $('#employee-rank').val(currentEmployee.rank);
+                        $('#employee-department').val(currentEmployee.department);
+                        $('#employee-specializations').val(currentEmployee.specializations.join(', '));
+                        $('#employee-certifications').val(currentEmployee.certifications.join(', '));
+
+                        if (currentEmployee.contactInfo) {
+                            $('#employee-discord').val(currentEmployee.contactInfo.discord || '');
+                            $('#employee-rsi').val(currentEmployee.contactInfo.rsiHandle || '');
+                        }
                     }
-                }
 
-                // Show the edit form
-                $('.employee-edit-form-container').show();
-            })
-            .catch(error => {
-                console.error('Error loading employee data:', error);
-                // Show the edit form anyway
-                $('.employee-edit-form-container').show();
-            });
+                    // Show the edit form
+                    $('.employee-edit-form-container').show();
+                })
+                .catch(error => {
+                    console.error('Error loading employee data:', error);
+                    AuthUtils.showNotification('Error loading profile data. Please try again.', 'error');
+                    // Show the edit form anyway
+                    $('.employee-edit-form-container').show();
+                });
+            } catch (error) {
+                console.error('Error in edit profile handler:', error);
+                AuthUtils.showNotification('An error occurred. Please try again.', 'error');
+            }
         });
 
         // Cancel profile edit button handler
@@ -1454,43 +1652,45 @@
 
             // Validation
             if (!fullName) {
-                alert('Please enter your full name.');
+                AuthUtils.showNotification('Please enter your full name.', 'error');
                 return;
             }
 
             try {
-                const apiBase = getApiBaseUrl();
-                const token = localStorage.getItem('aydocorpToken');
+                const url = getApiUrl('employee-portal/employees');
+                if (!url) {
+                    AuthUtils.showNotification('Invalid API configuration', 'error');
+                    return;
+                }
 
-                const response = await fetch(`${apiBase}/api/employee-portal/employees`, {
+                // Sanitize inputs before sending to server
+                const sanitizedData = {
+                    fullName: AuthUtils.sanitizeHtml(fullName),
+                    photo: AuthUtils.sanitizeHtml(photo),
+                    backgroundStory: AuthUtils.sanitizeHtml(backgroundStory),
+                    rank: AuthUtils.sanitizeHtml(rank),
+                    department: AuthUtils.sanitizeHtml(department),
+                    specializations: specializations.map(s => AuthUtils.sanitizeHtml(s)),
+                    certifications: certifications.map(c => AuthUtils.sanitizeHtml(c)),
+                    contactInfo: {
+                        discord: AuthUtils.sanitizeHtml(discord),
+                        rsiHandle: AuthUtils.sanitizeHtml(rsiHandle)
+                    }
+                };
+
+                const response = await AuthUtils.secureRequest(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
-                    body: JSON.stringify({
-                        fullName,
-                        photo,
-                        backgroundStory,
-                        rank,
-                        department,
-                        specializations,
-                        certifications,
-                        contactInfo: {
-                            discord,
-                            rsiHandle
-                        }
-                    })
+                    body: JSON.stringify(sanitizedData)
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    alert('Failed to save profile: ' + (errorData.message || 'Unknown error'));
+                    AuthUtils.showNotification('Failed to save profile: ' + (errorData.message || 'Unknown error'), 'error');
                     return;
                 }
 
                 // Profile saved successfully
-                alert('Profile saved successfully!');
+                AuthUtils.showNotification('Profile saved successfully!', 'success');
 
                 // Hide the edit form and reload employees
                 $('.employee-edit-form-container').hide();
@@ -1498,8 +1698,8 @@
                 loadEmployees();
 
             } catch (error) {
-                alert('Error saving profile: ' + (error.message || 'Network error'));
                 console.error('Profile save error:', error);
+                AuthUtils.showNotification('Error saving profile: ' + (error.message || 'Network error'), 'error');
             }
         });
 
@@ -1647,7 +1847,7 @@
             // Check for employee portal URLs
             if (hash === '#employee-portal') {
                 // Show the employee portal if logged in
-                if (localStorage.getItem('aydocorpLoggedIn') === 'true') {
+                if (sessionStorage.getItem('aydocorpLoggedIn') === 'true') {
                     // Default to showing the Career Paths section
                     $portalSection.hide();
                     $('#career-paths-section').show();
@@ -1656,6 +1856,9 @@
 
                     // Load career paths data
                     loadCareerPaths();
+                } else {
+                    // If not logged in, show notification
+                    AuthUtils.showNotification('Please log in to access the Employee Portal.', 'warning');
                 }
             }
         });
@@ -1699,7 +1902,7 @@
 
             // Validation
             if (!title || !content) {
-                alert('Please fill in both title and content.');
+                AuthUtils.showNotification('Please fill in both title and content.', 'error');
                 return;
             }
 
@@ -1709,32 +1912,34 @@
                 const originalButtonText = $submitButton.text();
                 $submitButton.text('Creating Operation...').prop('disabled', true);
 
-                const apiBase = getApiBaseUrl();
-                const token = localStorage.getItem('aydocorpToken');
+                const url = getApiUrl('employee-portal/operations');
+                if (!url) {
+                    AuthUtils.showNotification('Invalid API configuration', 'error');
+                    return;
+                }
 
-                const response = await fetch(`${apiBase}/api/employee-portal/operations`, {
+                // Sanitize inputs before sending to server
+                const sanitizedData = {
+                    title: AuthUtils.sanitizeHtml(title),
+                    description: 'Created from portal',
+                    content: AuthUtils.sanitizeHtml(content),
+                    category: 'document',
+                    classification: 'internal'
+                };
+
+                const response = await AuthUtils.secureRequest(url, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'x-auth-token': token
-                    },
-                    body: JSON.stringify({ 
-                        title, 
-                        description: 'Created from portal',
-                        content,
-                        category: 'document',
-                        classification: 'internal'
-                    })
+                    body: JSON.stringify(sanitizedData)
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    alert('Failed to create operation: ' + (errorData.message || 'Unknown error'));
+                    AuthUtils.showNotification('Failed to create operation: ' + (errorData.message || 'Unknown error'), 'error');
                     return;
                 }
 
                 // Operation created successfully
-                alert('Operation created successfully!');
+                AuthUtils.showNotification('Operation created successfully!', 'success');
 
                 // Clear form fields
                 $postTitle.val('');
@@ -1753,8 +1958,8 @@
                 loadOperations();
 
             } catch (error) {
-                alert('Error creating operation: ' + (error.message || 'Network error'));
                 console.error('Operation creation error:', error);
+                AuthUtils.showNotification('Error creating operation: ' + (error.message || 'Network error'), 'error');
             } finally {
                 // Reset button state
                 $submitButton.text(originalButtonText).prop('disabled', false);

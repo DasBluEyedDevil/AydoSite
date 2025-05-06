@@ -1,0 +1,152 @@
+/**
+ * Authentication Utilities
+ * Provides secure authentication methods using HttpOnly cookies and CSRF protection
+ */
+
+(function($) {
+    // CSRF token handling
+    let csrfToken = '';
+    
+    /**
+     * Initialize CSRF protection
+     * Fetches a CSRF token from the server and stores it for future requests
+     */
+    async function initCsrf() {
+        try {
+            const response = await fetch('/api/auth/csrf-token', {
+                method: 'GET',
+                credentials: 'include' // Important for cookies
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                csrfToken = data.csrfToken;
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Failed to initialize CSRF protection:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Get the current CSRF token
+     */
+    function getCsrfToken() {
+        return csrfToken;
+    }
+    
+    /**
+     * Create a secure API request with proper headers including CSRF token
+     * @param {string} url - The API endpoint URL
+     * @param {Object} options - Fetch options
+     * @returns {Promise} - Fetch promise
+     */
+    async function secureRequest(url, options = {}) {
+        // Default options with credentials included for cookies
+        const defaultOptions = {
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-Token': csrfToken
+            }
+        };
+        
+        // Merge with user provided options
+        const mergedOptions = {
+            ...defaultOptions,
+            ...options,
+            headers: {
+                ...defaultOptions.headers,
+                ...(options.headers || {})
+            }
+        };
+        
+        try {
+            return await fetch(url, mergedOptions);
+        } catch (error) {
+            console.error('Secure request failed:', error);
+            throw error;
+        }
+    }
+    
+    /**
+     * Show a non-blocking notification instead of using alert()
+     * @param {string} message - The message to display
+     * @param {string} type - The type of notification (success, error, warning, info)
+     * @param {number} duration - How long to show the notification in ms
+     */
+    function showNotification(message, type = 'info', duration = 3000) {
+        // Remove any existing notifications
+        $('.notification').remove();
+        
+        // Create notification element
+        const notification = $(`
+            <div class="notification ${type}">
+                <div class="notification-content">
+                    <span class="notification-message">${message}</span>
+                    <button class="notification-close">&times;</button>
+                </div>
+            </div>
+        `);
+        
+        // Add to body
+        $('body').append(notification);
+        
+        // Add event listener to close button
+        $('.notification-close').on('click', function() {
+            $(this).closest('.notification').fadeOut(300, function() {
+                $(this).remove();
+            });
+        });
+        
+        // Auto-hide after duration
+        setTimeout(function() {
+            notification.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, duration);
+    }
+    
+    /**
+     * Safely parse JSON with error handling
+     * @param {string} jsonString - The JSON string to parse
+     * @param {*} defaultValue - Default value to return if parsing fails
+     * @returns {*} - Parsed object or default value
+     */
+    function safeJsonParse(jsonString, defaultValue = null) {
+        try {
+            return JSON.parse(jsonString);
+        } catch (error) {
+            console.error('JSON parse error:', error);
+            return defaultValue;
+        }
+    }
+    
+    /**
+     * Sanitize HTML content to prevent XSS attacks
+     * @param {string} html - The HTML string to sanitize
+     * @returns {string} - Sanitized HTML
+     */
+    function sanitizeHtml(html) {
+        if (!html) return '';
+        
+        // Create a temporary div
+        const temp = document.createElement('div');
+        temp.textContent = html;
+        return temp.innerHTML;
+    }
+    
+    // Expose public methods
+    window.AuthUtils = {
+        initCsrf,
+        getCsrfToken,
+        secureRequest,
+        showNotification,
+        safeJsonParse,
+        sanitizeHtml
+    };
+    
+})(jQuery);
