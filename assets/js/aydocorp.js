@@ -196,7 +196,7 @@
                 $('body').append(`
                     <div class="user-status">
                         <span class="username">${user.username}</span>
-                        ${user.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
+                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">Admin</a>' : ''}
                         <span class="logout-option">
                             <a href="#" class="logout">Logout</a>
                         </span>
@@ -236,7 +236,14 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load career paths');
+                console.error('Failed to load career paths');
+                $('.career-path-list').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Career Paths</h3>
+                        <p>Failed to load career paths</p>
+                    </div>
+                `);
+                return;
             }
 
             const careerPaths = await response.json();
@@ -290,7 +297,22 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load career path details');
+                console.error('Failed to load career path details');
+                $('.career-path-details').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Career Path Details</h3>
+                        <p>Failed to load career path details</p>
+                        <button class="back-to-career-paths button">Back to Career Paths</button>
+                    </div>
+                `).show();
+                $('.career-path-list').hide();
+
+                // Add event listener to the back button
+                $('.back-to-career-paths').on('click', function() {
+                    $('.career-path-details').hide();
+                    $('.career-path-list').show();
+                });
+                return;
             }
 
             const careerPath = await response.json();
@@ -441,7 +463,14 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load employees');
+                console.error('Failed to load employees');
+                $('.employee-list-container').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Employees</h3>
+                        <p>Failed to load employees</p>
+                    </div>
+                `);
+                return;
             }
 
             const employees = await response.json();
@@ -501,7 +530,22 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load employee profile');
+                console.error('Failed to load employee profile');
+                $('.employee-profile-container').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Employee Profile</h3>
+                        <p>Failed to load employee profile</p>
+                        <button class="back-to-employees button">Back to Employee List</button>
+                    </div>
+                `).show();
+                $('.employee-list-container').hide();
+
+                // Add event listener to the back button
+                $('.back-to-employees').on('click', function() {
+                    $('.employee-profile-container').hide();
+                    $('.employee-list-container').show();
+                });
+                return;
             }
 
             const employee = await response.json();
@@ -598,7 +642,14 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load events');
+                console.error('Failed to load events');
+                $('.events-list-container').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Events</h3>
+                        <p>Failed to load events</p>
+                    </div>
+                `);
+                return;
             }
 
             const events = await response.json();
@@ -666,7 +717,22 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load event details');
+                console.error('Failed to load event details');
+                $('.event-details-container').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Event Details</h3>
+                        <p>Failed to load event details</p>
+                        <button class="back-to-events button">Back to Events</button>
+                    </div>
+                `).show();
+                $('.events-list-container').hide();
+
+                // Add event listener to the back button
+                $('.back-to-events').on('click', function() {
+                    $('.event-details-container').hide();
+                    $('.events-list-container').show();
+                });
+                return;
             }
 
             const event = await response.json();
@@ -765,7 +831,14 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load operations');
+                console.error('Failed to load operations');
+                $('.operations-list-container').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Operations</h3>
+                        <p>Failed to load operations</p>
+                    </div>
+                `);
+                return;
             }
 
             const operations = await response.json();
@@ -831,7 +904,22 @@
             });
 
             if (!response.ok) {
-                throw new Error('Failed to load operation details');
+                console.error('Failed to load operation details');
+                $('.operation-details-container').html(`
+                    <div class="error-message">
+                        <h3>Error Loading Operation Details</h3>
+                        <p>Failed to load operation details</p>
+                        <button class="back-to-operations button">Back to Operations</button>
+                    </div>
+                `).show();
+                $('.operations-list-container').hide();
+
+                // Add event listener to the back button
+                $('.back-to-operations').on('click', function() {
+                    $('.operation-details-container').hide();
+                    $('.operations-list-container').show();
+                });
+                return;
             }
 
             const operation = await response.json();
@@ -932,9 +1020,275 @@
         }
     }
 
+    // Admin Dashboard Functions
+    // ==================================
+
+    // Function to initialize the rich text editor
+    function initRichTextEditor() {
+        // Add event listeners to editor buttons
+        $('.editor-button').on('click', function(e) {
+            e.preventDefault();
+            const command = $(this).data('command');
+
+            if (command === 'createLink') {
+                const url = prompt('Enter the link URL:');
+                if (url) {
+                    document.execCommand(command, false, url);
+                }
+            } else if (command === 'insertImage') {
+                // Show image upload container
+                $('.image-upload-container').show();
+            } else {
+                // Execute the command
+                document.execCommand(command, false, null);
+
+                // Toggle active class for style buttons
+                if (['bold', 'italic', 'underline'].includes(command)) {
+                    $(this).toggleClass('active');
+                }
+            }
+        });
+
+        // Handle image insertion
+        $('#insert-image-button').on('click', function() {
+            const imageUrl = $('#image-url').val();
+            const altText = $('#image-alt').val() || 'Image';
+
+            if (imageUrl) {
+                const imageHtml = `<img src="${imageUrl}" alt="${altText}" />`;
+                document.execCommand('insertHTML', false, imageHtml);
+
+                // Clear fields and hide container
+                $('#image-url').val('');
+                $('#image-alt').val('');
+                $('.image-upload-container').hide();
+            } else {
+                alert('Please enter an image URL.');
+            }
+        });
+
+        // Handle image upload
+        $('#image-upload').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    $('#image-url').val(event.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Cancel image insertion
+        $('#cancel-image-button').on('click', function() {
+            $('#image-url').val('');
+            $('#image-alt').val('');
+            $('#image-upload').val('');
+            $('.image-upload-container').hide();
+        });
+    }
+
+    // Function to load page content for editing
+    function loadPageContent(pageElement) {
+        // Show the content editor
+        $('#content-editor-container').show();
+
+        // In a real implementation, this would fetch the content from the server
+        // For now, we'll use placeholder data
+        let title;
+        let content;
+
+        switch(pageElement) {
+            case 'about':
+                title = 'About AydoCorp';
+                content = $('#about h2').text() + '\n\n' + $('#about p').text();
+                break;
+            case 'services':
+                title = 'Our Services';
+                content = $('#services h2').text() + '\n\n' + $('#services p').text();
+                break;
+            case 'subsidiaries':
+                title = 'Our Subsidiaries';
+                content = $('#subsidiaries h2').text() + '\n\n' + $('#subsidiaries p').text();
+                break;
+            case 'contact':
+                title = 'Contact Us';
+                content = $('#contact h2').text() + '\n\n' + $('#contact p').text();
+                break;
+            default:
+                title = 'Select a page element';
+                content = 'Please select a page element to edit.';
+        }
+
+        // Set the values in the form
+        $('#element-title').val(title);
+        $('#element-content').val(content);
+    }
+
+    // Function to save page content
+    function savePageContent(pageElement, title, content) {
+        // In a real implementation, this would send the data to the server
+        // For now, we'll just show a success message
+        alert(`Content for "${pageElement}" has been saved successfully!`);
+
+        // Reset the form
+        $('#page-element-selector').val('');
+        $('#element-title').val('');
+        $('#element-content').val('');
+        $('#content-editor-container').hide();
+    }
+
+    // Function to load user list
+    function loadUserList() {
+        // Show the user list container
+        $('#user-list-container').show();
+
+        // In a real implementation, this would fetch users from the server
+        // For now, we'll use placeholder data
+        const users = [
+            { id: 1, username: 'Devil', email: 'shatteredobsidian@yahoo.com', role: 'admin', createdAt: 'Mon May 05 2025 22:36:43 GMT-0400' },
+            { id: 2, username: 'JohnDoe', email: 'john@example.com', role: 'employee', createdAt: 'Tue May 06 2025 10:15:22 GMT-0400' },
+            { id: 3, username: 'JaneSmith', email: 'jane@example.com', role: 'employee', createdAt: 'Wed May 07 2025 14:22:10 GMT-0400' }
+        ];
+
+        // Create the table
+        let html = `
+            <table class="user-list-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        users.forEach(user => {
+            const createdDate = new Date(user.createdAt).toLocaleDateString();
+            html += `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td><span class="user-role ${user.role}">${user.role}</span></td>
+                    <td>${createdDate}</td>
+                    <td>
+                        <button class="button small edit-user-button" data-id="${user.id}">Edit</button>
+                        ${user.role !== 'admin' ? `<button class="button small promote-user-button" data-id="${user.id}">Promote</button>` : ''}
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        $('#user-list-container').html(html);
+
+        // Add event listeners to buttons
+        $('.edit-user-button').on('click', function() {
+            const userId = $(this).data('id');
+            alert(`Edit user with ID: ${userId}`);
+        });
+
+        $('.promote-user-button').on('click', function() {
+            const userId = $(this).data('id');
+            alert(`Promote user with ID: ${userId} to admin`);
+        });
+    }
+
     // Initialize on document ready
     // ==================================
     $(document).ready(function () {
+        // Admin Dashboard Initialization
+        // Initialize the rich text editor when the page loads
+        initRichTextEditor();
+
+        // Handle page element selection
+        $('#page-element-selector').on('change', function() {
+            const selectedElement = $(this).val();
+            if (selectedElement) {
+                loadPageContent(selectedElement);
+            } else {
+                $('#content-editor-container').hide();
+            }
+        });
+
+        // Handle save content button
+        $('#save-content-button').on('click', function() {
+            const selectedElement = $('#page-element-selector').val();
+            const title = $('#element-title').val();
+            const content = $('#element-content').val();
+
+            if (selectedElement && title && content) {
+                savePageContent(selectedElement, title, content);
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+
+        // Handle cancel edit button
+        $('#cancel-edit-button').on('click', function() {
+            $('#page-element-selector').val('');
+            $('#element-title').val('');
+            $('#element-content').val('');
+            $('#content-editor-container').hide();
+        });
+
+        // Handle view users button
+        $('#view-users-button').on('click', function() {
+            loadUserList();
+        });
+
+        // Handle hash changes for admin dashboard
+        $(window).on('hashchange', function() {
+            if (window.location.hash === '#admin-dashboard') {
+                // Check if user is admin before showing dashboard
+                const userJson = localStorage.getItem('aydocorpUser');
+                if (userJson) {
+                    try {
+                        const user = JSON.parse(userJson);
+                        if (user.role !== 'admin') {
+                            // Redirect non-admin users
+                            alert('You do not have permission to access the Admin Dashboard.');
+                            window.location.href = '#';
+                        }
+                    } catch (error) {
+                        console.error('Error parsing user data:', error);
+                        window.location.href = '#';
+                    }
+                } else {
+                    // Redirect users who are not logged in
+                    alert('Please log in with an admin account to access the Admin Dashboard.');
+                    window.location.href = '#login';
+                }
+            }
+        });
+
+        // Check admin access on initial load if hash is #admin-dashboard
+        if (window.location.hash === '#admin-dashboard') {
+            const userJson = localStorage.getItem('aydocorpUser');
+            if (userJson) {
+                try {
+                    const user = JSON.parse(userJson);
+                    if (user.role !== 'admin') {
+                        alert('You do not have permission to access the Admin Dashboard.');
+                        window.location.href = '#';
+                    }
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                    window.location.href = '#';
+                }
+            } else {
+                alert('Please log in with an admin account to access the Admin Dashboard.');
+                window.location.href = '#login';
+            }
+        }
+
         // Subsidiary popup functionality
         $('.subsidiary-more').on('click', function () {
             const subsidiary = $(this).data('subsidiary');
@@ -1215,7 +1569,7 @@
                     return;
                 }
 
-                const data = await response.json();
+                await response.json();
                 alert('Account created successfully! You can now log in.');
 
                 // Switch to login form
