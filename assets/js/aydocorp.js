@@ -137,14 +137,22 @@
             if (response.ok) {
                 // Login success
                 console.log('Login successful:', data);
+                console.log('User data from server:', data.user);
+                console.log('User role from server:', data.user.role);
 
                 // Store token and user info
                 localStorage.setItem('aydocorpToken', data.token);
                 localStorage.setItem('aydocorpUser', JSON.stringify(data.user));
                 localStorage.setItem('aydocorpLoggedIn', 'true');
 
+                // Log stored user data for debugging
+                console.log('Stored user data in localStorage:', JSON.parse(localStorage.getItem('aydocorpUser')));
+
                 // Show success message
                 alert(`Welcome back, ${data.user.username}!`);
+
+                // Update UI to show admin badge if applicable
+                checkLoginStatus();
 
                 // Redirect to employee portal
                 window.location.href = '#employee-portal';
@@ -179,6 +187,7 @@
     }
 
     function checkLoginStatus() {
+        console.log('checkLoginStatus called');
         const isLoggedIn = localStorage.getItem('aydocorpLoggedIn') === 'true';
         const token = localStorage.getItem('aydocorpToken');
         const userJson = localStorage.getItem('aydocorpUser');
@@ -186,6 +195,8 @@
         if (isLoggedIn && token && userJson) {
             try {
                 const user = JSON.parse(userJson);
+                console.log('User data from localStorage:', user);
+                console.log('Is admin?', user.role === 'admin');
 
                 // Show employee portal content
                 $('#employee-portal-login-required').hide();
@@ -193,15 +204,19 @@
 
                 // Add user status indicator to the top right
                 $('.user-status').remove();
-                $('body').append(`
-                    <div class="user-status">
-                        <span class="username">${user.username}</span>
-                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">Admin</a>' : ''}
-                        <span class="logout-option">
-                            <a href="#" class="logout">Logout</a>
+
+                const userStatusHtml = `
+                    <div class="user-status" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; font-size: 14px;">
+                        <span class="username" style="font-weight: bold;">${user.username}</span>
+                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge" style="display: inline-block; margin-left: 0.5rem; padding: 0.2rem 0.5rem; background-color: #ff3c38; color: white; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">ADMIN</a>' : ''}
+                        <span class="logout-option" style="display: inline-block; margin-left: 10px;">
+                            <a href="#" class="logout" style="color: white; text-decoration: underline;">Logout</a>
                         </span>
                     </div>
-                `);
+                `;
+
+                console.log('User status HTML:', userStatusHtml);
+                $('body').append(userStatusHtml);
 
                 // Replace the "Member Login" link with just "Logout"
                 $('header nav ul li a[href="#login"]').text('Logout').attr('href', '#').addClass('logout').closest('li').attr('id', 'logout-nav');
