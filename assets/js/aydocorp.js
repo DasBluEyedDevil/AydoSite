@@ -12,7 +12,7 @@
             // Fix: Remove the '/api' suffix since we're adding it in getApiUrl
             // Use a secure approach instead of proxy.php with direct URL parameter
             // This prevents open redirect vulnerabilities
-            return window.location.origin;
+            return window.location.origin + '/api';
         }
     }
     
@@ -84,18 +84,11 @@
      */
     async function testApiConnection() {
         try {
-            const apiUrl = getApiUrl('api/test');
-            console.log('Testing API connection to:', apiUrl);
+            const apiBase = getApiBaseUrl();
+            const url = `${apiBase}/test`;
+            console.log('Testing API connection to:', url);
             
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                },
-                // Add a short timeout to avoid long waits
-                signal: AbortSignal.timeout(5000)
-            });
-            
+            const response = await fetch(url);
             const status = response.status;
             console.log('API test response status:', status);
             
@@ -135,11 +128,11 @@
             }
             
             // In your handleLogin function
-            console.log('Attempting login at:', getApiUrl('api/auth/login')); // Make sure 'api/' is included
-                        
+            console.log('Attempting login at:', getApiUrl('auth/login'));
+            
             // Attempt login
             // Use secure request with CSRF protection
-            const response = await fetch(getApiUrl('api/auth/login'), { // Make sure 'api/' is included
+            const response = await fetch(getApiUrl('auth/login'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
