@@ -596,20 +596,21 @@
                 $('#employee-portal-login-required').hide();
                 $('#employee-portal-content').show();
 
-                // Add user status indicator to the top right
-                $('.user-status').remove();
-
-                // Sanitize username before inserting into HTML
-                const safeUsername = AuthUtils.sanitizeHtml(user.username);
-
+                // Update the user status section in the checkLoginStatus function
+                // Replace the existing userStatusHtml part with this:
+                
+                // Get first letter of username for avatar
+                const firstLetter = safeUsername.charAt(0).toUpperCase();
+                
                 const userStatusHtml = `
-                    <div class="user-status">
-                        <span class="username">${safeUsername}</span>
-                        <div class="dropdown-container">
+                    <div class="user-profile-element">
+                        <div class="user-avatar">${firstLetter}</div>
+                        <div class="user-info">
+                            <span class="username">${safeUsername}</span>
                             ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
-                            <span class="logout-option">
-                                <a href="#" class="logout">Logout</a>
-                            </span>
+                        </div>
+                        <div class="user-actions">
+                            <a href="#" class="logout-btn logout">Logout</a>
                         </div>
                     </div>
                 `;
