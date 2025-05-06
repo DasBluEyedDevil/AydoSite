@@ -427,23 +427,31 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     border-color: rgba(255, 255, 255, 0.4);
 }
 
-/* Create a dropdown container that stays open */
-.user-status:hover .dropdown-container,
-.dropdown-container:hover {
-    display: block;
+/* Create a slide-out to the left menu effect */
+.dropdown-container {
     position: absolute;
-    top: 100%;
-    right: 0;
+    top: 0;
+    right: 100%;
+    margin-right: 5px;
     background-color: rgba(0, 0, 0, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 4px;
-    margin-top: 0;
-    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+    padding: 0.5rem;
     min-width: 120px;
     z-index: 101;
+    transform: translateX(10px);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
 }
 
-/* We don't need the ::after pseudo-element anymore */
+.user-status:hover .dropdown-container,
+.dropdown-container:hover {
+    display: block;
+    transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+}
 
 /* Ensure admin badge keeps its red background */
 .user-status .dropdown-container .admin-badge {
@@ -471,10 +479,7 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     text-align: center;
 }
 
-/* Hide dropdown by default */
-.dropdown-container {
-    display: none;
-}
+/* Initial state for dropdown is handled in the main dropdown-container rule */
 
 .user-status a {
     color: rgba(255, 255, 255, 0.8);
