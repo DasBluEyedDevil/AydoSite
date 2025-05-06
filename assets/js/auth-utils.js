@@ -67,6 +67,13 @@
             }
         };
 
+        // Add authentication token from sessionStorage if it exists
+        const token = sessionStorage.getItem('aydocorpToken');
+        if (token) {
+            defaultOptions.headers['Authorization'] = `Bearer ${token}`;
+            defaultOptions.headers['x-auth-token'] = token;
+        }
+
         // Only add CSRF token if it exists
         if (csrfToken) {
             defaultOptions.headers['X-CSRF-Token'] = csrfToken;
@@ -194,7 +201,7 @@
  */
 async function debugAuth() {
     console.group('Authentication Debug Information');
-    
+
     // Check stored token
     const token = sessionStorage.getItem('aydocorpToken');
     console.log('Token exists:', !!token);
@@ -202,7 +209,7 @@ async function debugAuth() {
         // Don't log full token for security reasons
         console.log('Token preview:', token.substring(0, 10) + '...');
     }
-    
+
     // Check user info
     const userJson = sessionStorage.getItem('aydocorpUser');
     console.log('User info exists:', !!userJson);
@@ -214,11 +221,11 @@ async function debugAuth() {
             console.error('Failed to parse user JSON:', e);
         }
     }
-    
+
     // Check login status
     const isLoggedIn = sessionStorage.getItem('aydocorpLoggedIn') === 'true';
     console.log('Is logged in:', isLoggedIn);
-    
+
     // Try API test
     try {
         const apiTest = await testApiConnection();
@@ -226,7 +233,7 @@ async function debugAuth() {
     } catch (e) {
         console.error('API test error:', e);
     }
-    
+
     // Try token validation
     if (token) {
         try {
@@ -236,9 +243,9 @@ async function debugAuth() {
             console.error('Token validation error:', e);
         }
     }
-    
+
     console.groupEnd();
-    
+
     // Return a summary
     return {
         hasToken: !!token,

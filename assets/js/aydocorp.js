@@ -125,7 +125,14 @@
             try {
                 const response = await AuthUtils.secureRequest(getApiUrl('auth/validate'));
                 if (response.ok) return true;
+
+                // Only log non-404 errors for the standard endpoint
+                if (response.status !== 404) {
+                    console.warn(`Standard validate endpoint failed with status: ${response.status}`);
+                }
+                console.log('Standard validate endpoint failed, trying alternatives...');
             } catch (e) {
+                // Log network errors but continue to alternatives
                 console.log('Standard validate endpoint failed, trying alternatives...');
             }
 
@@ -139,8 +146,14 @@
                 try {
                     const altResponse = await AuthUtils.secureRequest(getApiUrl(endpoint));
                     if (altResponse.ok) return true;
+
+                    // Don't log 404 errors for alternative endpoints as they might not exist
+                    if (altResponse.status !== 404) {
+                        console.warn(`Alternative endpoint ${endpoint} failed with status: ${altResponse.status}`);
+                    }
                 } catch (e) {
-                    // Continue to next endpoint
+                    // Silently continue to next endpoint without logging the error
+                    // This prevents console errors for endpoints that don't exist
                 }
             }
 
@@ -149,9 +162,19 @@
             if (window.location.hostname === 'localhost' || 
                 window.location.hostname === '127.0.0.1' ||
                 await testApiConnection()) {
-                console.warn('Token validation failed but server is reachable, proceeding anyway');
+                console.info('Using fallback authentication mode - validation endpoints unavailable but server is reachable');
+
+                // Set a flag in sessionStorage to indicate we're in fallback mode
+                // This can be used to show a warning to the user if needed
+                sessionStorage.setItem('aydocorpValidationFallback', 'true');
+
                 return true;
             }
+
+            // If we get here, all validation attempts failed and we're not in development mode
+            // and the server is not reachable
+            console.error('Token validation failed and server is not reachable');
+            sessionStorage.removeItem('aydocorpValidationFallback');
 
             return false;
         } catch (error) {
@@ -163,12 +186,22 @@
                 if (window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1' ||
                     await testApiConnection()) {
-                    console.warn('Token validation error but server is reachable, proceeding anyway');
+                    console.info('Using fallback authentication mode - validation error occurred but server is reachable');
+
+                    // Set a flag in sessionStorage to indicate we're in fallback mode
+                    // This can be used to show a warning to the user if needed
+                    sessionStorage.setItem('aydocorpValidationFallback', 'true');
+
                     return true;
                 }
             } catch (e) {
                 console.error('Failed to test API connection during validation error handling:', e);
             }
+
+            // If we get here, validation failed with an error and we're not in development mode
+            // and the server is not reachable
+            console.error('Token validation failed with an error and server is not reachable');
+            sessionStorage.removeItem('aydocorpValidationFallback');
 
             return false;
         }
@@ -425,6 +458,24 @@
                 const maxRetries = 5; // Increased from 3 to 5 for more tolerance
 
                 validateToken().then(isValid => {
+                    // Check if we're in fallback mode
+                    const inFallbackMode = sessionStorage.getItem('aydocorpValidationFallback') === 'true';
+
+                    if (inFallbackMode) {
+                        console.warn('Operating in validation fallback mode');
+
+                        // Show a subtle warning to the user that we're in fallback mode
+                        // Only show this once per session to avoid annoying the user
+                        if (!sessionStorage.getItem('fallbackWarningShown')) {
+                            AuthUtils.showNotification(
+                                'Some authentication services are currently unavailable. You can continue using the portal, but some features might have limited functionality.',
+                                'info',
+                                8000 // Show for 8 seconds
+                            );
+                            sessionStorage.setItem('fallbackWarningShown', 'true');
+                        }
+                    }
+
                     if (!isValid) {
                         console.warn(`Token validation failed (attempt ${tokenValidationRetries + 1}/${maxRetries})`);
 
@@ -461,6 +512,9 @@
                                     } else {
                                         console.log('Retry token validation succeeded');
                                         sessionStorage.removeItem('tokenValidationRetries');
+                                        // Also clear fallback mode if validation succeeds
+                                        sessionStorage.removeItem('aydocorpValidationFallback');
+                                        sessionStorage.removeItem('fallbackWarningShown');
                                     }
                                 });
                             }, delay);
@@ -468,6 +522,13 @@
                     } else {
                         // Reset retry counter on successful validation
                         sessionStorage.removeItem('tokenValidationRetries');
+
+                        // Also clear fallback mode if validation succeeds
+                        if (inFallbackMode) {
+                            console.log('Exiting fallback mode after successful validation');
+                            sessionStorage.removeItem('aydocorpValidationFallback');
+                            sessionStorage.removeItem('fallbackWarningShown');
+                        }
                     }
                 });
 
