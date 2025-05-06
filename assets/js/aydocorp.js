@@ -1940,14 +1940,15 @@
         $('#content-editor-container').hide();
     }
 
-    // Function to load user list
+    // Function to load website user list (not employees)
+    // This loads users who have created accounts on the website
     async function loadUserList() {
-        // Show the user list container
+        // Show the website user list container
         const $userListContainer = $('#user-list-container');
         $userListContainer.show();
 
         // Show loading indicator
-        $userListContainer.html('<p>Loading users...</p>');
+        $userListContainer.html('<p>Loading website users...</p>');
 
         try {
             // Fetch users from the server
@@ -1971,12 +1972,12 @@
             const users = await response.json();
             renderUserList(users, $userListContainer);
         } catch (error) {
-            console.error('Error loading users:', error);
+            console.error('Error loading website users:', error);
 
             // Show error message with retry button
             $userListContainer.html(`
                 <div class="error-message">
-                    <p>Failed to load users: ${error.message}</p>
+                    <p>Failed to load website users: ${error.message}</p>
                     <button id="retry-load-users" class="button">Retry</button>
                 </div>
             `);
@@ -1988,15 +1989,18 @@
         }
     }
 
-    // Function to render the user list
+    // Function to render the website user list (not employees)
+    // This displays users who have created accounts on the website
     function renderUserList(users, $container) {
         if (!users || users.length === 0) {
-            $container.html('<p>No users found.</p>');
+            $container.html('<p>No website users found.</p>');
             return;
         }
 
-        // Create the table
+        // Create the table with a clear heading
         let html = `
+            <h4>Website User Accounts</h4>
+            <p class="user-list-description">These are users who have registered accounts on the website, not employees in the company database.</p>
             <table class="user-list-table">
                 <thead>
                     <tr>
