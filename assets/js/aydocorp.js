@@ -140,6 +140,10 @@
                 console.log('User data from server:', data.user);
                 console.log('User role from server:', data.user.role);
 
+                // Explicitly check and log if user is admin
+                const isAdmin = data.user.role === 'admin';
+                console.log('Is user admin?', isAdmin);
+
                 // Store token and user info
                 localStorage.setItem('aydocorpToken', data.token);
                 localStorage.setItem('aydocorpUser', JSON.stringify(data.user));
@@ -151,11 +155,12 @@
                 // Show success message
                 alert(`Welcome back, ${data.user.username}!`);
 
-                // Update UI to show admin badge if applicable
-                checkLoginStatus();
-
                 // Redirect to employee portal
                 window.location.href = '#employee-portal';
+
+                // Update UI to show admin badge if applicable
+                // Call checkLoginStatus after a short delay to ensure the DOM is updated
+                setTimeout(checkLoginStatus, 100);
             } else {
                 // Login failed with error message from server
                 throw new Error(data.message || 'Login failed. Please check your credentials.');
@@ -192,6 +197,8 @@
         const token = localStorage.getItem('aydocorpToken');
         const userJson = localStorage.getItem('aydocorpUser');
 
+        console.log('Login status:', { isLoggedIn, hasToken: !!token, hasUserJson: !!userJson });
+
         if (isLoggedIn && token && userJson) {
             try {
                 const user = JSON.parse(userJson);
@@ -205,10 +212,14 @@
                 // Add user status indicator to the top right
                 $('.user-status').remove();
 
+                // Generate admin badge HTML if user is admin
+                const adminBadgeHtml = user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : '';
+                console.log('Admin badge HTML:', adminBadgeHtml);
+
                 const userStatusHtml = `
                     <div class="user-status">
                         <span class="username">${user.username}</span>
-                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                        ${adminBadgeHtml}
                         <span class="logout-option">
                             <a href="#" class="logout">Logout</a>
                         </span>
@@ -216,7 +227,9 @@
                 `;
 
                 console.log('User status HTML:', userStatusHtml);
-                $('body').append(userStatusHtml);
+                // Append to header instead of body to ensure it's visible
+                $('#header').append(userStatusHtml);
+                console.log('User status appended to header. Header HTML:', $('#header').html());
 
                 // Replace the "Member Login" link with just "Logout"
                 $('header nav ul li a[href="#login"]').text('Logout').attr('href', '#').addClass('logout').closest('li').attr('id', 'logout-nav');

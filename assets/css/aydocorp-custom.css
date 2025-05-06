@@ -396,14 +396,15 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     position: absolute;
     top: 1rem;
     right: 1rem;
-    z-index: 100;
+    z-index: 1000; /* Increased z-index to ensure visibility */
     font-size: 0.8rem;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7); /* Darker background for better visibility */
     padding: 0.5rem 1rem;
     border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3); /* More visible border */
     transition: all 0.3s ease;
     cursor: pointer;
+    display: block !important; /* Force display */
 }
 
 .user-status .username {
@@ -411,15 +412,17 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
 }
 
 .user-status .admin-badge {
-    display: inline-block;
+    display: inline-block !important; /* Force display */
     margin-left: 0.5rem;
     padding: 0.2rem 0.5rem;
     background-color: #ff3c38;
-    color: white;
+    color: white !important; /* Force color */
     border-radius: 3px;
     font-size: 0.7rem;
     font-weight: bold;
     text-transform: uppercase;
+    border: 1px solid white; /* Add border for visibility */
+    text-decoration: none !important; /* Ensure no underline */
 }
 
 .user-status .logout-option {
