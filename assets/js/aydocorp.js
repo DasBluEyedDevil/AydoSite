@@ -124,30 +124,7 @@
             // Try standard endpoint first
             try {
                 const response = await AuthUtils.secureRequest(getApiUrl('auth/validate'));
-                if (response.ok) {
-                    // Update user data in sessionStorage with the latest data from the server
-                    try {
-                        const userData = await response.json();
-                        if (userData && userData.role) {
-                            // Update the user data in sessionStorage
-                            const userJson = sessionStorage.getItem('aydocorpUser');
-                            if (userJson) {
-                                const user = AuthUtils.safeJsonParse(userJson, {});
-                                // Update the user's role
-                                user.role = userData.role;
-                                // Save the updated user data back to sessionStorage
-                                sessionStorage.setItem('aydocorpUser', JSON.stringify(user));
-                                console.log('Updated user role in sessionStorage:', user.role);
-
-                                // Refresh the UI to reflect the updated role
-                                checkLoginStatus();
-                            }
-                        }
-                    } catch (parseError) {
-                        console.warn('Failed to parse user data from validation response:', parseError);
-                    }
-                    return true;
-                }
+                if (response.ok) return true;
 
                 // Only log non-404 errors for the standard endpoint
                 if (response.status !== 404) {
@@ -168,30 +145,7 @@
             for (const endpoint of alternativeEndpoints) {
                 try {
                     const altResponse = await AuthUtils.secureRequest(getApiUrl(endpoint));
-                    if (altResponse.ok) {
-                        // Update user data in sessionStorage with the latest data from the server
-                        try {
-                            const userData = await altResponse.json();
-                            if (userData && userData.role) {
-                                // Update the user data in sessionStorage
-                                const userJson = sessionStorage.getItem('aydocorpUser');
-                                if (userJson) {
-                                    const user = AuthUtils.safeJsonParse(userJson, {});
-                                    // Update the user's role
-                                    user.role = userData.role;
-                                    // Save the updated user data back to sessionStorage
-                                    sessionStorage.setItem('aydocorpUser', JSON.stringify(user));
-                                    console.log('Updated user role in sessionStorage from alternative endpoint:', user.role);
-
-                                    // Refresh the UI to reflect the updated role
-                                    checkLoginStatus();
-                                }
-                            }
-                        } catch (parseError) {
-                            console.warn('Failed to parse user data from alternative validation response:', parseError);
-                        }
-                        return true;
-                    }
+                    if (altResponse.ok) return true;
 
                     // Don't log 404 errors for alternative endpoints as they might not exist
                     if (altResponse.status !== 404) {
@@ -501,15 +455,9 @@
                 }
 
                 console.log('User data from sessionStorage:', user);
-                // Check if user is admin by role
-                const isAdmin = user.role === 'admin';
+                // Check if user is admin - either by role or by username for specific admin users
+                const isAdmin = user.role === 'admin' || user.username === 'Devil';
                 console.log('Is admin?', isAdmin);
-
-                // Add debug message to help users understand if their role is not set correctly
-                if (!isAdmin) {
-                    console.log('User role is not set to "admin". Current role:', user.role);
-                    console.log('To set your role to admin, follow the instructions in ADMIN-ROLE-INSTRUCTIONS.md');
-                }
 
                 // Validate token with server in the background
                 // Don't immediately log out on validation failure
@@ -596,21 +544,21 @@
                 $('#employee-portal-login-required').hide();
                 $('#employee-portal-content').show();
 
-                // Update the user status section in the checkLoginStatus function
-                // Replace the existing userStatusHtml part with this:
-                
-                // Get first letter of username for avatar
-                const firstLetter = safeUsername.charAt(0).toUpperCase();
-                
+                // Add user status indicator to the top right
+                $('.user-status').remove();
+
+                // Sanitize username before inserting into HTML
+                const safeUsername = AuthUtils.sanitizeHtml(user.username);
+
+                // Revert to the original user status HTML in the checkLoginStatus function
                 const userStatusHtml = `
-                    <div class="user-profile-element">
-                        <div class="user-avatar">${firstLetter}</div>
-                        <div class="user-info">
-                            <span class="username">${safeUsername}</span>
+                    <div class="user-status">
+                        <span class="username">${safeUsername}</span>
+                        <div class="dropdown-container">
                             ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
-                        </div>
-                        <div class="user-actions">
-                            <a href="#" class="logout-btn logout">Logout</a>
+                            <span class="logout-option">
+                                <a href="#" class="logout">Logout</a>
+                            </span>
                         </div>
                     </div>
                 `;
@@ -2168,45 +2116,9 @@
         });
     }
 
-    /**
-     * Periodically validate the token and update the user data in sessionStorage
-     * This ensures that the client has the latest user data, including the user's role
-     */
-    function startTokenValidationInterval() {
-        // Only start the interval if the user is logged in
-        if (sessionStorage.getItem('aydocorpLoggedIn') === 'true') {
-            console.log('Starting token validation interval');
-
-            // Validate the token immediately
-            validateToken().catch(err => {
-                console.warn('Initial token validation failed:', err);
-            });
-
-            // Then validate it every 5 minutes
-            const intervalId = setInterval(() => {
-                // Only validate if the user is still logged in
-                if (sessionStorage.getItem('aydocorpLoggedIn') === 'true') {
-                    validateToken().catch(err => {
-                        console.warn('Periodic token validation failed:', err);
-                    });
-                } else {
-                    // If the user is no longer logged in, clear the interval
-                    clearInterval(intervalId);
-                    console.log('Token validation interval stopped (user logged out)');
-                }
-            }, 5 * 60 * 1000); // 5 minutes
-
-            // Store the interval ID in sessionStorage so it can be cleared if needed
-            sessionStorage.setItem('tokenValidationIntervalId', intervalId.toString());
-        }
-    }
-
     // Initialize on document ready
     // ==================================
     $(document).ready(function () {
-        // Start token validation interval
-        startTokenValidationInterval();
-
         // Cache jQuery selectors
         const $portalSection = $('.portal-section');
         const $portalTab = $('.portal-tab');
@@ -2262,14 +2174,10 @@
                 if (userJson) {
                     try {
                         const user = AuthUtils.safeJsonParse(userJson, null);
-                        // Check if user is admin by role
-                        if (!user || user.role !== 'admin') {
-                            // Add debug message to help users understand if their role is not set correctly
-                            console.log('User role is not set to "admin". Current role:', user ? user.role : 'undefined');
-                            console.log('To set your role to admin, follow the instructions in ADMIN-ROLE-INSTRUCTIONS.md');
-
+                        // Check if user is admin - either by role or by username for specific admin users
+                        if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
                             // Redirect non-admin users
-                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard. Check console for details.', 'error');
+                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                             window.location.href = '#';
                         } else {
                             // User is admin, explicitly show the admin dashboard
@@ -2303,14 +2211,9 @@
             if (userJson) {
                 try {
                     const user = AuthUtils.safeJsonParse(userJson, null);
-                    // Check if user is admin by role
-                    if (!user || user.role !== 'admin') {
-                        // Add debug message to help users understand if their role is not set correctly
-                        console.log('User role is not set to "admin". Current role:', user ? user.role : 'undefined');
-                        console.log('To set your role to admin, follow the instructions in ADMIN-ROLE-INSTRUCTIONS.md');
-
-                        // Redirect non-admin users
-                        AuthUtils.showNotification('You do not have permission to access the Admin Dashboard. Check console for details.', 'error');
+                    // Check if user is admin - either by role or by username for specific admin users
+                    if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
+                        AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                         window.location.href = '#';
                     } else {
                         // User is admin, explicitly show the admin dashboard
