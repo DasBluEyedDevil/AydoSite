@@ -430,7 +430,8 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
 
 /* Create a dropdown container that stays open */
 .user-status:hover .dropdown-container,
-.dropdown-container:hover {
+.dropdown-container:hover,
+.user-status:hover::after:hover + .dropdown-container {
     display: block;
     position: absolute;
     top: 100%;
@@ -442,6 +443,18 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     padding: 0.5rem 0.5rem 0.5rem 0.5rem;
     min-width: 120px;
     z-index: 101;
+}
+
+/* Create an invisible area to bridge any gap */
+.user-status::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    height: 10px; /* Height of the bridge */
+    background-color: transparent;
+    z-index: 102; /* Higher than the dropdown to ensure hover works */
 }
 
 /* Ensure admin badge keeps its red background */
