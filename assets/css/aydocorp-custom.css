@@ -562,6 +562,13 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     display: none !important;
 }
 
+/* Specific styling for logout link */
+#header nav ul li a.logout {
+    background-color: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+}
+
 /* Hover effect */
 #header nav ul li a:hover {
     background-color: rgba(0, 0, 0, 0.2);
