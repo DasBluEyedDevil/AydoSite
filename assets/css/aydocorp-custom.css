@@ -402,7 +402,7 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     padding: 0.5rem 1rem;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
     cursor: pointer;
 }
 
@@ -422,7 +422,20 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     text-transform: uppercase;
 }
 
-.user-status:hover .admin-badge {
+/* Create a dropdown menu effect */
+.user-status:hover,
+.user-status:hover .admin-badge,
+.user-status:hover .logout-option,
+.user-status .admin-badge:hover,
+.user-status .logout-option:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Show admin badge when hovering over any part of the dropdown */
+.user-status:hover .admin-badge,
+.user-status .admin-badge:hover,
+.user-status .logout-option:hover ~ .admin-badge {
     display: inline-block;
 }
 
@@ -433,12 +446,12 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     border-left: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.user-status:hover {
-    background-color: rgba(0, 0, 0, 0.7);
-    border-color: rgba(255, 255, 255, 0.4);
-}
+/* Hover styling moved to combined selector above */
 
-.user-status:hover .logout-option {
+/* Show logout option when hovering over any part of the dropdown */
+.user-status:hover .logout-option,
+.user-status .logout-option:hover,
+.user-status .admin-badge:hover ~ .logout-option {
     display: inline-block;
 }
 
