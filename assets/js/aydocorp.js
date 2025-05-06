@@ -1930,17 +1930,81 @@
     }
 
     // Function to save page content
-    function savePageContent(pageElement, title, content) {
-        // In a real implementation, this would send the data to the server
-        // For now, we'll just show a success message
-        console.log(`Saving content: ${title} - ${content.substring(0, 50)}...`);
-        alert(`Content for "${pageElement}" has been saved successfully!`);
+    async function savePageContent(pageElement, title, content) {
+        try {
+            console.log(`Saving content: ${title} - ${content.substring(0, 50)}...`);
 
-        // Reset the form
-        $('#page-element-selector').val('');
-        $('#element-title').val('');
-        $('#element-content').val('');
-        $('#content-editor-container').hide();
+            // Construct the API endpoint URL
+            const url = getApiUrl('content-management/pages');
+
+            // Send the data to the server
+            const response = await AuthUtils.secureRequest(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    pageElement: pageElement,
+                    title: title,
+                    content: content
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to save content: ${response.status} ${response.statusText}`);
+            }
+
+            // Update the page content
+            updatePageContent(pageElement, title, content);
+
+            // Show success message
+            AuthUtils.showNotification(`Content for "${pageElement}" has been saved successfully!`, 'success');
+
+            // Reset the form
+            $('#page-element-selector').val('');
+            $('#element-title').val('');
+            $('#element-content').val('');
+            $('#content-editor-container').hide();
+        } catch (error) {
+            console.error('Error saving page content:', error);
+            AuthUtils.showNotification(`Error saving content: ${error.message}`, 'error');
+        }
+    }
+
+    // Function to update page content in the DOM
+    function updatePageContent(pageElement, title, content) {
+        // Update the content in the DOM based on the page element
+        switch(pageElement) {
+            case 'about':
+                // Split content into title and body
+                const aboutParts = content.split('\n\n');
+                if (aboutParts.length > 1) {
+                    $('#about h2').text(title);
+                    $('#about p').text(aboutParts[1]);
+                }
+                break;
+            case 'services':
+                const servicesParts = content.split('\n\n');
+                if (servicesParts.length > 1) {
+                    $('#services h2').text(title);
+                    $('#services p').text(servicesParts[1]);
+                }
+                break;
+            case 'subsidiaries':
+                const subsidiariesParts = content.split('\n\n');
+                if (subsidiariesParts.length > 1) {
+                    $('#subsidiaries h2').text(title);
+                    $('#subsidiaries p').text(subsidiariesParts[1]);
+                }
+                break;
+            case 'contact':
+                const contactParts = content.split('\n\n');
+                if (contactParts.length > 1) {
+                    $('#contact h2').text(title);
+                    $('#contact p').text(contactParts[1]);
+                }
+                break;
+        }
     }
 
     // Function to load website user list (not employees)
