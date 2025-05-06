@@ -1,0 +1,12 @@
+# Enable the RewriteEngine
+RewriteEngine On
+
+# If the requested file or directory doesn't exist, forward to Node.js
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ http://localhost:8080/$1 [P,L]
+
+# Set proper headers for proxied content
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+</IfModule>
