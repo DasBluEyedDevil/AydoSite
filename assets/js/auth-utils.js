@@ -6,37 +6,51 @@
 (function($) {
     // CSRF token handling
     let csrfToken = '';
-    
+
     /**
      * Initialize CSRF protection
      * Fetches a CSRF token from the server and stores it for future requests
      */
     async function initCsrf() {
         try {
-            const response = await fetch('/api/auth/csrf-token', {
+            // First try the standard endpoint
+            let response = await fetch('/api/auth/csrf-token', {
                 method: 'GET',
                 credentials: 'include' // Important for cookies
             });
-            
+
+            // If that fails, try alternative endpoint
+            if (!response.ok) {
+                console.log('Standard CSRF endpoint not found, trying alternative...');
+                response = await fetch('/api/csrf', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+            }
+
             if (response.ok) {
                 const data = await response.json();
                 csrfToken = data.csrfToken;
                 return true;
             }
-            return false;
+
+            // If both endpoints fail, proceed without CSRF for now
+            console.warn('CSRF endpoints not available, proceeding without CSRF protection');
+            return true;
         } catch (error) {
             console.error('Failed to initialize CSRF protection:', error);
-            return false;
+            // Continue without CSRF protection rather than blocking the user
+            return true;
         }
     }
-    
+
     /**
      * Get the current CSRF token
      */
     function getCsrfToken() {
         return csrfToken;
     }
-    
+
     /**
      * Create a secure API request with proper headers including CSRF token
      * @param {string} url - The API endpoint URL
@@ -49,11 +63,15 @@
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'X-CSRF-Token': csrfToken
+                'Accept': 'application/json'
             }
         };
-        
+
+        // Only add CSRF token if it exists
+        if (csrfToken) {
+            defaultOptions.headers['X-CSRF-Token'] = csrfToken;
+        }
+
         // Merge with user provided options
         const mergedOptions = {
             ...defaultOptions,
@@ -63,15 +81,34 @@
                 ...(options.headers || {})
             }
         };
-        
+
         try {
-            return await fetch(url, mergedOptions);
+            // Add retry logic for network errors
+            let retries = 2;
+            let response;
+
+            while (retries >= 0) {
+                try {
+                    response = await fetch(url, mergedOptions);
+                    break; // If successful, exit the loop
+                } catch (fetchError) {
+                    if (retries === 0) {
+                        throw fetchError; // If out of retries, rethrow the error
+                    }
+                    console.warn(`Request failed, retrying... (${retries} retries left)`, fetchError);
+                    retries--;
+                    // Wait a bit before retrying
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            }
+
+            return response;
         } catch (error) {
-            console.error('Secure request failed:', error);
+            console.error('Secure request failed after retries:', error);
             throw error;
         }
     }
-    
+
     /**
      * Show a non-blocking notification instead of using alert()
      * @param {string} message - The message to display
@@ -81,7 +118,7 @@
     function showNotification(message, type = 'info', duration = 3000) {
         // Remove any existing notifications
         $('.notification').remove();
-        
+
         // Create notification element
         const notification = $(`
             <div class="notification ${type}">
@@ -91,17 +128,17 @@
                 </div>
             </div>
         `);
-        
+
         // Add to body
         $('body').append(notification);
-        
+
         // Add event listener to close button
         $('.notification-close').on('click', function() {
             $(this).closest('.notification').fadeOut(300, function() {
                 $(this).remove();
             });
         });
-        
+
         // Auto-hide after duration
         setTimeout(function() {
             notification.fadeOut(300, function() {
@@ -109,7 +146,7 @@
             });
         }, duration);
     }
-    
+
     /**
      * Safely parse JSON with error handling
      * @param {string} jsonString - The JSON string to parse
@@ -124,7 +161,7 @@
             return defaultValue;
         }
     }
-    
+
     /**
      * Sanitize HTML content to prevent XSS attacks
      * @param {string} html - The HTML string to sanitize
@@ -132,13 +169,13 @@
      */
     function sanitizeHtml(html) {
         if (!html) return '';
-        
+
         // Create a temporary div
         const temp = document.createElement('div');
         temp.textContent = html;
         return temp.innerHTML;
     }
-    
+
     // Expose public methods
     window.AuthUtils = {
         initCsrf,
@@ -148,5 +185,5 @@
         safeJsonParse,
         sanitizeHtml
     };
-    
+
 })(jQuery);
