@@ -164,4 +164,26 @@ router.get('/validate', auth, async (req, res) => {
     }
 });
 
+// @route   GET api/auth/users
+// @desc    Get all users
+// @access  Private (admin only)
+router.get('/users', auth, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        // Get all users from database, excluding passwords
+        const users = await User.find().select('-password');
+        res.json(users);
+    } catch (err) {
+        console.error('Error fetching users:', err.message);
+        res.status(500).json({
+            message: 'Server error while fetching users',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
 module.exports = router;

@@ -6,6 +6,7 @@ const Employee = require('../models/Employee');
 const CareerPath = require('../models/CareerPath');
 const Event = require('../models/Event');
 const Operation = require('../models/Operation');
+const User = require('../models/User');
 
 // Basic route to confirm employee portal routes are working
 router.get('/', (req, res) => {
@@ -311,6 +312,36 @@ router.get('/events/:id', auth, async (req, res) => {
 
     res.status(500).json({
       message: 'Server error while fetching event',
+      error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    });
+  }
+});
+
+// ===== User Routes =====
+
+// @route   GET api/employee-portal/users
+// @desc    Get all users (basic info only)
+// @access  Private
+router.get('/users', auth, async (req, res) => {
+  try {
+    // Get users from database, but only return basic info
+    // This endpoint is available to all authenticated users, but only returns limited data
+    const users = await User.find().select('username email role createdAt');
+
+    // Map to a simplified format with less sensitive information
+    const simplifiedUsers = users.map(user => ({
+      id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt
+    }));
+
+    res.json(simplifiedUsers);
+  } catch (err) {
+    console.error('Error fetching users:', err.message);
+    res.status(500).json({
+      message: 'Server error while fetching users',
       error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
     });
   }
