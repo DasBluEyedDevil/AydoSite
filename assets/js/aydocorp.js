@@ -196,6 +196,7 @@
                 $('body').append(`
                     <div class="user-status">
                         <span class="username">${user.username}</span>
+                        ${user.role === 'admin' ? '<span class="admin-badge">Admin</span>' : ''}
                         <span class="logout-option">
                             <a href="#" class="logout">Logout</a>
                         </span>

@@ -410,6 +410,18 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     font-weight: bold;
 }
 
+.user-status .admin-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.2rem 0.5rem;
+    background-color: #ff3c38;
+    color: white;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
 .user-status .logout-option {
     display: none;
     margin-left: 0.5rem;
