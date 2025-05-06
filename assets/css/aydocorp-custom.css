@@ -424,11 +424,14 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
 
 /* Create a dropdown menu effect */
 .user-status:hover,
-.user-status:hover .admin-badge,
 .user-status:hover .logout-option,
-.user-status .admin-badge:hover,
 .user-status .logout-option:hover {
     background-color: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Ensure admin badge keeps its red background */
+.user-status .admin-badge:hover {
     border-color: rgba(255, 255, 255, 0.4);
 }
 
