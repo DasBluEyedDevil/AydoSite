@@ -404,10 +404,38 @@
                 console.log('Is admin?', user.role === 'admin');
 
                 // Validate token with server in the background
+                // Don't immediately log out on validation failure
+                // Instead, set a flag to retry validation later
+                let tokenValidationRetries = parseInt(sessionStorage.getItem('tokenValidationRetries') || '0');
+
                 validateToken().then(isValid => {
                     if (!isValid) {
-                        console.warn('Token validation failed, logging out');
-                        handleLogout();
+                        console.warn(`Token validation failed (attempt ${tokenValidationRetries + 1}/3)`);
+
+                        // Only log out after 3 failed attempts
+                        if (tokenValidationRetries >= 2) {
+                            console.warn('Token validation failed multiple times, logging out');
+                            sessionStorage.removeItem('tokenValidationRetries');
+                            handleLogout();
+                        } else {
+                            // Increment retry counter
+                            sessionStorage.setItem('tokenValidationRetries', (tokenValidationRetries + 1).toString());
+
+                            // Schedule another validation attempt in 30 seconds
+                            setTimeout(() => {
+                                validateToken().then(retryValid => {
+                                    if (!retryValid) {
+                                        console.warn(`Retry token validation failed (attempt ${tokenValidationRetries + 1}/3)`);
+                                    } else {
+                                        console.log('Retry token validation succeeded');
+                                        sessionStorage.removeItem('tokenValidationRetries');
+                                    }
+                                });
+                            }, 30000);
+                        }
+                    } else {
+                        // Reset retry counter on successful validation
+                        sessionStorage.removeItem('tokenValidationRetries');
                     }
                 });
 
@@ -489,12 +517,87 @@
 
             if (!response.ok) {
                 console.error('Failed to load career paths');
+
+                // Special handling for authentication errors
+                if (response.status === 401) {
+                    console.warn('Authentication error loading career paths, attempting to refresh token');
+
+                    // Try to validate token
+                    const isValid = await validateToken();
+
+                    if (isValid) {
+                        // Token is valid, retry the request
+                        console.log('Token validated, retrying career paths request');
+                        const retryResponse = await AuthUtils.secureRequest(url);
+
+                        if (retryResponse.ok) {
+                            // Success on retry, process the response
+                            const careerPaths = await retryResponse.json();
+
+                            // Use the existing rendering logic instead of calling a separate function
+                            if (careerPaths.length === 0) {
+                                $careerPathList.html('<p>No career paths found.</p>');
+                                return;
+                            }
+
+                            // Render career paths
+                            let html = '<div class="career-paths">';
+
+                            careerPaths.forEach(careerPath => {
+                                html += `
+                                    <div class="career-path-item" data-id="${careerPath._id}">
+                                        <h4>${careerPath.department}</h4>
+                                        <p>${careerPath.description.substring(0, 100)}${careerPath.description.length > 100 ? '...' : ''}</p>
+                                        <button class="view-career-path button small" data-id="${careerPath._id}">View Details</button>
+                                    </div>
+                                `;
+                            });
+
+                            html += '</div>';
+                            $careerPathList.html(html);
+
+                            // Add event listeners to the view buttons
+                            $('.view-career-path').on('click', function() {
+                                const careerPathId = $(this).data('id');
+                                loadCareerPathDetails(careerPathId);
+                            });
+
+                            return;
+                        }
+                    }
+
+                    // If we get here, the retry failed or token is invalid
+                    $careerPathList.html(`
+                        <div class="error-message">
+                            <h3>Authentication Error</h3>
+                            <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
+                            <button class="retry-button button small">Retry</button>
+                            <a href="#login" class="button small">Login Again</a>
+                        </div>
+                    `);
+
+                    // Add event listener to retry button
+                    $('.retry-button').on('click', function() {
+                        loadCareerPaths();
+                    });
+
+                    return;
+                }
+
+                // Handle other errors
                 $careerPathList.html(`
                     <div class="error-message">
                         <h3>Error Loading Career Paths</h3>
                         <p>Failed to load career paths</p>
+                        <button class="retry-button button small">Retry</button>
                     </div>
                 `);
+
+                // Add event listener to retry button
+                $('.retry-button').on('click', function() {
+                    loadCareerPaths();
+                });
+
                 return;
             }
 
@@ -732,12 +835,92 @@
 
             if (!response.ok) {
                 console.error('Failed to load employees');
+
+                // Special handling for authentication errors
+                if (response.status === 401) {
+                    console.warn('Authentication error loading employees, attempting to refresh token');
+
+                    // Try to validate token
+                    const isValid = await validateToken();
+
+                    if (isValid) {
+                        // Token is valid, retry the request
+                        console.log('Token validated, retrying employees request');
+                        const retryResponse = await AuthUtils.secureRequest(url);
+
+                        if (retryResponse.ok) {
+                            // Success on retry, process the response
+                            const employees = await retryResponse.json();
+
+                            if (employees.length === 0) {
+                                $employeeListContainer.html('<p>No employees found.</p>');
+                                return;
+                            }
+
+                            // Render employees
+                            let html = '<div class="employee-grid">';
+
+                            employees.forEach(employee => {
+                                html += `
+                                    <div class="employee-card" data-id="${employee._id}">
+                                        <div class="employee-photo">
+                                            <img src="${employee.photo}" alt="${employee.fullName}" />
+                                        </div>
+                                        <div class="employee-info">
+                                            <h4>${employee.fullName}</h4>
+                                            <p class="employee-rank">${employee.rank}</p>
+                                            <p class="employee-department">${employee.department}</p>
+                                            <button class="view-employee button small" data-id="${employee._id}">View Profile</button>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            html += '</div>';
+                            $employeeListContainer.html(html);
+
+                            // Add event listeners to the view buttons
+                            $('.view-employee').on('click', function() {
+                                const employeeId = $(this).data('id');
+                                loadEmployeeProfile(employeeId);
+                            });
+
+                            return;
+                        }
+                    }
+
+                    // If we get here, the retry failed or token is invalid
+                    $employeeListContainer.html(`
+                        <div class="error-message">
+                            <h3>Authentication Error</h3>
+                            <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
+                            <button class="retry-button button small">Retry</button>
+                            <a href="#login" class="button small">Login Again</a>
+                        </div>
+                    `);
+
+                    // Add event listener to retry button
+                    $('.retry-button').on('click', function() {
+                        loadEmployees();
+                    });
+
+                    return;
+                }
+
+                // Handle other errors
                 $employeeListContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Employees</h3>
                         <p>Failed to load employees</p>
+                        <button class="retry-button button small">Retry</button>
                     </div>
                 `);
+
+                // Add event listener to retry button
+                $('.retry-button').on('click', function() {
+                    loadEmployees();
+                });
+
                 return;
             }
 
@@ -926,12 +1109,100 @@
 
             if (!response.ok) {
                 console.error('Failed to load events');
+
+                // Special handling for authentication errors
+                if (response.status === 401) {
+                    console.warn('Authentication error loading events, attempting to refresh token');
+
+                    // Try to validate token
+                    const isValid = await validateToken();
+
+                    if (isValid) {
+                        // Token is valid, retry the request
+                        console.log('Token validated, retrying events request');
+                        const retryResponse = await AuthUtils.secureRequest(url);
+
+                        if (retryResponse.ok) {
+                            // Success on retry, process the response
+                            const events = await retryResponse.json();
+
+                            if (events.length === 0) {
+                                $eventsListContainer.html('<p>No events found.</p>');
+                                return;
+                            }
+
+                            // Render events
+                            let html = '<div class="events-list">';
+
+                            events.forEach(event => {
+                                const startDate = new Date(event.startDate);
+                                const endDate = event.endDate ? new Date(event.endDate) : null;
+
+                                html += `
+                                    <div class="event-item ${event.eventType}" data-id="${event._id}">
+                                        <div class="event-date">
+                                            <span class="event-day">${startDate.getDate()}</span>
+                                            <span class="event-month">${startDate.toLocaleString('default', { month: 'short' })}</span>
+                                        </div>
+                                        <div class="event-details">
+                                            <h4>${event.title}</h4>
+                                            <p class="event-time">
+                                                ${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                ${endDate ? ` - ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : ''}
+                                            </p>
+                                            <p class="event-location">${event.location}</p>
+                                            <p class="event-organizer">Organized by: ${event.organizer.username}</p>
+                                            <button class="view-event button small" data-id="${event._id}">View Details</button>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            html += '</div>';
+                            $eventsListContainer.html(html);
+
+                            // Add event listeners to the view buttons
+                            $('.view-event').on('click', function() {
+                                const eventId = $(this).data('id');
+                                loadEventDetails(eventId);
+                            });
+
+                            return;
+                        }
+                    }
+
+                    // If we get here, the retry failed or token is invalid
+                    $eventsListContainer.html(`
+                        <div class="error-message">
+                            <h3>Authentication Error</h3>
+                            <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
+                            <button class="retry-button button small">Retry</button>
+                            <a href="#login" class="button small">Login Again</a>
+                        </div>
+                    `);
+
+                    // Add event listener to retry button
+                    $('.retry-button').on('click', function() {
+                        loadEvents();
+                    });
+
+                    return;
+                }
+
+                // Handle other errors
                 $eventsListContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Events</h3>
                         <p>Failed to load events</p>
+                        <button class="retry-button button small">Retry</button>
                     </div>
                 `);
+
+                // Add event listener to retry button
+                $('.retry-button').on('click', function() {
+                    loadEvents();
+                });
+
                 return;
             }
 
@@ -1133,12 +1404,98 @@
 
             if (!response.ok) {
                 console.error('Failed to load operations');
+
+                // Special handling for authentication errors
+                if (response.status === 401) {
+                    console.warn('Authentication error loading operations, attempting to refresh token');
+
+                    // Try to validate token
+                    const isValid = await validateToken();
+
+                    if (isValid) {
+                        // Token is valid, retry the request
+                        console.log('Token validated, retrying operations request');
+                        const retryResponse = await AuthUtils.secureRequest(url);
+
+                        if (retryResponse.ok) {
+                            // Success on retry, process the response
+                            const operations = await retryResponse.json();
+
+                            if (operations.length === 0) {
+                                $operationsListContainer.html('<p>No operations found.</p>');
+                                return;
+                            }
+
+                            // Render operations
+                            let html = '<div class="operations-list">';
+
+                            operations.forEach(operation => {
+                                html += `
+                                    <div class="operation-item ${operation.category}" data-id="${operation._id}">
+                                        <div class="operation-header">
+                                            <h4>${operation.title}</h4>
+                                            <span class="operation-classification ${operation.classification}">${operation.classification}</span>
+                                        </div>
+                                        <div class="operation-meta">
+                                            <span class="operation-category">${operation.category}</span>
+                                            <span class="operation-version">v${operation.version}</span>
+                                            <span class="operation-status">${operation.status}</span>
+                                        </div>
+                                        <p class="operation-description">${operation.description.substring(0, 100)}${operation.description.length > 100 ? '...' : ''}</p>
+                                        <div class="operation-footer">
+                                            <span class="operation-author">By: ${operation.author.username}</span>
+                                            <span class="operation-date">Updated: ${new Date(operation.updatedAt).toLocaleDateString()}</span>
+                                            <button class="view-operation button small" data-id="${operation._id}">View Details</button>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+
+                            html += '</div>';
+                            $operationsListContainer.html(html);
+
+                            // Add event listeners to the view buttons
+                            $('.view-operation').on('click', function() {
+                                const operationId = $(this).data('id');
+                                loadOperationDetails(operationId);
+                            });
+
+                            return;
+                        }
+                    }
+
+                    // If we get here, the retry failed or token is invalid
+                    $operationsListContainer.html(`
+                        <div class="error-message">
+                            <h3>Authentication Error</h3>
+                            <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
+                            <button class="retry-button button small">Retry</button>
+                            <a href="#login" class="button small">Login Again</a>
+                        </div>
+                    `);
+
+                    // Add event listener to retry button
+                    $('.retry-button').on('click', function() {
+                        loadOperations();
+                    });
+
+                    return;
+                }
+
+                // Handle other errors
                 $operationsListContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Operations</h3>
                         <p>Failed to load operations</p>
+                        <button class="retry-button button small">Retry</button>
                     </div>
                 `);
+
+                // Add event listener to retry button
+                $('.retry-button').on('click', function() {
+                    loadOperations();
+                });
+
                 return;
             }
 
