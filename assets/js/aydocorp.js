@@ -124,7 +124,30 @@
             // Try standard endpoint first
             try {
                 const response = await AuthUtils.secureRequest(getApiUrl('auth/validate'));
-                if (response.ok) return true;
+                if (response.ok) {
+                    // Update user data in sessionStorage with the latest data from the server
+                    try {
+                        const userData = await response.json();
+                        if (userData && userData.role) {
+                            // Update the user data in sessionStorage
+                            const userJson = sessionStorage.getItem('aydocorpUser');
+                            if (userJson) {
+                                const user = AuthUtils.safeJsonParse(userJson, {});
+                                // Update the user's role
+                                user.role = userData.role;
+                                // Save the updated user data back to sessionStorage
+                                sessionStorage.setItem('aydocorpUser', JSON.stringify(user));
+                                console.log('Updated user role in sessionStorage:', user.role);
+
+                                // Refresh the UI to reflect the updated role
+                                checkLoginStatus();
+                            }
+                        }
+                    } catch (parseError) {
+                        console.warn('Failed to parse user data from validation response:', parseError);
+                    }
+                    return true;
+                }
 
                 // Only log non-404 errors for the standard endpoint
                 if (response.status !== 404) {
@@ -145,7 +168,30 @@
             for (const endpoint of alternativeEndpoints) {
                 try {
                     const altResponse = await AuthUtils.secureRequest(getApiUrl(endpoint));
-                    if (altResponse.ok) return true;
+                    if (altResponse.ok) {
+                        // Update user data in sessionStorage with the latest data from the server
+                        try {
+                            const userData = await altResponse.json();
+                            if (userData && userData.role) {
+                                // Update the user data in sessionStorage
+                                const userJson = sessionStorage.getItem('aydocorpUser');
+                                if (userJson) {
+                                    const user = AuthUtils.safeJsonParse(userJson, {});
+                                    // Update the user's role
+                                    user.role = userData.role;
+                                    // Save the updated user data back to sessionStorage
+                                    sessionStorage.setItem('aydocorpUser', JSON.stringify(user));
+                                    console.log('Updated user role in sessionStorage from alternative endpoint:', user.role);
+
+                                    // Refresh the UI to reflect the updated role
+                                    checkLoginStatus();
+                                }
+                            }
+                        } catch (parseError) {
+                            console.warn('Failed to parse user data from alternative validation response:', parseError);
+                        }
+                        return true;
+                    }
 
                     // Don't log 404 errors for alternative endpoints as they might not exist
                     if (altResponse.status !== 404) {
@@ -2119,9 +2165,45 @@
         });
     }
 
+    /**
+     * Periodically validate the token and update the user data in sessionStorage
+     * This ensures that the client has the latest user data, including the user's role
+     */
+    function startTokenValidationInterval() {
+        // Only start the interval if the user is logged in
+        if (sessionStorage.getItem('aydocorpLoggedIn') === 'true') {
+            console.log('Starting token validation interval');
+
+            // Validate the token immediately
+            validateToken().catch(err => {
+                console.warn('Initial token validation failed:', err);
+            });
+
+            // Then validate it every 5 minutes
+            const intervalId = setInterval(() => {
+                // Only validate if the user is still logged in
+                if (sessionStorage.getItem('aydocorpLoggedIn') === 'true') {
+                    validateToken().catch(err => {
+                        console.warn('Periodic token validation failed:', err);
+                    });
+                } else {
+                    // If the user is no longer logged in, clear the interval
+                    clearInterval(intervalId);
+                    console.log('Token validation interval stopped (user logged out)');
+                }
+            }, 5 * 60 * 1000); // 5 minutes
+
+            // Store the interval ID in sessionStorage so it can be cleared if needed
+            sessionStorage.setItem('tokenValidationIntervalId', intervalId.toString());
+        }
+    }
+
     // Initialize on document ready
     // ==================================
     $(document).ready(function () {
+        // Start token validation interval
+        startTokenValidationInterval();
+
         // Cache jQuery selectors
         const $portalSection = $('.portal-section');
         const $portalTab = $('.portal-tab');
