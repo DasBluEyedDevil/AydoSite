@@ -21,24 +21,24 @@
      * @returns {string} The complete API URL
      */
     function getApiUrl(endpoint) {
-        if (!endpoint) {
-            console.error('Invalid endpoint provided to getApiUrl');
-            return null;
-        }
-
         const baseUrl = getApiBaseUrl();
 
-        // Ensure baseUrl ends with a slash and endpoint doesn't start with one
-        const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-
-        // Validate the endpoint to prevent injection
-        if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
-            console.error('Invalid characters in API endpoint');
-            return null;
+        // If we're using the proxy
+        if (baseUrl.includes('/proxy.php?url=')) {
+            return `${baseUrl}${endpoint}`;
         }
 
-        return baseWithSlash + cleanEndpoint;
+        // For direct access to API server
+        // If the endpoint already starts with 'api/', don't add it again
+        if (endpoint.startsWith('api/')) {
+            // If baseUrl ends with slash and endpoint starts with slash, prevent double slash
+            return baseUrl.endsWith('/') ? `${baseUrl}${endpoint}` : `${baseUrl}/${endpoint}`;
+        } else {
+            // Add 'api/' prefix if not already present
+            const apiPrefix = 'api/';
+            const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+            return baseUrl.endsWith('/') ? `${baseUrl}${apiPrefix}${cleanEndpoint}` : `${baseUrl}/${apiPrefix}${cleanEndpoint}`;
+        }
     }
 
     /**
@@ -124,38 +124,51 @@
      */
     async function validateToken() {
         try {
+            const token = sessionStorage.getItem('aydocorpToken');
+            if (!token) return false;
+
+            // Get the API URL correctly
+            const apiUrl = getApiUrl('auth/validate');
+
             // Try standard endpoint first
-            const standardUrl = getApiUrl('auth/validate');
-            if (!standardUrl) return false;
-
-            let response = await AuthUtils.secureRequest(standardUrl);
-
-            // If standard endpoint fails with 401 or 404, try alternative endpoints
-            if (!response.ok && (response.status === 401 || response.status === 404)) {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {'x-auth-token': token}
+                });
+                if (response.ok) return true;
+            } catch (e) {
                 console.log('Standard validate endpoint failed, trying alternatives...');
+            }
 
-                // Try alternative endpoint 1
-                const altUrl1 = getApiUrl('auth/check');
-                if (altUrl1) {
-                    response = await AuthUtils.secureRequest(altUrl1);
-                    if (response.ok) return true;
-                }
+            // Try alternative endpoints
+            const alternativeEndpoints = [
+                'auth/check', 
+                'auth/status'
+            ];
 
-                // Try alternative endpoint 2
-                const altUrl2 = getApiUrl('auth/status');
-                if (altUrl2) {
-                    response = await AuthUtils.secureRequest(altUrl2);
-                    if (response.ok) return true;
-                }
-
-                // If we're in development mode, allow proceeding even with invalid token
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    console.warn('Token validation failed but in development mode, proceeding anyway');
-                    return true;
+            for (const endpoint of alternativeEndpoints) {
+                try {
+                    const altResponse = await fetch(getApiUrl(endpoint), {
+                        method: 'GET',
+                        headers: {'x-auth-token': token}
+                    });
+                    if (altResponse.ok) return true;
+                } catch (e) {
+                    // Continue to next endpoint
                 }
             }
 
-            return response.ok;
+            // If none of the validation endpoints work, check if we can access a protected resource
+            try {
+                const testResponse = await fetch(getApiUrl('employee-portal/me'), {
+                    method: 'GET',
+                    headers: {'x-auth-token': token}
+                });
+                return testResponse.ok;
+            } catch (e) {
+                return false;
+            }
         } catch (error) {
             console.error('Token validation error:', error);
 
@@ -178,60 +191,38 @@
      * @returns {Promise<void>}
      */
     async function handleLogin(username, password) {
-        // Input validation
-        if (!username || !username.trim()) {
-            AuthUtils.showNotification('Please enter a username', 'error');
-            throw new Error('Username is required');
-        }
-
-        if (!password) {
-            AuthUtils.showNotification('Please enter a password', 'error');
-            throw new Error('Password is required');
+        if (!username || !password) {
+            throw new Error('Please enter both username and password.');
         }
 
         try {
             // First test connection
             const connectionTest = await testApiConnection();
             if (!connectionTest) {
-                AuthUtils.showNotification('Cannot connect to the server. Please try again later.', 'error');
-                throw new Error('Server connection failed');
+                throw new Error('Cannot connect to the server. Please try again later.');
             }
 
-            // Try to initialize CSRF protection, but continue even if it fails
-            try {
-                await AuthUtils.initCsrf();
-            } catch (csrfError) {
-                console.warn('CSRF initialization failed, continuing without CSRF protection:', csrfError);
-                // Continue with login process even if CSRF initialization fails
-            }
+            console.log('Attempting login at:', getApiUrl('auth/login'));
 
-            const loginUrl = getApiUrl('auth/login');
-            if (!loginUrl) {
-                AuthUtils.showNotification('Invalid API configuration', 'error');
-                throw new Error('Invalid API URL');
-            }
-
-            console.log('Attempting login at:', loginUrl);
-
-            // Use secure request with CSRF protection
-            const response = await AuthUtils.secureRequest(loginUrl, {
+            const response = await fetch(getApiUrl('auth/login'), {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({username, password})
             });
 
             // Check response type and handle accordingly
             const contentType = response.headers.get('content-type');
-
             if (contentType && contentType.includes('application/json')) {
                 // Handle JSON response
                 const data = await response.json();
-
                 if (response.ok) {
-                    // Login success - token is now stored in HttpOnly cookie by the server
+                    // Login success
                     console.log('Login successful');
 
-                    // Store minimal user info for UI purposes only (no sensitive data)
-                    // We'll store this in sessionStorage which is cleared when the browser is closed
+                    // Store token and user info in sessionStorage instead of localStorage
+                    sessionStorage.setItem('aydocorpToken', data.token);
                     sessionStorage.setItem('aydocorpUser', JSON.stringify({
                         username: data.user.username,
                         role: data.user.role,
@@ -239,7 +230,7 @@
                     }));
                     sessionStorage.setItem('aydocorpLoggedIn', 'true');
 
-                    // Show success message with non-blocking notification
+                    // Show success message (using a more user-friendly notification)
                     AuthUtils.showNotification(`Welcome back, ${data.user.username}!`, 'success');
 
                     // Update UI to show admin badge if applicable
@@ -249,27 +240,15 @@
                     window.location.href = '#employee-portal';
                 } else {
                     // Login failed with error message from server
-                    AuthUtils.showNotification(data.message || 'Login failed. Please check your credentials.', 'error');
-                    throw new Error(data.message || 'Login failed');
+                    throw new Error(data.message || 'Login failed. Please check your credentials.');
                 }
             } else {
-                // Non-JSON response (likely HTML error page)
-                const text = await response.text();
-                console.error('Received non-JSON response:', text.substring(0, 500));
-                AuthUtils.showNotification('Unexpected response from server. Please try again later.', 'error');
-                throw new Error('Unexpected response format');
+                // Handle non-JSON response
+                throw new Error('Unexpected response from server. Please try again later.');
             }
         } catch (error) {
             console.error('Login error:', error);
-            // Only show notification if it hasn't been shown already
-            if (error.message !== 'Server connection failed' && 
-                error.message !== 'Invalid API URL' && 
-                error.message !== 'Login failed' &&
-                error.message !== 'Unexpected response format' &&
-                error.message !== 'Username is required' &&
-                error.message !== 'Password is required') {
-                AuthUtils.showNotification('An error occurred during login. Please try again.', 'error');
-            }
+            AuthUtils.showNotification(error.message || 'Login failed', 'error');
             throw error;
         }
     }
@@ -279,96 +258,60 @@
      */
     async function handleLogout() {
         try {
-            // Try to call logout endpoint to clear the secure cookie
-            let logoutSuccess = false;
+            const token = sessionStorage.getItem('aydocorpToken');
 
-            // Try standard endpoint first
-            const standardUrl = getApiUrl('auth/logout');
-            if (standardUrl) {
+            // Only attempt server logout if we have a token
+            if (token) {
+                // Try standard logout endpoint
                 try {
-                    const response = await AuthUtils.secureRequest(standardUrl, {
-                        method: 'POST'
+                    await fetch(getApiUrl('auth/logout'), {
+                        method: 'POST',
+                        headers: {'x-auth-token': token}
                     });
-                    logoutSuccess = response.ok;
                 } catch (e) {
-                    console.warn('Standard logout endpoint failed:', e);
-                }
-            }
+                    console.log('Standard logout endpoint failed, trying alternatives...');
 
-            // If standard endpoint fails, try alternatives
-            if (!logoutSuccess) {
-                console.log('Standard logout endpoint failed, trying alternatives...');
+                    // Try alternative endpoints
+                    const alternativeEndpoints = [
+                        'auth/signout', 
+                        'logout'
+                    ];
 
-                // Try alternative endpoint 1
-                const altUrl1 = getApiUrl('auth/signout');
-                if (altUrl1) {
-                    try {
-                        const response = await AuthUtils.secureRequest(altUrl1, {
-                            method: 'POST'
-                        });
-                        logoutSuccess = response.ok;
-                    } catch (e) {
-                        console.warn('Alternative logout endpoint 1 failed:', e);
-                    }
-                }
-
-                // Try alternative endpoint 2
-                if (!logoutSuccess) {
-                    const altUrl2 = getApiUrl('logout');
-                    if (altUrl2) {
+                    let logoutSuccess = false;
+                    for (const endpoint of alternativeEndpoints) {
                         try {
-                            const response = await AuthUtils.secureRequest(altUrl2, {
-                                method: 'POST'
+                            const response = await fetch(getApiUrl(endpoint), {
+                                method: 'POST',
+                                headers: {'x-auth-token': token}
                             });
-                            logoutSuccess = response.ok;
+                            if (response.ok) {
+                                logoutSuccess = true;
+                                break;
+                            }
                         } catch (e) {
-                            console.warn('Alternative logout endpoint 2 failed:', e);
+                            // Continue to next endpoint
                         }
                     }
+
+                    if (!logoutSuccess) {
+                        console.warn('All logout endpoints failed, proceeding with client-side logout only');
+                    }
                 }
             }
-
-            // Even if all endpoints fail, proceed with client-side logout
-            if (!logoutSuccess) {
-                console.warn('All logout endpoints failed, proceeding with client-side logout only');
-            }
-
-            // Clear session storage
-            sessionStorage.removeItem('aydocorpUser');
-            sessionStorage.removeItem('aydocorpLoggedIn');
-
-            // Clear any cookies by setting them to expire in the past
-            document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'aydocorp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-            // Update UI
-            $('.user-status').remove();
-            $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
-
-            // Show notification
-            AuthUtils.showNotification('You have been logged out successfully.', 'info');
-
-            // Redirect to home
-            window.location.href = '#';
-
-            // Update UI state
-            checkLoginStatus();
         } catch (error) {
-            console.error('Logout error:', error);
-
-            // Even if there's an error, still clear client-side data
+            console.error('Error during logout process:', error);
+        } finally {
+            // Always clear authentication data locally, regardless of server response
+            sessionStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
-
-            // Clear any cookies
-            document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'aydocorp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
             // Update UI
             $('.user-status').remove();
             $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
 
-            AuthUtils.showNotification('An error occurred during logout, but you have been logged out locally.', 'warning');
+            // Notify user
+            AuthUtils.showNotification('You have been logged out.', 'info');
 
             // Redirect to home
             window.location.href = '#';
@@ -403,40 +346,12 @@
                 console.log('User data from sessionStorage:', user);
                 console.log('Is admin?', user.role === 'admin');
 
-                // Validate token with server in the background
-                // Don't immediately log out on validation failure
-                // Instead, set a flag to retry validation later
-                let tokenValidationRetries = parseInt(sessionStorage.getItem('tokenValidationRetries') || '0');
-
-                validateToken().then(isValid => {
-                    if (!isValid) {
-                        console.warn(`Token validation failed (attempt ${tokenValidationRetries + 1}/3)`);
-
-                        // Only log out after 3 failed attempts
-                        if (tokenValidationRetries >= 2) {
-                            console.warn('Token validation failed multiple times, logging out');
-                            sessionStorage.removeItem('tokenValidationRetries');
-                            handleLogout();
-                        } else {
-                            // Increment retry counter
-                            sessionStorage.setItem('tokenValidationRetries', (tokenValidationRetries + 1).toString());
-
-                            // Schedule another validation attempt in 30 seconds
-                            setTimeout(() => {
-                                validateToken().then(retryValid => {
-                                    if (!retryValid) {
-                                        console.warn(`Retry token validation failed (attempt ${tokenValidationRetries + 1}/3)`);
-                                    } else {
-                                        console.log('Retry token validation succeeded');
-                                        sessionStorage.removeItem('tokenValidationRetries');
-                                    }
-                                });
-                            }, 30000);
-                        }
-                    } else {
-                        // Reset retry counter on successful validation
-                        sessionStorage.removeItem('tokenValidationRetries');
-                    }
+                // IMPORTANT: Only validate the token but don't immediately logout on failure
+                // This allows for a grace period during development
+                validateToken().catch(err => {
+                    console.warn('Token validation warning:', err);
+                    // Don't logout automatically during development
+                    // We'll implement proper validation once API endpoints are stable
                 });
 
                 // Show employee portal content
