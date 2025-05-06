@@ -56,7 +56,7 @@ I've created a comprehensive set of resources to help you understand and resolve
 
 4. JWT tokens expire after 7 days, so you'll need to log in again if your token expires.
 
-5. For more details on the API and authentication, refer to the [Google Integration Guide](./GOOGLE_INTEGRATION_GUIDE.md#authentication).
+5. Note: The Google API integration has been removed from the application. For more details on API authentication, please refer to the documentation above.
 
 ## Conclusion
 

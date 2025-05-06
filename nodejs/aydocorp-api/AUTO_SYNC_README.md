@@ -1,108 +1,27 @@
-# Automatic Data Synchronization
+# Automatic Data Synchronization - Removed
 
-This document explains the automatic data synchronization feature that keeps your Employee Portal data up-to-date with Google Sheets and Google Docs.
+## Important Notice
 
-## Overview
+The automatic data synchronization feature that used Google Sheets and Google Docs has been removed as per requirements. This decision was made because the Google API approach to updating the website was not working properly and was deemed to be a poor approach for the website's needs.
 
-The Employee Portal now includes an automatic data synchronization system that periodically refreshes data from Google Sheets and Google Docs without requiring manual API calls. This ensures that your employee portal always displays the most up-to-date information.
+## What Has Been Removed
 
-## How It Works
+The following functionality has been removed from the application:
 
-The system uses a scheduler (powered by node-cron) that runs in the background on the server. The scheduler automatically syncs data at regular intervals:
+1. **Scheduled Sync Jobs**: The background jobs that periodically synced data with Google APIs
+2. **Google Sheets Integration**: The ability to sync employee data with Google Sheets
+3. **Google Docs Integration**: The ability to sync operations, career paths, and events with Google Docs
+4. **Manual Sync Endpoints**: The API endpoints that allowed manual triggering of data synchronization
 
-1. **Employee Data**: Synced with Google Sheets every 5 minutes
-2. **Career Paths**: Synced with Google Docs every 5 minutes
-3. **Events**: Synced with Google Docs every 5 minutes
-4. **Operations**: Synced with Google Docs every 5 minutes
+## Current Data Management
 
-This means that when users visit the employee portal, they'll always see the latest data from your Google Sheets and Google Docs, even if no one has manually accessed the API endpoints.
+All data is now managed directly through the application's database. To update content:
 
-## Benefits
+1. Use the application's user interface
+2. Use the API endpoints with proper authentication
 
-- **Always Up-to-Date**: Data is automatically refreshed without requiring manual API calls
-- **Reduced Load**: Sync operations are staggered to distribute the server load
-- **Improved User Experience**: Users always see the latest data when they visit the portal
-- **Simplified Workflow**: Content editors can update Google Sheets/Docs and know the changes will appear on the site automatically
+There is no longer any automatic synchronization with external data sources.
 
-## Configuration
+## Questions
 
-The automatic synchronization is enabled by default when the server starts. No additional configuration is required beyond the standard Google API setup described in the [Google Integration Guide](./GOOGLE_INTEGRATION_GUIDE.md).
-
-The sync schedule is defined in the `utils/scheduler.js` file and can be modified if needed:
-
-```javascript
-// Employee data sync (every 5 minutes)
-cron.schedule('*/5 * * * *', async () => { ... });
-
-// Career paths sync (every 5 minutes)
-cron.schedule('*/5 * * * *', async () => { ... });
-
-// Events sync (every 5 minutes)
-cron.schedule('*/5 * * * *', async () => { ... });
-
-// Operations sync (every 5 minutes)
-cron.schedule('*/5 * * * *', async () => { ... });
-```
-
-## Testing
-
-To test the automatic synchronization, you can use the included test script:
-
-```bash
-node test-scheduler.js
-```
-
-This script will:
-1. Connect to MongoDB
-2. Test each sync function individually
-3. Log the results
-4. Disconnect from MongoDB
-
-The test script is useful for verifying that the synchronization functions work correctly without waiting for the scheduled times.
-
-## Logging
-
-The automatic synchronization system logs its activity to the console. You can monitor these logs to see when sync operations occur and whether they succeed or fail.
-
-Example log messages:
-
-```
-Initializing data sync scheduler...
-Employee sync job scheduled (every 5 minutes)
-Career path sync job scheduled (every 5 minutes)
-Event sync job scheduled (every 5 minutes)
-Operation sync job scheduled (every 5 minutes)
-Data sync scheduler initialized successfully
-Automatic data synchronization scheduler started
-
-Running scheduled employee data sync...
-Found 5 employees in database
-Syncing with Google Sheets...
-Processed 6 employees from Google Sheets
-Scheduled employee sync completed successfully
-```
-
-## Troubleshooting
-
-If you encounter issues with the automatic synchronization, check the following:
-
-1. **Check Logs**: Look for error messages in the server logs related to the scheduler or sync operations
-2. **Verify Google API Configuration**: Make sure your Google API credentials and document IDs are correctly configured in the `.env` file
-3. **Test Manual Sync**: Try accessing the API endpoints manually to see if the sync works when triggered manually
-4. **Run Test Script**: Use the `test-scheduler.js` script to test each sync function individually
-5. **Check Document Access**: Verify that the service account still has access to the Google Sheets and Google Docs
-
-## Manual Override
-
-Even with automatic synchronization enabled, you can still trigger a manual sync by accessing the API endpoints:
-
-- `/api/employee-portal/employees` - Syncs employee data
-- `/api/employee-portal/career-paths` - Syncs career paths
-- `/api/employee-portal/events` - Syncs events
-- `/api/employee-portal/operations` - Syncs operations
-
-This can be useful if you need to immediately see changes you've made to a Google Sheet or Google Doc.
-
-## Conclusion
-
-The automatic data synchronization feature ensures that your Employee Portal always displays the most up-to-date information from your Google Sheets and Google Docs. This improves the user experience and simplifies the content management workflow.
+If you have any questions about this change or need assistance with data management, please contact the system administrator.

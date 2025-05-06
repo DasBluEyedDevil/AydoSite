@@ -84,4 +84,4 @@ All scripts will:
 
 ## More Information
 
-For more details on the API and authentication, please refer to the [Google Integration Guide](./GOOGLE_INTEGRATION_GUIDE.md#authentication) which includes a comprehensive section on authentication.
+Note: The Google API integration has been removed from the application. For more details on API authentication, please refer to the documentation above.
