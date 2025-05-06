@@ -322,9 +322,17 @@
 
     /**
      * Handle user logout with secure authentication
+     * Note: This implementation handles the case where server-side logout endpoints
+     * may not be available, focusing on client-side logout for reliability.
      */
     async function handleLogout() {
         try {
+            // Since server-side logout endpoints are not currently available,
+            // we'll skip the server-side logout attempts to avoid unnecessary network requests
+            // and proceed directly with client-side logout
+
+            // For future server-side logout implementation, uncomment this section:
+            /*
             // Try to call logout endpoint to clear the secure cookie
             let logoutSuccess = false;
 
@@ -373,15 +381,14 @@
                     }
                 }
             }
+            */
 
-            // Even if all endpoints fail, proceed with client-side logout
-            if (!logoutSuccess) {
-                console.warn('All logout endpoints failed, proceeding with client-side logout only');
-            }
+            console.info('Performing client-side logout');
 
-            // Clear session storage
+            // Clear all authentication data from sessionStorage
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
+            sessionStorage.removeItem('aydocorpToken'); // Also remove the token if it exists
 
             // Clear any cookies by setting them to expire in the past
             document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
@@ -405,6 +412,7 @@
             // Even if there's an error, still clear client-side data
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
+            sessionStorage.removeItem('aydocorpToken'); // Also remove the token if it exists
 
             // Clear any cookies
             document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
