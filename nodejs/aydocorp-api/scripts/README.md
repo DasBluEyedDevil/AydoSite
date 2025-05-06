@@ -51,6 +51,19 @@ It will:
   - If the user exists but is not an admin, update the role to "admin"
   - If the user doesn't exist, create a new user with the username "Devil", email "admin@example.com", and role "admin"
 
+### 4. Set User Admin
+
+This script sets a user's role to "admin" by username:
+
+```bash
+node scripts/set-user-admin.js <username>
+```
+
+It will:
+- Check if a user with the specified username exists
+  - If the user exists but is not an admin, update the role to "admin"
+  - If the user doesn't exist, display an error message
+
 ## Verifying Users in the Admin Dashboard
 
 After running these scripts, you can verify that the users are being correctly retrieved and displayed in the admin dashboard:
