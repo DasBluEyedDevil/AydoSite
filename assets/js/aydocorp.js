@@ -140,10 +140,6 @@
                 console.log('User data from server:', data.user);
                 console.log('User role from server:', data.user.role);
 
-                // Explicitly check and log if user is admin
-                const isAdmin = data.user.role === 'admin';
-                console.log('Is user admin?', isAdmin);
-
                 // Store token and user info
                 localStorage.setItem('aydocorpToken', data.token);
                 localStorage.setItem('aydocorpUser', JSON.stringify(data.user));
@@ -155,12 +151,11 @@
                 // Show success message
                 alert(`Welcome back, ${data.user.username}!`);
 
-                // Redirect to landing page instead of employee portal
-                window.location.href = '#';
-
                 // Update UI to show admin badge if applicable
-                // Call checkLoginStatus after a short delay to ensure the DOM is updated
-                setTimeout(checkLoginStatus, 100);
+                checkLoginStatus();
+
+                // Redirect to employee portal
+                window.location.href = '#employee-portal';
             } else {
                 // Login failed with error message from server
                 throw new Error(data.message || 'Login failed. Please check your credentials.');
@@ -197,8 +192,6 @@
         const token = localStorage.getItem('aydocorpToken');
         const userJson = localStorage.getItem('aydocorpUser');
 
-        console.log('Login status:', { isLoggedIn, hasToken: !!token, hasUserJson: !!userJson });
-
         if (isLoggedIn && token && userJson) {
             try {
                 const user = JSON.parse(userJson);
@@ -212,24 +205,18 @@
                 // Add user status indicator to the top right
                 $('.user-status').remove();
 
-                // Generate admin badge HTML if user is admin
-                const adminBadgeHtml = user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : '';
-                console.log('Admin badge HTML:', adminBadgeHtml);
-
                 const userStatusHtml = `
                     <div class="user-status">
                         <span class="username">${user.username}</span>
+                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
                         <span class="logout-option">
-                            ${adminBadgeHtml}
                             <a href="#" class="logout">Logout</a>
                         </span>
                     </div>
                 `;
 
                 console.log('User status HTML:', userStatusHtml);
-                // Append to header instead of body to ensure it's visible
-                $('#header').prepend(userStatusHtml);
-                console.log('User status appended to header. Header HTML:', $('#header').html());
+                $('body').append(userStatusHtml);
 
                 // Replace the "Member Login" link with just "Logout"
                 $('header nav ul li a[href="#login"]').text('Logout').attr('href', '#').addClass('logout').closest('li').attr('id', 'logout-nav');
@@ -313,15 +300,6 @@
         }
     }
 
-    // Helper function to add back button event listener
-    function addBackToCareerPathsListener() {
-        // Use event delegation to handle all back buttons with a single handler
-        $(document).off('click', '.back-to-career-paths').on('click', '.back-to-career-paths', function() {
-            $('.career-path-details').hide();
-            $('.career-path-list').show();
-        });
-    }
-
     async function loadCareerPathDetails(careerPathId) {
         try {
             const apiBase = getApiBaseUrl();
@@ -345,7 +323,10 @@
                 $('.career-path-list').hide();
 
                 // Add event listener to the back button
-                addBackToCareerPathsListener();
+                $('.back-to-career-paths').on('click', function() {
+                    $('.career-path-details').hide();
+                    $('.career-path-list').show();
+                });
                 return;
             }
 
@@ -461,7 +442,10 @@
             $('.career-path-list').hide();
 
             // Add event listener to the back button
-            addBackToCareerPathsListener();
+            $('.back-to-career-paths').on('click', function() {
+                $('.career-path-details').hide();
+                $('.career-path-list').show();
+            });
         } catch (error) {
             console.error('Error loading career path details:', error);
             $('.career-path-details').html(`
@@ -474,7 +458,10 @@
             $('.career-path-list').hide();
 
             // Add event listener to the back button
-            addBackToCareerPathsListener();
+            $('.back-to-career-paths').on('click', function() {
+                $('.career-path-details').hide();
+                $('.career-path-list').show();
+            });
         }
     }
 
@@ -1154,7 +1141,7 @@
     }
 
     // Function to save page content
-    function savePageContent(pageElement) {
+    function savePageContent(pageElement, title, content) {
         // In a real implementation, this would send the data to the server
         // For now, we'll just show a success message
         alert(`Content for "${pageElement}" has been saved successfully!`);
@@ -1253,7 +1240,7 @@
             const content = $('#element-content').val();
 
             if (selectedElement && title && content) {
-                savePageContent(selectedElement);
+                savePageContent(selectedElement, title, content);
             } else {
                 alert('Please fill in all fields.');
             }
