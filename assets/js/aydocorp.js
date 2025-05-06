@@ -455,9 +455,15 @@
                 }
 
                 console.log('User data from sessionStorage:', user);
-                // Check if user is admin - either by role or by username for specific admin users
+                // Check if user is admin by role
                 const isAdmin = user.role === 'admin';
                 console.log('Is admin?', isAdmin);
+
+                // Add debug message to help users understand if their role is not set correctly
+                if (!isAdmin) {
+                    console.log('User role is not set to "admin". Current role:', user.role);
+                    console.log('To set your role to admin, follow the instructions in ADMIN-ROLE-INSTRUCTIONS.md');
+                }
 
                 // Validate token with server in the background
                 // Don't immediately log out on validation failure
@@ -2171,10 +2177,14 @@
                 if (userJson) {
                     try {
                         const user = AuthUtils.safeJsonParse(userJson, null);
-                        // Check if user is admin
+                        // Check if user is admin by role
                         if (!user || user.role !== 'admin') {
+                            // Add debug message to help users understand if their role is not set correctly
+                            console.log('User role is not set to "admin". Current role:', user ? user.role : 'undefined');
+                            console.log('To set your role to admin, follow the instructions in ADMIN-ROLE-INSTRUCTIONS.md');
+
                             // Redirect non-admin users
-                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
+                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard. Check console for details.', 'error');
                             window.location.href = '#';
                         } else {
                             // User is admin, explicitly show the admin dashboard
@@ -2208,9 +2218,14 @@
             if (userJson) {
                 try {
                     const user = AuthUtils.safeJsonParse(userJson, null);
-                    // Check if user is admin
+                    // Check if user is admin by role
                     if (!user || user.role !== 'admin') {
-                        AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
+                        // Add debug message to help users understand if their role is not set correctly
+                        console.log('User role is not set to "admin". Current role:', user ? user.role : 'undefined');
+                        console.log('To set your role to admin, follow the instructions in ADMIN-ROLE-INSTRUCTIONS.md');
+
+                        // Redirect non-admin users
+                        AuthUtils.showNotification('You do not have permission to access the Admin Dashboard. Check console for details.', 'error');
                         window.location.href = '#';
                     } else {
                         // User is admin, explicitly show the admin dashboard
