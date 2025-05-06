@@ -52,11 +52,13 @@ try {
 const authRoutes = require('./routes/auth');
 const forumRoutes = require('./routes/forum');
 const employeePortalRoutes = require('./routes/employeePortal');
+const pageContentRoutes = require('./routes/pageContent');
 
 // Mount routes
 app.use('/api/auth', authRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/employee-portal', employeePortalRoutes);
+app.use('/api/page-content', pageContentRoutes);
 
 // Basic routes
 app.get('/', (req, res) => {

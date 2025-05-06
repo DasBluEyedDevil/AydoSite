@@ -46,7 +46,8 @@ router.post('/register', async (req, res) => {
         // Create and return JWT token
         const payload = {
             user: {
-                id: user.id
+                id: user.id,
+                role: user.role
             }
         };
 
@@ -67,7 +68,8 @@ router.post('/register', async (req, res) => {
                     user: {
                         id: user.id,
                         username: user.username,
-                        email: user.email
+                        email: user.email,
+                        role: user.role
                     }
                 });
             }
@@ -103,7 +105,8 @@ router.post('/login', async (req, res) => {
         // Create and return JWT token
         const payload = {
             user: {
-                id: user.id
+                id: user.id,
+                role: user.role
             }
         };
 
@@ -124,7 +127,8 @@ router.post('/login', async (req, res) => {
                     user: {
                         id: user.id,
                         username: user.username,
-                        email: user.email
+                        email: user.email,
+                        role: user.role
                     }
                 });
             }
@@ -144,7 +148,13 @@ router.post('/login', async (req, res) => {
 router.get('/validate', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.user.id).select('-password');
-        res.json(user);
+        res.json({
+            id: user.id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            createdAt: user.createdAt
+        });
     } catch (err) {
         console.error('Validation error:', err.message);
         res.status(500).json({
