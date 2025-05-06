@@ -31,7 +31,12 @@
 
         // Ensure baseUrl ends with a slash and endpoint doesn't start with one
         const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-        const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+
+        // Remove 'api/' prefix from endpoint if baseUrl already includes '/api'
+        let cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+        if (baseUrl.includes('/api') && cleanEndpoint.startsWith('api/')) {
+            cleanEndpoint = cleanEndpoint.substring(4); // Remove 'api/'
+        }
 
         // Validate the endpoint to prevent injection
         if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
