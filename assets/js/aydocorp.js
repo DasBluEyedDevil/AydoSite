@@ -9,12 +9,13 @@
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
         } else {
+            // Fix: Remove the '/api' suffix since we're adding it in getApiUrl
             // Use a secure approach instead of proxy.php with direct URL parameter
             // This prevents open redirect vulnerabilities
-            return window.location.origin + '/api';
+            return window.location.origin;
         }
     }
-
+    
     /**
      * Construct a proper API URL with validation
      * @param {string} endpoint - The API endpoint to call
@@ -25,19 +26,19 @@
             console.error('Invalid endpoint provided to getApiUrl');
             return null;
         }
-
+    
         const baseUrl = getApiBaseUrl();
-
+    
         // Ensure baseUrl ends with a slash and endpoint doesn't start with one
         const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
         const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-
+    
         // Validate the endpoint to prevent injection
         if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
             console.error('Invalid characters in API endpoint');
             return null;
         }
-
+    
         return baseWithSlash + cleanEndpoint;
     }
 
