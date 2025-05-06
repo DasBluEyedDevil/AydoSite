@@ -605,10 +605,12 @@
                 const userStatusHtml = `
                     <div class="user-status">
                         <span class="username">${safeUsername}</span>
-                        ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
-                        <span class="logout-option">
-                            <a href="#" class="logout">Logout</a>
-                        </span>
+                        <div class="dropdown-container">
+                            ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                            <span class="logout-option">
+                                <a href="#" class="logout">Logout</a>
+                            </span>
+                        </div>
                     </div>
                 `;
 
