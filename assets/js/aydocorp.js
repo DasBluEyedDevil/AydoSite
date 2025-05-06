@@ -654,6 +654,7 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $eventsListContainer = $('.events-list-container');
 
             const response = await fetch(`${apiBase}/api/employee-portal/events`, {
                 headers: {
@@ -663,7 +664,7 @@
 
             if (!response.ok) {
                 console.error('Failed to load events');
-                $('.events-list-container').html(`
+                $eventsListContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Events</h3>
                         <p>Failed to load events</p>
@@ -675,7 +676,7 @@
             const events = await response.json();
 
             if (events.length === 0) {
-                $('.events-list-container').html('<p>No events found.</p>');
+                $eventsListContainer.html('<p>No events found.</p>');
                 return;
             }
 
@@ -707,7 +708,7 @@
             });
 
             html += '</div>';
-            $('.events-list-container').html(html);
+            $eventsListContainer.html(html);
 
             // Add event listeners to the view buttons
             $('.view-event').on('click', function() {
@@ -716,7 +717,7 @@
             });
         } catch (error) {
             console.error('Error loading events:', error);
-            $('.events-list-container').html(`
+            $eventsListContainer.html(`
                 <div class="error-message">
                     <h3>Error Loading Events</h3>
                     <p>${error.message}</p>
@@ -729,6 +730,8 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $eventDetailsContainer = $('.event-details-container');
+            const $eventsListContainer = $('.events-list-container');
 
             const response = await fetch(`${apiBase}/api/employee-portal/events/${eventId}`, {
                 headers: {
@@ -811,29 +814,31 @@
                 </div>
             `;
 
-            $('.event-details-container').html(html).show();
-            $('.events-list-container').hide();
+            $eventDetailsContainer.html(html).show();
+            $eventsListContainer.hide();
 
             // Add event listener to the back button
-            $('.back-to-events').on('click', function() {
-                $('.event-details-container').hide();
-                $('.events-list-container').show();
+            const $backToEventsButton = $('.back-to-events');
+            $backToEventsButton.on('click', function() {
+                $eventDetailsContainer.hide();
+                $eventsListContainer.show();
             });
         } catch (error) {
             console.error('Error loading event details:', error);
-            $('.event-details-container').html(`
+            $eventDetailsContainer.html(`
                 <div class="error-message">
                     <h3>Error Loading Event Details</h3>
                     <p>${error.message}</p>
                     <button class="back-to-events button">Back to Events</button>
                 </div>
             `).show();
-            $('.events-list-container').hide();
+            $eventsListContainer.hide();
 
             // Add event listener to the back button
-            $('.back-to-events').on('click', function() {
-                $('.event-details-container').hide();
-                $('.events-list-container').show();
+            const $backToEventsButton = $('.back-to-events');
+            $backToEventsButton.on('click', function() {
+                $eventDetailsContainer.hide();
+                $eventsListContainer.show();
             });
         }
     }
@@ -843,6 +848,7 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $operationsListContainer = $('.operations-list-container');
 
             const response = await fetch(`${apiBase}/api/employee-portal/operations`, {
                 headers: {
@@ -852,7 +858,7 @@
 
             if (!response.ok) {
                 console.error('Failed to load operations');
-                $('.operations-list-container').html(`
+                $operationsListContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Operations</h3>
                         <p>Failed to load operations</p>
@@ -864,7 +870,7 @@
             const operations = await response.json();
 
             if (operations.length === 0) {
-                $('.operations-list-container').html('<p>No operations found.</p>');
+                $operationsListContainer.html('<p>No operations found.</p>');
                 return;
             }
 
@@ -894,7 +900,7 @@
             });
 
             html += '</div>';
-            $('.operations-list-container').html(html);
+            $operationsListContainer.html(html);
 
             // Add event listeners to the view buttons
             $('.view-operation').on('click', function() {
@@ -903,7 +909,7 @@
             });
         } catch (error) {
             console.error('Error loading operations:', error);
-            $('.operations-list-container').html(`
+            $operationsListContainer.html(`
                 <div class="error-message">
                     <h3>Error Loading Operations</h3>
                     <p>${error.message}</p>
@@ -916,6 +922,8 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $operationDetailsContainer = $('.operation-details-container');
+            const $operationsListContainer = $('.operations-list-container');
 
             const response = await fetch(`${apiBase}/api/employee-portal/operations/${operationId}`, {
                 headers: {
@@ -1006,13 +1014,14 @@
                 </div>
             `;
 
-            $('.operation-details-container').html(html).show();
-            $('.operations-list-container').hide();
+            $operationDetailsContainer.html(html).show();
+            $operationsListContainer.hide();
 
             // Add event listener to the back button
-            $('.back-to-operations').on('click', function() {
-                $('.operation-details-container').hide();
-                $('.operations-list-container').show();
+            const $backToOperationsButton = $('.back-to-operations');
+            $backToOperationsButton.on('click', function() {
+                $operationDetailsContainer.hide();
+                $operationsListContainer.show();
             });
 
             // Add event listeners to related operations links
@@ -1023,19 +1032,20 @@
             });
         } catch (error) {
             console.error('Error loading operation details:', error);
-            $('.operation-details-container').html(`
+            $operationDetailsContainer.html(`
                 <div class="error-message">
                     <h3>Error Loading Operation Details</h3>
                     <p>${error.message}</p>
                     <button class="back-to-operations button">Back to Operations</button>
                 </div>
             `).show();
-            $('.operations-list-container').hide();
+            $operationsListContainer.hide();
 
             // Add event listener to the back button
-            $('.back-to-operations').on('click', function() {
-                $('.operation-details-container').hide();
-                $('.operations-list-container').show();
+            const $backToOperationsButton = $('.back-to-operations');
+            $backToOperationsButton.on('click', function() {
+                $operationDetailsContainer.hide();
+                $operationsListContainer.show();
             });
         }
     }
@@ -1045,8 +1055,12 @@
 
     // Function to initialize the rich text editor
     function initRichTextEditor() {
+        // Cache jQuery selectors
+        const $imageUploadContainer = $('.image-upload-container');
+        const $editorButton = $('.editor-button');
+
         // Add event listeners to editor buttons
-        $('.editor-button').on('click', function(e) {
+        $editorButton.on('click', function(e) {
             e.preventDefault();
             const command = $(this).data('command');
 
@@ -1057,7 +1071,7 @@
                 }
             } else if (command === 'insertImage') {
                 // Show image upload container
-                $('.image-upload-container').show();
+                $imageUploadContainer.show();
             } else {
                 // Execute the command
                 document.execCommand(command, false, null);
@@ -1071,29 +1085,32 @@
 
         // Handle image insertion
         $('#insert-image-button').on('click', function() {
-            const imageUrl = $('#image-url').val();
-            const altText = $('#image-alt').val() || 'Image';
+            const $imageUrl = $('#image-url');
+            const $imageAlt = $('#image-alt');
+            const imageUrl = $imageUrl.val();
+            const altText = $imageAlt.val() || 'Image';
 
             if (imageUrl) {
                 const imageHtml = `<img src="${imageUrl}" alt="${altText}" />`;
                 document.execCommand('insertHTML', false, imageHtml);
 
                 // Clear fields and hide container
-                $('#image-url').val('');
-                $('#image-alt').val('');
-                $('.image-upload-container').hide();
+                $imageUrl.val('');
+                $imageAlt.val('');
+                $imageUploadContainer.hide();
             } else {
                 alert('Please enter an image URL.');
             }
         });
 
         // Handle image upload
-        $('#image-upload').on('change', function(e) {
+        const $imageUpload = $('#image-upload');
+        $imageUpload.on('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
-                    $('#image-url').val(event.target.result);
+                    $imageUrl.val(event.target.result);
                 };
                 reader.readAsDataURL(file);
             }
@@ -1101,10 +1118,10 @@
 
         // Cancel image insertion
         $('#cancel-image-button').on('click', function() {
-            $('#image-url').val('');
-            $('#image-alt').val('');
-            $('#image-upload').val('');
-            $('.image-upload-container').hide();
+            $imageUrl.val('');
+            $imageAlt.val('');
+            $imageUpload.val('');
+            $imageUploadContainer.hide();
         });
     }
 
@@ -1337,18 +1354,18 @@
         });
 
         // Employee Portal tab navigation
-        $('.portal-tab').on('click', function(e) {
+        $portalTab.on('click', function(e) {
             e.preventDefault();
 
             // Get the section to show
             const section = $(this).data('section');
 
             // Update active tab
-            $('.portal-tab').removeClass('active');
+            $portalTab.removeClass('active');
             $(this).addClass('active');
 
             // Hide all sections and show the selected one
-            $('.portal-section').hide();
+            $portalSection.hide();
             $(`#${section}-section`).show();
 
             // Load data for the selected section
@@ -1565,6 +1582,7 @@
             const email = $('#reg-email').val();
             const password = $('#reg-password').val();
             const confirmPassword = $('#reg-confirm-password').val();
+            const $registerButton = $('#register-button');
 
             // Validation
             if (!username || !email || !password) {
@@ -1578,7 +1596,7 @@
             }
 
             // Show loading indicator
-            $('#register-button').val('Creating account...').prop('disabled', true);
+            $registerButton.val('Creating account...').prop('disabled', true);
 
             try {
                 const apiBase = getApiBaseUrl();
@@ -1610,7 +1628,7 @@
                 console.error('Registration error:', error);
             } finally {
                 // Reset button
-                $('#register-button').val('Create Account').prop('disabled', false);
+                $registerButton.val('Create Account').prop('disabled', false);
             }
         });
 
@@ -1674,8 +1692,10 @@
         $('#new-post-form').on('submit', async function(event) {
             event.preventDefault();
 
-            const title = $('#post-title').val();
-            const content = $('#post-content').val();
+            const $postTitle = $('#post-title');
+            const $postContent = $('#post-content');
+            const title = $postTitle.val();
+            const content = $postContent.val();
 
             // Validation
             if (!title || !content) {
@@ -1717,8 +1737,8 @@
                 alert('Operation created successfully!');
 
                 // Clear form fields
-                $('#post-title').val('');
-                $('#post-content').val('');
+                $postTitle.val('');
+                $postContent.val('');
 
                 // Redirect to employee portal operations section
                 window.location.href = '#employee-portal';

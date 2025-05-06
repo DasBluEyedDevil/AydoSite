@@ -35,3 +35,4 @@
    .contactemail
    .cpanel-logs/
    .lastlogin
+/nodejs/aydocorp-api/node_modules/
