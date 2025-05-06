@@ -308,8 +308,8 @@
                     // Update UI to show admin badge if applicable
                 checkLoginStatus();
 
-                // Redirect to employee portal
-                window.location.href = '#employee-portal';
+                // Redirect to landing page instead of employee portal
+                window.location.href = '#';
             } else {
                 throw new Error('Unexpected response format from server.');
             }
