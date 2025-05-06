@@ -79,55 +79,36 @@
     // Call the debug function immediately
 
     /**
-     * Validate the authentication token with better token handling
-     * @returns {Promise<boolean>} True if token is valid
+     * Test if the API server is reachable
+     * @returns {Promise<boolean>} True if the API is reachable
      */
-    async function validateToken() {
+    async function testApiConnection() {
         try {
-            // Get token from sessionStorage
-            const token = sessionStorage.getItem('aydocorpToken');
-            if (!token) return false;
-    
-            // Create request with proper headers
-            const requestOptions = {
+            const apiUrl = getApiUrl('api/test');
+            console.log('Testing API connection to:', apiUrl);
+            
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,  // Add Bearer prefix
-                    'x-auth-token': token                // Also include x-auth-token as fallback
-                }
-            };
-    
-            // Test API endpoints with better error handling
-            const apiEndpoints = [
-                'api/auth/validate',
-                'api/auth/check',
-                'api/auth/status',
-                'api/employee-portal/me'
-            ];
-    
-            // Try each endpoint until one works
-            for (const endpoint of apiEndpoints) {
-                try {
-                    const url = getApiUrl(endpoint);
-                    const response = await fetch(url, requestOptions);
-                    if (response.ok) return true;
-                } catch (e) {
-                    // Continue to next endpoint
-                }
-            }
-    
-            // Allow operation in development mode even if validation fails
-                // allow proceeding even with invalid token
-            if (window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1') {
-                console.warn('Token validation failed but in development mode, proceeding anyway');
+                    'Accept': 'application/json'
+                },
+                // Add a short timeout to avoid long waits
+                signal: AbortSignal.timeout(5000)
+            });
+            
+            const status = response.status;
+            console.log('API test response status:', status);
+            
+            if (response.ok) {
+                const data = await response.json();
+                console.log('API test response data:', data);
                 return true;
+            } else {
+                console.error('API test failed with status:', status);
+                return false;
             }
-    
-            // All validation attempts failed
-            return false;
         } catch (error) {
-            console.error('Token validation error:', error);
+            console.error('API connection test failed with error:', error);
             return false;
         }
     }
