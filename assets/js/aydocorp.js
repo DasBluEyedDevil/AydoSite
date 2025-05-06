@@ -155,8 +155,8 @@
                 // Show success message
                 alert(`Welcome back, ${data.user.username}!`);
 
-                // Redirect to employee portal
-                window.location.href = '#employee-portal';
+                // Redirect to landing page instead of employee portal
+                window.location.href = '#';
 
                 // Update UI to show admin badge if applicable
                 // Call checkLoginStatus after a short delay to ensure the DOM is updated
