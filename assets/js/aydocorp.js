@@ -1941,18 +1941,59 @@
     }
 
     // Function to load user list
-    function loadUserList() {
+    async function loadUserList() {
         // Show the user list container
         const $userListContainer = $('#user-list-container');
         $userListContainer.show();
 
-        // In a real implementation, this would fetch users from the server
-        // For now, we'll use placeholder data
-        const users = [
-            { id: 1, username: 'Devil', email: 'shatteredobsidian@yahoo.com', role: 'admin', createdAt: 'Mon May 05 2025 22:36:43 GMT-0400' },
-            { id: 2, username: 'JohnDoe', email: 'john@example.com', role: 'employee', createdAt: 'Tue May 06 2025 10:15:22 GMT-0400' },
-            { id: 3, username: 'JaneSmith', email: 'jane@example.com', role: 'employee', createdAt: 'Wed May 07 2025 14:22:10 GMT-0400' }
-        ];
+        // Show loading indicator
+        $userListContainer.html('<p>Loading users...</p>');
+
+        try {
+            // Fetch users from the server
+            const url = getApiUrl('auth/users');
+            const response = await AuthUtils.secureRequest(url);
+
+            if (!response.ok) {
+                // If the endpoint doesn't exist or returns an error, try an alternative endpoint
+                const altUrl = getApiUrl('employee-portal/users');
+                const altResponse = await AuthUtils.secureRequest(altUrl);
+
+                if (!altResponse.ok) {
+                    throw new Error(`Failed to fetch users: ${response.status} ${response.statusText}`);
+                }
+
+                const users = await altResponse.json();
+                renderUserList(users, $userListContainer);
+                return;
+            }
+
+            const users = await response.json();
+            renderUserList(users, $userListContainer);
+        } catch (error) {
+            console.error('Error loading users:', error);
+
+            // Show error message with retry button
+            $userListContainer.html(`
+                <div class="error-message">
+                    <p>Failed to load users: ${error.message}</p>
+                    <button id="retry-load-users" class="button">Retry</button>
+                </div>
+            `);
+
+            // Add event listener to retry button
+            $('#retry-load-users').on('click', function() {
+                loadUserList();
+            });
+        }
+    }
+
+    // Function to render the user list
+    function renderUserList(users, $container) {
+        if (!users || users.length === 0) {
+            $container.html('<p>No users found.</p>');
+            return;
+        }
 
         // Create the table
         let html = `
@@ -1970,16 +2011,23 @@
         `;
 
         users.forEach(user => {
-            const createdDate = new Date(user.createdAt).toLocaleDateString();
+            // Ensure createdAt is a valid date string
+            const createdDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+
+            // Sanitize user data before inserting into HTML
+            const safeUsername = AuthUtils.sanitizeHtml(user.username || '');
+            const safeEmail = AuthUtils.sanitizeHtml(user.email || '');
+            const safeRole = AuthUtils.sanitizeHtml(user.role || 'employee');
+
             html += `
                 <tr>
-                    <td>${user.username}</td>
-                    <td>${user.email}</td>
-                    <td><span class="user-role ${user.role}">${user.role}</span></td>
+                    <td>${safeUsername}</td>
+                    <td>${safeEmail}</td>
+                    <td><span class="user-role ${safeRole}">${safeRole}</span></td>
                     <td>${createdDate}</td>
                     <td>
-                        <button class="button small edit-user-button" data-id="${user.id}">Edit</button>
-                        ${user.role !== 'admin' ? `<button class="button small promote-user-button" data-id="${user.id}">Promote</button>` : ''}
+                        <button class="button small edit-user-button" data-id="${user.id || user._id}">Edit</button>
+                        ${safeRole !== 'admin' ? `<button class="button small promote-user-button" data-id="${user.id || user._id}">Promote</button>` : ''}
                     </td>
                 </tr>
             `;
@@ -1990,7 +2038,7 @@
             </table>
         `;
 
-        $userListContainer.html(html);
+        $container.html(html);
 
         // Add event listeners to buttons
         $('.edit-user-button').on('click', function() {
