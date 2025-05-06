@@ -206,11 +206,11 @@
                 $('.user-status').remove();
 
                 const userStatusHtml = `
-                    <div class="user-status" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background-color: rgba(0, 0, 0, 0.7); padding: 10px; border-radius: 5px; color: white; font-size: 14px;">
-                        <span class="username" style="font-weight: bold;">${user.username}</span>
-                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge" style="display: inline-block; margin-left: 0.5rem; padding: 0.2rem 0.5rem; background-color: #ff3c38; color: white; border-radius: 3px; font-size: 0.7rem; font-weight: bold; text-transform: uppercase;">ADMIN</a>' : ''}
-                        <span class="logout-option" style="display: inline-block; margin-left: 10px;">
-                            <a href="#" class="logout" style="color: white; text-decoration: underline;">Logout</a>
+                    <div class="user-status">
+                        <span class="username">${user.username}</span>
+                        ${user.role === 'admin' ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                        <span class="logout-option">
+                            <a href="#" class="logout">Logout</a>
                         </span>
                     </div>
                 `;
