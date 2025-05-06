@@ -407,13 +407,17 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     display: block !important; /* Force display */
 }
 
+/* Ensure header has position relative for proper absolute positioning of user-status */
+#header {
+    position: relative;
+}
+
 .user-status .username {
     font-weight: bold;
 }
 
 .user-status .admin-badge {
-    display: inline-block !important; /* Force display */
-    margin-left: 0.5rem;
+    display: block !important; /* Force display */
     padding: 0.2rem 0.5rem;
     background-color: #ff3c38;
     color: white !important; /* Force color */
@@ -423,13 +427,22 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     text-transform: uppercase;
     border: 1px solid white; /* Add border for visibility */
     text-decoration: none !important; /* Ensure no underline */
+    margin-bottom: 0.5rem;
 }
 
 .user-status .logout-option {
     display: none;
-    margin-left: 0.5rem;
-    padding-left: 0.5rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin-top: 0.5rem;
+    min-width: 100px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .user-status:hover {
@@ -445,11 +458,17 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     border-bottom: none;
+    display: block;
+    padding: 0.3rem 0;
 }
 
 .user-status a:hover {
     color: #fff;
     text-decoration: underline;
+}
+
+.user-status .logout-option a.logout {
+    margin-top: 0.3rem;
 }
 
 /* Make sure it stays visible on mobile */

@@ -219,8 +219,8 @@
                 const userStatusHtml = `
                     <div class="user-status">
                         <span class="username">${user.username}</span>
-                        ${adminBadgeHtml}
                         <span class="logout-option">
+                            ${adminBadgeHtml}
                             <a href="#" class="logout">Logout</a>
                         </span>
                     </div>
