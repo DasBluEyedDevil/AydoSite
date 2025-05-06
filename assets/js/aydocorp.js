@@ -119,73 +119,55 @@
     }
 
     /**
-     * Validate the authentication token using secure cookies
+     * Validate the authentication token with better token handling
      * @returns {Promise<boolean>} True if token is valid
      */
     async function validateToken() {
         try {
-            // Try standard endpoint first
-            const standardUrl = getApiUrl('auth/validate');
-            if (!standardUrl) return false;
-
-            let response = await AuthUtils.secureRequest(standardUrl);
-
-            // If standard endpoint fails with 401 or 404, try alternative endpoints
-            if (!response.ok && (response.status === 401 || response.status === 404)) {
-                console.log('Standard validate endpoint failed, trying alternatives...');
-
-                // Try alternative endpoint 1
-                const altUrl1 = getApiUrl('auth/check');
-                if (altUrl1) {
-                    response = await AuthUtils.secureRequest(altUrl1);
+            // Get token from sessionStorage
+            const token = sessionStorage.getItem('aydocorpToken');
+            if (!token) return false;
+    
+            // Create request with proper headers
+            const requestOptions = {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,  // Add Bearer prefix
+                    'x-auth-token': token                // Also include x-auth-token as fallback
+                }
+            };
+    
+            // Test API endpoints with better error handling
+            const apiEndpoints = [
+                'api/auth/validate',
+                'api/auth/check',
+                'api/auth/status',
+                'api/employee-portal/me'
+            ];
+    
+            // Try each endpoint until one works
+            for (const endpoint of apiEndpoints) {
+                try {
+                    const url = getApiUrl(endpoint);
+                    const response = await fetch(url, requestOptions);
                     if (response.ok) return true;
-                }
-
-                // Try alternative endpoint 2
-                const altUrl2 = getApiUrl('auth/status');
-                if (altUrl2) {
-                    response = await AuthUtils.secureRequest(altUrl2);
-                    if (response.ok) return true;
-                }
-
-                // Try alternative endpoint 3 - a protected resource endpoint
-                const protectedUrl = getApiUrl('employee-portal/me');
-                if (protectedUrl) {
-                    try {
-                        const protectedResponse = await AuthUtils.secureRequest(protectedUrl);
-                        if (protectedResponse.ok) return true;
-                    } catch (e) {
-                        console.warn('Protected resource check failed:', e);
-                    }
-                }
-
-                // If we're in development mode or if the server is reachable but validation endpoints are missing,
-                // allow proceeding even with invalid token
-                if (window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' ||
-                    await testApiConnection()) {
-                    console.warn('Token validation failed but server is reachable, proceeding anyway');
-                    return true;
+                } catch (e) {
+                    // Continue to next endpoint
                 }
             }
-
-            return response.ok;
+    
+            // Allow operation in development mode even if validation fails
+                // allow proceeding even with invalid token
+            if (window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1') {
+                console.warn('Token validation failed but in development mode, proceeding anyway');
+                return true;
+            }
+    
+            // All validation attempts failed
+            return false;
         } catch (error) {
             console.error('Token validation error:', error);
-
-            // If we're in development mode or if the server is reachable but validation is failing,
-            // allow proceeding even with errors
-            try {
-                if (window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' ||
-                    await testApiConnection()) {
-                    console.warn('Token validation error but server is reachable, proceeding anyway');
-                    return true;
-                }
-            } catch (e) {
-                console.error('Failed to test API connection during validation error handling:', e);
-            }
-
             return false;
         }
     }
@@ -200,97 +182,76 @@
      */
     async function handleLogin(username, password) {
         // Input validation
-        if (!username || !username.trim()) {
-            AuthUtils.showNotification('Please enter a username', 'error');
-            throw new Error('Username is required');
+        if (!username || !password) {
+            throw new Error('Please enter both username and password.');
         }
-
-        if (!password) {
-            AuthUtils.showNotification('Please enter a password', 'error');
-            throw new Error('Password is required');
-        }
-
+        
         try {
             // First test connection
             const connectionTest = await testApiConnection();
             if (!connectionTest) {
-                AuthUtils.showNotification('Cannot connect to the server. Please try again later.', 'error');
-                throw new Error('Server connection failed');
+                throw new Error('Cannot connect to the server. Please try again later.');
             }
-
-            // Try to initialize CSRF protection, but continue even if it fails
-            try {
-                await AuthUtils.initCsrf();
-            } catch (csrfError) {
-                console.warn('CSRF initialization failed, continuing without CSRF protection:', csrfError);
-                // Continue with login process even if CSRF initialization fails
-            }
-
-            const loginUrl = getApiUrl('auth/login');
-            if (!loginUrl) {
-                AuthUtils.showNotification('Invalid API configuration', 'error');
-                throw new Error('Invalid API URL');
-            }
-
-            console.log('Attempting login at:', loginUrl);
-
+            
+            console.log('Attempting login at:', getApiUrl('api/auth/login'));
+            
+            // Attempt login
             // Use secure request with CSRF protection
-            const response = await AuthUtils.secureRequest(loginUrl, {
+            const response = await fetch(getApiUrl('api/auth/login'), {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({username, password})
             });
-
+            
+            // Parse response
+            if (!response.ok) {
             // Check response type and handle accordingly
-            const contentType = response.headers.get('content-type');
-
-            if (contentType && contentType.includes('application/json')) {
-                // Handle JSON response
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Login success - token is now stored in HttpOnly cookie by the server
-                    console.log('Login successful');
-
-                    // Store minimal user info for UI purposes only (no sensitive data)
-                    // We'll store this in sessionStorage which is cleared when the browser is closed
-                    sessionStorage.setItem('aydocorpUser', JSON.stringify({
-                        username: data.user.username,
-                        role: data.user.role,
-                        id: data.user.id
-                    }));
-                    sessionStorage.setItem('aydocorpLoggedIn', 'true');
-
-                    // Show success message with non-blocking notification
-                    AuthUtils.showNotification(`Welcome back, ${data.user.username}!`, 'success');
-
-                    // Update UI to show admin badge if applicable
-                    checkLoginStatus();
-
-                    // Redirect to employee portal
-                    window.location.href = '#employee-portal';
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Login failed. Please check your credentials.');
                 } else {
-                    // Login failed with error message from server
-                    AuthUtils.showNotification(data.message || 'Login failed. Please check your credentials.', 'error');
-                    throw new Error(data.message || 'Login failed');
+                    throw new Error(`Login failed with status: ${response.status}`);
                 }
+            }
+            
+            // Handle successful login
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                // Parse JSON response
+                const data = await response.json();
+                console.log('Login successful');
+                
+                if (!data.token) {
+                    throw new Error('Server did not return an authentication token.');
+                }
+                
+                // Store token and user info in sessionStorage
+                sessionStorage.setItem('aydocorpToken', data.token);
+                    // We'll store this in sessionStorage which is cleared when the browser is closed
+                sessionStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
+                sessionStorage.setItem('aydocorpLoggedIn', 'true');
+                
+                // Store token in a cookie for APIs that use cookie auth
+                document.cookie = `aydocorpToken=${data.token}; path=/; max-age=86400; SameSite=Strict`;
+                
+                // Show success message
+                AuthUtils.showNotification(`Welcome back, ${data.user?.username || 'User'}!`, 'success');
+                
+                // Update UI
+                    // Update UI to show admin badge if applicable
+                checkLoginStatus();
+                
+                // Redirect to employee portal
+                window.location.href = '#employee-portal';
             } else {
-                // Non-JSON response (likely HTML error page)
-                const text = await response.text();
-                console.error('Received non-JSON response:', text.substring(0, 500));
-                AuthUtils.showNotification('Unexpected response from server. Please try again later.', 'error');
-                throw new Error('Unexpected response format');
+                throw new Error('Unexpected response format from server.');
             }
         } catch (error) {
             console.error('Login error:', error);
-            // Only show notification if it hasn't been shown already
-            if (error.message !== 'Server connection failed' && 
-                error.message !== 'Invalid API URL' && 
-                error.message !== 'Login failed' &&
-                error.message !== 'Unexpected response format' &&
-                error.message !== 'Username is required' &&
-                error.message !== 'Password is required') {
-                AuthUtils.showNotification('An error occurred during login. Please try again.', 'error');
-            }
+            AuthUtils.showNotification(error.message || 'Login failed', 'error');
             throw error;
         }
     }
@@ -544,21 +505,32 @@
     async function loadCareerPaths() {
         try {
             const $careerPathList = $('.career-path-list');
-            const url = getApiUrl('employee-portal/career-paths');
-
-            if (!url) {
-                AuthUtils.showNotification('Invalid API configuration', 'error');
-                return;
+            $careerPathList.html('<p>Loading career paths...</p>');
+            
+            // Get token from session storage
+            const token = sessionStorage.getItem('aydocorpToken');
+            if (!token) {
+                throw new Error('Authentication required');
             }
-
-            const response = await AuthUtils.secureRequest(url);
-
+            
+            // Set up headers with both authentication methods
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'x-auth-token': token
+            };
+            
+            // Make the API request
+            const response = await fetch(getApiUrl('api/employee-portal/career-paths'), {
+                method: 'GET',
+                headers: headers
+            });
+            
             if (!response.ok) {
-                console.error('Failed to load career paths');
-
-                // Special handling for authentication errors
+                // If unauthorized, try to refresh token
                 if (response.status === 401) {
-                    console.warn('Authentication error loading career paths, attempting to refresh token');
+                    console.error('Authentication error loading career paths, attempting to refresh token');
 
                     // Try to validate token
                     const isValid = await validateToken();
@@ -566,139 +538,102 @@
                     if (isValid) {
                         // Token is valid, retry the request
                         console.log('Token validated, retrying career paths request');
-                        const retryResponse = await AuthUtils.secureRequest(url);
-
+                        
+                        // Try again with the same headers
+                        const retryResponse = await fetch(getApiUrl('api/employee-portal/career-paths'), {
+                            method: 'GET',
+                            headers: headers
+                        });
+                        
                         if (retryResponse.ok) {
                             // Success on retry, process the response
                             const careerPaths = await retryResponse.json();
-
-                            // Use the existing rendering logic instead of calling a separate function
-                            if (careerPaths.length === 0) {
-                                $careerPathList.html('<p>No career paths found.</p>');
-                                return;
-                            }
-
-                            // Render career paths
-                            let html = '<div class="career-paths">';
-
-                            careerPaths.forEach(careerPath => {
-                                html += `
-                                    <div class="career-path-item" data-id="${careerPath._id}">
-                                        <h4>${careerPath.department}</h4>
-                                        <p>${careerPath.description.substring(0, 100)}${careerPath.description.length > 100 ? '...' : ''}</p>
-                                        <button class="view-career-path button small" data-id="${careerPath._id}">View Details</button>
-                                    </div>
-                                `;
-                            });
-
-                            html += '</div>';
-                            $careerPathList.html(html);
-
-                            // Add event listeners to the view buttons
-                            $('.view-career-path').on('click', function() {
-                                const careerPathId = $(this).data('id');
-                                loadCareerPathDetails(careerPathId);
-                            });
-
+                            renderCareerPaths(careerPaths, $careerPathList);
                             return;
                         }
                     }
-
+                    
+                    // If we still can't access, show login required
                     // If we get here, the retry failed or token is invalid
                     // Show a more informative error message with options to continue
                     $careerPathList.html(`
                         <div class="error-message">
-                            <h3>Authentication Notice</h3>
-                            <p>We're having trouble authenticating your session, but you can continue using the portal.</p>
-                            <p>Some features might be limited until this is resolved.</p>
-                            <div class="error-actions">
-                                <button class="retry-button button small">Retry</button>
-                                <button class="continue-anyway-button button small">Continue Anyway</button>
-                                <a href="#login" class="button small">Login Again</a>
-                            </div>
+                            <h3>Authentication Required</h3>
+                            <p>Your session may have expired. Please <a href="#login">log in</a> again.</p>
                         </div>
                     `);
-
-                    // Add event listener to the continue anyway button
-                    $('.continue-anyway-button').on('click', function() {
-                        // Show placeholder content instead of error
-                        $careerPathList.html(`
-                            <div class="placeholder-content">
-                                <h3>Career Paths</h3>
-                                <p>Career path data is currently unavailable due to authentication issues.</p>
-                                <p>You can still access other sections of the employee portal.</p>
-                                <button class="retry-button button small">Try Again</button>
-                            </div>
-                        `);
-
-                        // Add event listener to the retry button
-                        $('.retry-button').on('click', function() {
-                            loadCareerPaths();
-                        });
-                    });
-
-                    // Add event listener to retry button
-                    $('.retry-button').on('click', function() {
-                        loadCareerPaths();
-                    });
-
                     return;
                 }
-
-                // Handle other errors
+                
+                console.error('Failed to load career paths');
                 $careerPathList.html(`
                     <div class="error-message">
                         <h3>Error Loading Career Paths</h3>
-                        <p>Failed to load career paths</p>
-                        <button class="retry-button button small">Retry</button>
+                        <p>Status: ${response.status}</p>
+                        <button class="retry-button">Retry</button>
                     </div>
                 `);
-
-                // Add event listener to retry button
+                
+                // Add retry button handler
                 $('.retry-button').on('click', function() {
                     loadCareerPaths();
                 });
 
                 return;
             }
-
+            
             const careerPaths = await response.json();
-
-            if (careerPaths.length === 0) {
-                $careerPathList.html('<p>No career paths found.</p>');
-                return;
-            }
-
-            // Render career paths
-            let html = '<div class="career-paths">';
-
-            careerPaths.forEach(careerPath => {
-                html += `
-                    <div class="career-path-item" data-id="${careerPath._id}">
-                        <h4>${careerPath.department}</h4>
-                        <p>${careerPath.description.substring(0, 100)}${careerPath.description.length > 100 ? '...' : ''}</p>
-                        <button class="view-career-path button small" data-id="${careerPath._id}">View Details</button>
-                    </div>
-                `;
-            });
-
-            html += '</div>';
-            $careerPathList.html(html);
-
-            // Add event listeners to the view buttons
-            $('.view-career-path').on('click', function() {
-                const careerPathId = $(this).data('id');
-                loadCareerPathDetails(careerPathId);
-            });
+            renderCareerPaths(careerPaths, $careerPathList);
         } catch (error) {
             console.error('Error loading career paths:', error);
-            $careerPathList.html(`
+            $('.career-path-list').html(`
                 <div class="error-message">
                     <h3>Error Loading Career Paths</h3>
                     <p>${error.message}</p>
+                    <button class="retry-button">Retry</button>
                 </div>
             `);
+            
+            // Add retry button handler
+            $('.retry-button').on('click', function() {
+                loadCareerPaths();
+            });
         }
+    }
+    
+    // Helper function to render career paths (add this after loadCareerPaths)
+    function renderCareerPaths(careerPaths, $container) {
+
+        if (careerPaths.length === 0) {
+            $container.html('<p>No career paths found.</p>');
+            return;
+        }
+        
+        // Render career paths
+        let html = '<div class="career-paths">';
+
+        careerPaths.forEach(careerPath => {
+            // Safely trim description
+            const description = careerPath.description || '';
+            const trimmedDescription = description.substring(0, 100) + (description.length > 100 ? '...' : '');
+            
+            html += `
+                <div class="career-path-item" data-id="${AuthUtils.sanitizeHtml(careerPath._id)}">
+                    <h4>${AuthUtils.sanitizeHtml(careerPath.department)}</h4>
+                    <p>${AuthUtils.sanitizeHtml(trimmedDescription)}</p>
+                    <button class="view-career-path button small" data-id="${AuthUtils.sanitizeHtml(careerPath._id)}">View Details</button>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        $container.html(html);
+        
+        // Add event listeners to the view buttons
+        $('.view-career-path').on('click', function() {
+            const careerPathId = $(this).data('id');
+            loadCareerPathDetails(careerPathId);
+        });
     }
 
     /**

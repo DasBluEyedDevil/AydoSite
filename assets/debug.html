@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Authentication Debugging</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-panel { 
+            position: fixed; 
+            bottom: 10px; 
+            right: 10px; 
+            z-index: 9999; 
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #ff5722; 
+            color: white; 
+            padding: 5px 10px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer;
+        }
+        pre {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Debugging</h1>
+    <p>Use this page to debug authentication issues in the application.</p>
+    
+    <div id="debug-output"></div>
+    
+    <div class="debug-panel">
+        <button id="debug-auth">Debug Auth</button>
+        <button id="clear-auth">Clear Auth Data</button>
+    </div>
+
+    <script>
+    document.getElementById('debug-auth').addEventListener('click', async function() {
+        try {
+            // Check if debugAuth function exists
+            if (typeof debugAuth !== 'function') {
+                alert('debugAuth function not found. Make sure debug-utils.js is loaded.');
+                return;
+            }
+            
+            const summary = await debugAuth();
+            
+            // Display results
+            const output = document.getElementById('debug-output');
+            output.innerHTML = `
+                <h2>Auth Debug Summary</h2>
+                <ul>
+                    <li><strong>Has Token:</strong> ${summary.hasToken}</li>
+                    <li><strong>Has User Info:</strong> ${summary.hasUserInfo}</li>
+                    <li><strong>Is Logged In:</strong> ${summary.isLoggedIn}</li>
+                </ul>
+                <p>${summary.message}</p>
+                <p>See browser console for more detailed information.</p>
+            `;
+            
+            alert(`Auth Debug Summary:\n- Has Token: ${summary.hasToken}\n- Has User Info: ${summary.hasUserInfo}\n- Is Logged In: ${summary.isLoggedIn}\n\n${summary.message}\n\nSee page and console for details.`);
+        } catch (error) {
+            alert('Error running debug: ' + error.message);
+            console.error('Debug error:', error);
+        }
+    });
+    
+    document.getElementById('clear-auth').addEventListener('click', function() {
+        // Clear all auth data
+        sessionStorage.removeItem('aydocorpToken');
+        sessionStorage.removeItem('aydocorpUser');
+        sessionStorage.removeItem('aydocorpLoggedIn');
+        
+        // Clear cookies
+        document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        alert('All authentication data has been cleared.');
+        
+        const output = document.getElementById('debug-output');
+        output.innerHTML = '<p>Authentication data cleared.</p>';
+    });
+    </script>
+</body>
+</html>

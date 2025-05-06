@@ -187,3 +187,73 @@
     };
 
 })(jQuery);
+
+/**
+ * Debug helper for authentication issues
+ * @returns {Promise<Object>} A summary of auth state
+ */
+async function debugAuth() {
+    console.group('Authentication Debug Information');
+    
+    // Check stored token
+    const token = sessionStorage.getItem('aydocorpToken');
+    console.log('Token exists:', !!token);
+    if (token) {
+        // Don't log full token for security reasons
+        console.log('Token preview:', token.substring(0, 10) + '...');
+    }
+    
+    // Check user info
+    const userJson = sessionStorage.getItem('aydocorpUser');
+    console.log('User info exists:', !!userJson);
+    if (userJson) {
+        try {
+            const user = JSON.parse(userJson);
+            console.log('User:', { ...user, token: undefined }); // Don't log token if present
+        } catch (e) {
+            console.error('Failed to parse user JSON:', e);
+        }
+    }
+    
+    // Check login status
+    const isLoggedIn = sessionStorage.getItem('aydocorpLoggedIn') === 'true';
+    console.log('Is logged in:', isLoggedIn);
+    
+    // Try API test
+    try {
+        const apiTest = await testApiConnection();
+        console.log('API reachable:', apiTest);
+    } catch (e) {
+        console.error('API test error:', e);
+    }
+    
+    // Try token validation
+    if (token) {
+        try {
+            const isValid = await validateToken();
+            console.log('Token valid:', isValid);
+        } catch (e) {
+            console.error('Token validation error:', e);
+        }
+    }
+    
+    console.groupEnd();
+    
+    // Return a summary
+    return {
+        hasToken: !!token,
+        hasUserInfo: !!userJson,
+        isLoggedIn: isLoggedIn,
+        message: token ? 'Authentication data exists but may not be valid with server' : 'No authentication data found'
+    };
+}
+
+// Export if using as a module, or make available in global scope
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        debugAuth
+    };
+} else {
+    // Make it available globally
+    window.debugAuth = debugAuth;
+}
