@@ -228,7 +228,7 @@
 
                 console.log('User status HTML:', userStatusHtml);
                 // Append to header instead of body to ensure it's visible
-                $('#header').append(userStatusHtml);
+                $('#header').prepend(userStatusHtml);
                 console.log('User status appended to header. Header HTML:', $('#header').html());
 
                 // Replace the "Member Login" link with just "Logout"
@@ -313,6 +313,15 @@
         }
     }
 
+    // Helper function to add back button event listener
+    function addBackToCareerPathsListener() {
+        // Use event delegation to handle all back buttons with a single handler
+        $(document).off('click', '.back-to-career-paths').on('click', '.back-to-career-paths', function() {
+            $('.career-path-details').hide();
+            $('.career-path-list').show();
+        });
+    }
+
     async function loadCareerPathDetails(careerPathId) {
         try {
             const apiBase = getApiBaseUrl();
@@ -336,10 +345,7 @@
                 $('.career-path-list').hide();
 
                 // Add event listener to the back button
-                $('.back-to-career-paths').on('click', function() {
-                    $('.career-path-details').hide();
-                    $('.career-path-list').show();
-                });
+                addBackToCareerPathsListener();
                 return;
             }
 
@@ -455,10 +461,7 @@
             $('.career-path-list').hide();
 
             // Add event listener to the back button
-            $('.back-to-career-paths').on('click', function() {
-                $('.career-path-details').hide();
-                $('.career-path-list').show();
-            });
+            addBackToCareerPathsListener();
         } catch (error) {
             console.error('Error loading career path details:', error);
             $('.career-path-details').html(`
@@ -471,10 +474,7 @@
             $('.career-path-list').hide();
 
             // Add event listener to the back button
-            $('.back-to-career-paths').on('click', function() {
-                $('.career-path-details').hide();
-                $('.career-path-list').show();
-            });
+            addBackToCareerPathsListener();
         }
     }
 
@@ -1154,7 +1154,7 @@
     }
 
     // Function to save page content
-    function savePageContent(pageElement, title, content) {
+    function savePageContent(pageElement) {
         // In a real implementation, this would send the data to the server
         // For now, we'll just show a success message
         alert(`Content for "${pageElement}" has been saved successfully!`);
@@ -1253,7 +1253,7 @@
             const content = $('#element-content').val();
 
             if (selectedElement && title && content) {
-                savePageContent(selectedElement, title, content);
+                savePageContent(selectedElement);
             } else {
                 alert('Please fill in all fields.');
             }
