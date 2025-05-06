@@ -243,6 +243,7 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $careerPathList = $('.career-path-list');
 
             const response = await fetch(`${apiBase}/api/employee-portal/career-paths`, {
                 headers: {
@@ -252,7 +253,7 @@
 
             if (!response.ok) {
                 console.error('Failed to load career paths');
-                $('.career-path-list').html(`
+                $careerPathList.html(`
                     <div class="error-message">
                         <h3>Error Loading Career Paths</h3>
                         <p>Failed to load career paths</p>
@@ -264,7 +265,7 @@
             const careerPaths = await response.json();
 
             if (careerPaths.length === 0) {
-                $('.career-path-list').html('<p>No career paths found.</p>');
+                $careerPathList.html('<p>No career paths found.</p>');
                 return;
             }
 
@@ -282,7 +283,7 @@
             });
 
             html += '</div>';
-            $('.career-path-list').html(html);
+            $careerPathList.html(html);
 
             // Add event listeners to the view buttons
             $('.view-career-path').on('click', function() {
@@ -291,7 +292,7 @@
             });
         } catch (error) {
             console.error('Error loading career paths:', error);
-            $('.career-path-list').html(`
+            $careerPathList.html(`
                 <div class="error-message">
                     <h3>Error Loading Career Paths</h3>
                     <p>${error.message}</p>
@@ -304,6 +305,8 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $careerPathDetails = $('.career-path-details');
+            const $careerPathList = $('.career-path-list');
 
             const response = await fetch(`${apiBase}/api/employee-portal/career-paths/${careerPathId}`, {
                 headers: {
@@ -313,19 +316,19 @@
 
             if (!response.ok) {
                 console.error('Failed to load career path details');
-                $('.career-path-details').html(`
+                $careerPathDetails.html(`
                     <div class="error-message">
                         <h3>Error Loading Career Path Details</h3>
                         <p>Failed to load career path details</p>
                         <button class="back-to-career-paths button">Back to Career Paths</button>
                     </div>
                 `).show();
-                $('.career-path-list').hide();
+                $careerPathList.hide();
 
                 // Add event listener to the back button
                 $('.back-to-career-paths').on('click', function() {
-                    $('.career-path-details').hide();
-                    $('.career-path-list').show();
+                    $careerPathDetails.hide();
+                    $careerPathList.show();
                 });
                 return;
             }
@@ -438,29 +441,29 @@
                 </div>
             `;
 
-            $('.career-path-details').html(html).show();
-            $('.career-path-list').hide();
+            $careerPathDetails.html(html).show();
+            $careerPathList.hide();
 
             // Add event listener to the back button
             $('.back-to-career-paths').on('click', function() {
-                $('.career-path-details').hide();
-                $('.career-path-list').show();
+                $careerPathDetails.hide();
+                $careerPathList.show();
             });
         } catch (error) {
             console.error('Error loading career path details:', error);
-            $('.career-path-details').html(`
+            $careerPathDetails.html(`
                 <div class="error-message">
                     <h3>Error Loading Career Path Details</h3>
                     <p>${error.message}</p>
                     <button class="back-to-career-paths button">Back to Career Paths</button>
                 </div>
             `).show();
-            $('.career-path-list').hide();
+            $careerPathList.hide();
 
             // Add event listener to the back button
             $('.back-to-career-paths').on('click', function() {
-                $('.career-path-details').hide();
-                $('.career-path-list').show();
+                $careerPathDetails.hide();
+                $careerPathList.show();
             });
         }
     }
@@ -470,6 +473,7 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $employeeListContainer = $('.employee-list-container');
 
             const response = await fetch(`${apiBase}/api/employee-portal/employees`, {
                 headers: {
@@ -479,7 +483,7 @@
 
             if (!response.ok) {
                 console.error('Failed to load employees');
-                $('.employee-list-container').html(`
+                $employeeListContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Employees</h3>
                         <p>Failed to load employees</p>
@@ -491,7 +495,7 @@
             const employees = await response.json();
 
             if (employees.length === 0) {
-                $('.employee-list-container').html('<p>No employees found.</p>');
+                $employeeListContainer.html('<p>No employees found.</p>');
                 return;
             }
 
@@ -515,7 +519,7 @@
             });
 
             html += '</div>';
-            $('.employee-list-container').html(html);
+            $employeeListContainer.html(html);
 
             // Add event listeners to the view buttons
             $('.view-employee').on('click', function() {
@@ -524,7 +528,7 @@
             });
         } catch (error) {
             console.error('Error loading employees:', error);
-            $('.employee-list-container').html(`
+            $employeeListContainer.html(`
                 <div class="error-message">
                     <h3>Error Loading Employees</h3>
                     <p>${error.message}</p>
@@ -537,6 +541,8 @@
         try {
             const apiBase = getApiBaseUrl();
             const token = localStorage.getItem('aydocorpToken');
+            const $employeeProfileContainer = $('.employee-profile-container');
+            const $employeeListContainer = $('.employee-list-container');
 
             const response = await fetch(`${apiBase}/api/employee-portal/employees/${employeeId}`, {
                 headers: {
@@ -546,19 +552,19 @@
 
             if (!response.ok) {
                 console.error('Failed to load employee profile');
-                $('.employee-profile-container').html(`
+                $employeeProfileContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Employee Profile</h3>
                         <p>Failed to load employee profile</p>
                         <button class="back-to-employees button">Back to Employee List</button>
                     </div>
                 `).show();
-                $('.employee-list-container').hide();
+                $employeeListContainer.hide();
 
                 // Add event listener to the back button
                 $('.back-to-employees').on('click', function() {
-                    $('.employee-profile-container').hide();
-                    $('.employee-list-container').show();
+                    $employeeProfileContainer.hide();
+                    $employeeListContainer.show();
                 });
                 return;
             }
@@ -616,30 +622,29 @@
                 </div>
             `;
 
-            $('.employee-profile-container').html(html).show();
-            $('.employee-list-container').hide();
-            $('.employee-edit-form-container').hide();
+            $employeeProfileContainer.html(html).show();
+            $employeeListContainer.hide();
 
             // Add event listener to the back button
             $('.back-to-employees').on('click', function() {
-                $('.employee-profile-container').hide();
-                $('.employee-list-container').show();
+                $employeeProfileContainer.hide();
+                $employeeListContainer.show();
             });
         } catch (error) {
             console.error('Error loading employee profile:', error);
-            $('.employee-profile-container').html(`
+            $employeeProfileContainer.html(`
                 <div class="error-message">
                     <h3>Error Loading Employee Profile</h3>
                     <p>${error.message}</p>
                     <button class="back-to-employees button">Back to Employee List</button>
                 </div>
             `).show();
-            $('.employee-list-container').hide();
+            $employeeListContainer.hide();
 
             // Add event listener to the back button
             $('.back-to-employees').on('click', function() {
-                $('.employee-profile-container').hide();
-                $('.employee-list-container').show();
+                $employeeProfileContainer.hide();
+                $employeeListContainer.show();
             });
         }
     }
@@ -1144,6 +1149,7 @@
     function savePageContent(pageElement, title, content) {
         // In a real implementation, this would send the data to the server
         // For now, we'll just show a success message
+        console.log(`Saving content: ${title} - ${content.substring(0, 50)}...`);
         alert(`Content for "${pageElement}" has been saved successfully!`);
 
         // Reset the form
@@ -1156,7 +1162,8 @@
     // Function to load user list
     function loadUserList() {
         // Show the user list container
-        $('#user-list-container').show();
+        const $userListContainer = $('#user-list-container');
+        $userListContainer.show();
 
         // In a real implementation, this would fetch users from the server
         // For now, we'll use placeholder data
@@ -1202,7 +1209,7 @@
             </table>
         `;
 
-        $('#user-list-container').html(html);
+        $userListContainer.html(html);
 
         // Add event listeners to buttons
         $('.edit-user-button').on('click', function() {
@@ -1219,6 +1226,13 @@
     // Initialize on document ready
     // ==================================
     $(document).ready(function () {
+        // Cache jQuery selectors
+        const $portalSection = $('.portal-section');
+        const $portalTab = $('.portal-tab');
+        const $operationsListContainer = $('#operations-list-container');
+        const $operationDetailsContainer = $('#operation-details-container');
+        const $newPostFormContainer = $('#new-post-form-container');
+
         // Admin Dashboard Initialization
         // Initialize the rich text editor when the page loads
         initRichTextEditor();
@@ -1617,10 +1631,10 @@
                 // Show the employee portal if logged in
                 if (localStorage.getItem('aydocorpLoggedIn') === 'true') {
                     // Default to showing the Career Paths section
-                    $('.portal-section').hide();
+                    $portalSection.hide();
                     $('#career-paths-section').show();
-                    $('.portal-tab').removeClass('active');
-                    $('.portal-tab[data-section="career-paths"]').addClass('active');
+                    $portalTab.removeClass('active');
+                    $portalTab.filter('[data-section="career-paths"]').addClass('active');
 
                     // Load career paths data
                     loadCareerPaths();
@@ -1649,11 +1663,11 @@
             event.preventDefault();
 
             // Hide other containers
-            $('#operations-list-container').hide();
-            $('#operation-details-container').hide();
+            $operationsListContainer.hide();
+            $operationDetailsContainer.hide();
 
             // Show the new operation form
-            $('#new-post-form-container').show();
+            $newPostFormContainer.show();
         });
 
         // Operation submission handler
@@ -1710,10 +1724,10 @@
                 window.location.href = '#employee-portal';
 
                 // Show the operations section
-                $('.portal-section').hide();
+                $portalSection.hide();
                 $('#operations-section').show();
-                $('.portal-tab').removeClass('active');
-                $('.portal-tab[data-section="operations"]').addClass('active');
+                $portalTab.removeClass('active');
+                $portalTab.filter('[data-section="operations"]').addClass('active');
 
                 // Reload operations data
                 loadOperations();
