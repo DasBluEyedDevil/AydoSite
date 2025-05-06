@@ -1569,7 +1569,7 @@
                     return;
                 }
 
-                await response.json();
+                // Process successful response but we don't need the data
                 alert('Account created successfully! You can now log in.');
 
                 // Switch to login form
