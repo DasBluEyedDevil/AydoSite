@@ -247,17 +247,18 @@
      * @returns {Promise<void>}
      */
     async function handleLogin(username, password) {
-        // Input validation
+        // Input validation outside try-catch
         if (!username || !password) {
-            throw new Error('Please enter both username and password.');
+            return Promise.reject(new Error('Please enter both username and password.'));
+        }
+
+        // Connection test outside try-catch
+        const connectionTest = await testApiConnection();
+        if (!connectionTest) {
+            return Promise.reject(new Error('Cannot connect to the server. Please try again later.'));
         }
 
         try {
-            // First test connection
-            const connectionTest = await testApiConnection();
-            if (!connectionTest) {
-                throw new Error('Cannot connect to the server. Please try again later.');
-            }
 
             // In your handleLogin function
             console.log('Attempting login at:', getApiUrl('auth/login'));
@@ -278,9 +279,9 @@
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || 'Login failed. Please check your credentials.');
+                    return Promise.reject(new Error(errorData.message || 'Login failed. Please check your credentials.'));
                 } else {
-                    throw new Error(`Login failed with status: ${response.status}`);
+                    return Promise.reject(new Error(`Login failed with status: ${response.status}`));
                 }
             }
 
@@ -292,7 +293,7 @@
                 console.log('Login successful');
 
                 if (!data.token) {
-                    throw new Error('Server did not return an authentication token.');
+                    return Promise.reject(new Error('Server did not return an authentication token.'));
                 }
 
                 // Store token and user info in sessionStorage
@@ -314,7 +315,7 @@
                 // Redirect to landing page instead of employee portal
                 window.location.href = '#';
             } else {
-                throw new Error('Unexpected response format from server.');
+                return Promise.reject(new Error('Unexpected response format from server.'));
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -558,7 +559,7 @@
                     <div class="user-status">
                         <span class="username">${safeUsername}</span>
                         <div class="dropdown-container">
-                            ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                            ${isAdmin ? '<a href="#admin-panel" class="admin-badge">ADMIN</a>' : ''}
                             <span class="logout-option">
                                 <a href="#" class="logout">Logout</a>
                             </span>
@@ -611,15 +612,22 @@
      * Load career paths from the API
      */
     async function loadCareerPaths() {
-        try {
-            const $careerPathList = $('.career-path-list');
-            $careerPathList.html('<p>Loading career paths...</p>');
+        const $careerPathList = $('.career-path-list');
+        $careerPathList.html('<p>Loading career paths...</p>');
 
-            // Get token from session storage
-            const token = sessionStorage.getItem('aydocorpToken');
-            if (!token) {
-                throw new Error('Authentication required');
-            }
+        // Get token from session storage
+        const token = sessionStorage.getItem('aydocorpToken');
+        if (!token) {
+            $careerPathList.html(`
+                <div class="error-message">
+                    <h3>Authentication Required</h3>
+                    <p>Please <a href="#signin">log in</a> to view career paths.</p>
+                </div>
+            `);
+            return;
+        }
+
+        try {
 
             // Set up headers with both authentication methods
             const headers = {
@@ -667,7 +675,7 @@
                     $careerPathList.html(`
                         <div class="error-message">
                             <h3>Authentication Required</h3>
-                            <p>Your session may have expired. Please <a href="#login">log in</a> again.</p>
+                            <p>Your session may have expired. Please <a href="#signin">log in</a> again.</p>
                         </div>
                     `);
                     return;
@@ -683,7 +691,8 @@
                 `);
 
                 // Add retry button handler
-                $('.retry-button').on('click', function() {
+                const $retryButton = $('.retry-button');
+                $retryButton.on('click', function() {
                     loadCareerPaths();
                 });
 
@@ -694,7 +703,7 @@
             renderCareerPaths(careerPaths, $careerPathList);
         } catch (error) {
             console.error('Error loading career paths:', error);
-            $('.career-path-list').html(`
+            $careerPathList.html(`
                 <div class="error-message">
                     <h3>Error Loading Career Paths</h3>
                     <p>${error.message}</p>
@@ -703,7 +712,8 @@
             `);
 
             // Add retry button handler
-            $('.retry-button').on('click', function() {
+            const $retryButton = $('.retry-button');
+            $retryButton.on('click', function() {
                 loadCareerPaths();
             });
         }
@@ -779,7 +789,8 @@
                 $careerPathList.hide();
 
                 // Add event listener to the back button
-                $('.back-to-career-paths').on('click', function() {
+                const $backButton = $('.back-to-career-paths');
+                $backButton.on('click', function() {
                     $careerPathDetails.hide();
                     $careerPathList.show();
                 });
@@ -898,7 +909,8 @@
             $careerPathList.hide();
 
             // Add event listener to the back button
-            $('.back-to-career-paths').on('click', function() {
+            const $backButton = $('.back-to-career-paths');
+            $backButton.on('click', function() {
                 $careerPathDetails.hide();
                 $careerPathList.show();
             });
@@ -914,7 +926,8 @@
             $careerPathList.hide();
 
             // Add event listener to the back button
-            $('.back-to-career-paths').on('click', function() {
+            const $backButton = $('.back-to-career-paths');
+            $backButton.on('click', function() {
                 $careerPathDetails.hide();
                 $careerPathList.show();
             });
@@ -999,12 +1012,13 @@
                             <h3>Authentication Error</h3>
                             <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
                             <button class="retry-button button small">Retry</button>
-                            <a href="#login" class="button small">Login Again</a>
+                            <a href="#signin" class="button small">Login Again</a>
                         </div>
                     `);
 
                     // Add event listener to retry button
-                    $('.retry-button').on('click', function() {
+                    const $authRetryButton = $('.retry-button');
+                    $authRetryButton.on('click', function() {
                         loadEmployees();
                     });
 
@@ -1021,7 +1035,8 @@
                 `);
 
                 // Add event listener to retry button
-                $('.retry-button').on('click', function() {
+                const $errorRetryButton = $('.retry-button');
+                $errorRetryButton.on('click', function() {
                     loadEmployees();
                 });
 
@@ -1281,7 +1296,7 @@
                             <h3>Authentication Error</h3>
                             <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
                             <button class="retry-button button small">Retry</button>
-                            <a href="#login" class="button small">Login Again</a>
+                            <a href="#signin" class="button small">Login Again</a>
                         </div>
                     `);
 
@@ -1574,7 +1589,7 @@
                             <h3>Authentication Error</h3>
                             <p>Your session may have expired. Please try refreshing the page or logging in again.</p>
                             <button class="retry-button button small">Retry</button>
-                            <a href="#login" class="button small">Login Again</a>
+                            <a href="#signin" class="button small">Login Again</a>
                         </div>
                     `);
 
@@ -1961,7 +1976,7 @@
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to save content: ${response.status} ${response.statusText}`);
+                return Promise.reject(new Error(`Failed to save content: ${response.status} ${response.statusText}`));
             }
 
             // Update the page content
