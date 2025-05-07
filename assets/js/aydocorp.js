@@ -1804,13 +1804,17 @@
         // Initialize TinyMCE
         tinymce.init({
             selector: '#element-content',
-            plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+            // Add image tools plugin for more image editing options
+            plugins: 'anchor autolink charmap codesample emoticons image imagetools link lists media searchreplace table visualblocks wordcount',
+            // Add image button to toolbar
             toolbar: 'undo redo | blocks | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
             menubar: 'file edit view insert format tools table',
             toolbar_mode: 'sliding',
             contextmenu: 'link image table',
             height: 400,
             promotion: false,
+            // Enable image editing tools
+            imagetools_toolbar: 'rotateleft rotateright | flipv fliph | editimage imageoptions',
             setup: function(editor) {
                 // Log when editor is initialized
                 editor.on('init', function() {
@@ -1819,18 +1823,57 @@
             },
             // Enable automatic uploads of images represented by blob or data URIs
             automatic_uploads: true,
+            // Allow local images to be embedded
+            paste_data_images: true,
             // Add custom handler for images
             images_upload_handler: function (blobInfo, success, failure) {
-                // This is a simple example that converts the image to a data URL
-                // In a real implementation, you would upload the image to your server
-                const reader = new FileReader();
-                reader.onload = function () {
-                    success(reader.result);
-                };
-                reader.onerror = function () {
-                    failure('Image upload failed');
-                };
-                reader.readAsDataURL(blobInfo.blob());
+                try {
+                    // Convert the image to a data URL for embedding directly in the content
+                    const reader = new FileReader();
+                    reader.onload = function () {
+                        success(reader.result);
+                        console.log('Image uploaded successfully');
+                        // Show success notification
+                        AuthUtils.showNotification('Image uploaded successfully', 'success');
+                    };
+                    reader.onerror = function () {
+                        console.error('Image upload failed', reader.error);
+                        failure('Image upload failed: ' + reader.error);
+                        // Show error notification
+                        AuthUtils.showNotification('Image upload failed: ' + reader.error, 'error');
+                    };
+                    reader.readAsDataURL(blobInfo.blob());
+                } catch (error) {
+                    console.error('Error in image upload handler:', error);
+                    failure('Image upload error: ' + error.message);
+                    // Show error notification
+                    AuthUtils.showNotification('Image upload error: ' + error.message, 'error');
+                }
+            },
+            // Add file picker callback for more image sources
+            file_picker_callback: function(callback, value, meta) {
+                // Only for image type
+                if (meta.filetype === 'image') {
+                    // Create an input element
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'file');
+                    input.setAttribute('accept', 'image/*');
+
+                    input.onchange = function() {
+                        var file = this.files[0];
+                        var reader = new FileReader();
+
+                        reader.onload = function() {
+                            callback(reader.result, {
+                                alt: file.name
+                            });
+                        };
+
+                        reader.readAsDataURL(file);
+                    };
+
+                    input.click();
+                }
             }
         });
     }
@@ -1887,7 +1930,7 @@
             console.log(`Saving content: ${title} - ${content.substring(0, 50)}...`);
 
             // Construct the API endpoint URL
-            const url = getApiUrl('page-content/pages');
+            const url = getApiUrl('page-content/pages/' + pageElement);
 
             // Send the data to the server
             const response = await AuthUtils.secureRequest(url, {
