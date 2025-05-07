@@ -997,7 +997,8 @@
                             $employeeListContainer.html(html);
 
                             // Add event listeners to the view buttons
-                            $('.view-employee').on('click', function() {
+                            const $viewEmployeeButtons = $('.view-employee');
+                            $viewEmployeeButtons.on('click', function() {
                                 const employeeId = $(this).data('id');
                                 loadEmployeeProfile(employeeId);
                             });
@@ -1073,7 +1074,8 @@
             $employeeListContainer.html(html);
 
             // Add event listeners to the view buttons
-            $('.view-employee').on('click', function() {
+            const $viewEmployeeButtons = $('.view-employee');
+            $viewEmployeeButtons.on('click', function() {
                 const employeeId = $(this).data('id');
                 loadEmployeeProfile(employeeId);
             });
@@ -1123,7 +1125,8 @@
                 $employeeListContainer.hide();
 
                 // Add event listener to the back button
-                $('.back-to-employees').on('click', function() {
+                const $backButton = $('.back-to-employees');
+                $backButton.on('click', function() {
                     $employeeProfileContainer.hide();
                     $employeeListContainer.show();
                 });
@@ -1187,7 +1190,8 @@
             $employeeListContainer.hide();
 
             // Add event listener to the back button
-            $('.back-to-employees').on('click', function() {
+            const $backButton = $('.back-to-employees');
+            $backButton.on('click', function() {
                 $employeeProfileContainer.hide();
                 $employeeListContainer.show();
             });
@@ -1203,7 +1207,8 @@
             $employeeListContainer.hide();
 
             // Add event listener to the back button
-            $('.back-to-employees').on('click', function() {
+            const $backButton = $('.back-to-employees');
+            $backButton.on('click', function() {
                 $employeeProfileContainer.hide();
                 $employeeListContainer.show();
             });
@@ -1281,7 +1286,8 @@
                             $eventsListContainer.html(html);
 
                             // Add event listeners to the view buttons
-                            $('.view-event').on('click', function() {
+                            const $viewEventButtons = $('.view-event');
+                            $viewEventButtons.on('click', function() {
                                 const eventId = $(this).data('id');
                                 loadEventDetails(eventId);
                             });
@@ -1363,7 +1369,8 @@
             $eventsListContainer.html(html);
 
             // Add event listeners to the view buttons
-            $('.view-event').on('click', function() {
+            const $viewEventButtons = $('.view-event');
+            $viewEventButtons.on('click', function() {
                 const eventId = $(this).data('id');
                 loadEventDetails(eventId);
             });
@@ -1403,19 +1410,20 @@
 
             if (!response.ok) {
                 console.error('Failed to load event details');
-                $('.event-details-container').html(`
+                $eventDetailsContainer.html(`
                     <div class="error-message">
                         <h3>Error Loading Event Details</h3>
                         <p>Failed to load event details</p>
                         <button class="back-to-events button">Back to Events</button>
                     </div>
                 `).show();
-                $('.events-list-container').hide();
+                $eventsListContainer.hide();
 
                 // Add event listener to the back button
-                $('.back-to-events').on('click', function() {
-                    $('.event-details-container').hide();
-                    $('.events-list-container').show();
+                const $backToEventsButton = $('.back-to-events');
+                $backToEventsButton.on('click', function() {
+                    $eventDetailsContainer.hide();
+                    $eventsListContainer.show();
                 });
                 return;
             }
@@ -1574,7 +1582,8 @@
                             $operationsListContainer.html(html);
 
                             // Add event listeners to the view buttons
-                            $('.view-operation').on('click', function() {
+                            const $viewOperationButtons = $('.view-operation');
+                            $viewOperationButtons.on('click', function() {
                                 const operationId = $(this).data('id');
                                 loadOperationDetails(operationId);
                             });
@@ -1594,7 +1603,8 @@
                     `);
 
                     // Add event listener to retry button
-                    $('.retry-button').on('click', function() {
+                    const $retryButton = $('.retry-button');
+                    $retryButton.on('click', function() {
                         loadOperations();
                     });
 
@@ -1611,7 +1621,8 @@
                 `);
 
                 // Add event listener to retry button
-                $('.retry-button').on('click', function() {
+                const $retryButton = $('.retry-button');
+                $retryButton.on('click', function() {
                     loadOperations();
                 });
 
@@ -1654,7 +1665,8 @@
             $operationsListContainer.html(html);
 
             // Add event listeners to the view buttons
-            $('.view-operation').on('click', function() {
+            const $viewOperationButtons = $('.view-operation');
+            $viewOperationButtons.on('click', function() {
                 const operationId = $(this).data('id');
                 loadOperationDetails(operationId);
             });
