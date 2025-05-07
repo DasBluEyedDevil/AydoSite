@@ -448,8 +448,13 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
 .user-status .logout-option {
     display: none;
     margin-left: 0.5rem;
-    padding-left: 0.5rem;
-    border-left: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 0.2rem 0.5rem;
+    background-color: #000;
+    color: white;
+    border-radius: 3px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 /* Hover styling moved to combined selector above */
@@ -564,13 +569,13 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
 
 /* Specific styling for logout link */
 #header nav ul li a.logout {
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
-    padding: 0.2rem 0.5rem;
-    font-size: 0.7rem;
-    font-weight: bold;
-    text-transform: uppercase;
+    border-radius: 4px;
+    padding: 0.75rem 0.5rem;
+    font-size: inherit;
+    font-weight: normal;
+    text-transform: none;
 }
 
 /* Hover effect */
@@ -580,9 +585,9 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     transform: translateY(-2px);
 }
 
-/* Specific hover effect for logout link */
+/* Specific hover effect for logout link - now matches other buttons */
 #header nav ul li a.logout:hover {
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.2);
     border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
 }
