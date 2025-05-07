@@ -31,13 +31,19 @@
             max-height: 300px;
         }
     </style>
+    <!-- Include jQuery for DOM manipulation -->
+    <script src="assets/js/jquery.min.js"></script>
+    <!-- Include auth utilities -->
+    <script src="assets/js/auth-utils.js"></script>
+    <!-- Include main JS file with API functions -->
+    <script src="assets/js/aydocorp.js"></script>
 </head>
 <body>
     <h1>Authentication Debugging</h1>
     <p>Use this page to debug authentication issues in the application.</p>
-    
+
     <div id="debug-output"></div>
-    
+
     <div class="debug-panel">
         <button id="debug-auth">Debug Auth</button>
         <button id="clear-auth">Clear Auth Data</button>
@@ -51,9 +57,9 @@
                 alert('debugAuth function not found. Make sure debug-utils.js is loaded.');
                 return;
             }
-            
+
             const summary = await debugAuth();
-            
+
             // Display results
             const output = document.getElementById('debug-output');
             output.innerHTML = `
@@ -66,25 +72,25 @@
                 <p>${summary.message}</p>
                 <p>See browser console for more detailed information.</p>
             `;
-            
+
             alert(`Auth Debug Summary:\n- Has Token: ${summary.hasToken}\n- Has User Info: ${summary.hasUserInfo}\n- Is Logged In: ${summary.isLoggedIn}\n\n${summary.message}\n\nSee page and console for details.`);
         } catch (error) {
             alert('Error running debug: ' + error.message);
             console.error('Debug error:', error);
         }
     });
-    
+
     document.getElementById('clear-auth').addEventListener('click', function() {
         // Clear all auth data
         sessionStorage.removeItem('aydocorpToken');
         sessionStorage.removeItem('aydocorpUser');
         sessionStorage.removeItem('aydocorpLoggedIn');
-        
+
         // Clear cookies
         document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        
+
         alert('All authentication data has been cleared.');
-        
+
         const output = document.getElementById('debug-output');
         output.innerHTML = '<p>Authentication data cleared.</p>';
     });
