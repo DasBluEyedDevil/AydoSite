@@ -1799,99 +1799,39 @@
     // Admin Dashboard Functions
     // ==================================
 
-    // Function to initialize the rich text editor
+    // Function to initialize the TinyMCE rich text editor
     function initRichTextEditor() {
-        // Cache jQuery selectors
-        const $imageUploadContainer = $('.image-upload-container');
-        const $editorButton = $('.editor-button');
-
-        // Add event listeners to editor buttons
-        $editorButton.on('click', function(e) {
-            e.preventDefault();
-            const command = $(this).data('command');
-
-            if (command === 'createLink') {
-                const url = prompt('Enter the link URL:');
-                if (url) {
-                    document.execCommand(command, false, url);
-                }
-            } else if (command === 'insertImage') {
-                // Show image upload container
-                $imageUploadContainer.show();
-            } else {
-                // Execute the command
-                document.execCommand(command, false, null);
-
-                // Toggle active class for style buttons
-                if (['bold', 'italic', 'underline'].includes(command)) {
-                    $(this).toggleClass('active');
-                }
-            }
-        });
-
-        // Handle image insertion
-        $('#insert-image-button').on('click', function() {
-            const $imageUrl = $('#image-url');
-            const $imageAlt = $('#image-alt');
-            const imageUrl = $imageUrl.val();
-            const altText = $imageAlt.val() || 'Image';
-
-            if (imageUrl) {
-                // Get the textarea element
-                const $textarea = $('#element-content');
-
-                // Get current cursor position
-                const cursorPos = $textarea[0].selectionStart;
-
-                // Get current content
-                const content = $textarea.val();
-
-                // Create markdown-style image syntax
-                const imageSyntax = `![${altText}](${imageUrl})`;
-
-                // Insert the image syntax at cursor position
-                const newContent = content.substring(0, cursorPos) + imageSyntax + content.substring(cursorPos);
-
-                // Update the textarea content
-                $textarea.val(newContent);
-
-                // Set focus back to the textarea
-                $textarea.focus();
-
-                // Set cursor position after the inserted image syntax
-                $textarea[0].setSelectionRange(cursorPos + imageSyntax.length, cursorPos + imageSyntax.length);
-
-                // Clear fields and hide container
-                $imageUrl.val('');
-                $imageAlt.val('');
-                $imageUploadContainer.hide();
-
-                // Show success message
-                AuthUtils.showNotification('Image inserted successfully. It will appear as markdown syntax in the editor.', 'success');
-            } else {
-                alert('Please enter an image URL.');
-            }
-        });
-
-        // Handle image upload
-        const $imageUpload = $('#image-upload');
-        $imageUpload.on('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
+        // Initialize TinyMCE
+        tinymce.init({
+            selector: '#element-content',
+            plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+            toolbar: 'undo redo | blocks | bold italic underline strikethrough | link image media table | align lineheight | numlist bullist indent outdent | emoticons charmap | removeformat',
+            menubar: 'file edit view insert format tools table',
+            toolbar_mode: 'sliding',
+            contextmenu: 'link image table',
+            height: 400,
+            promotion: false,
+            setup: function(editor) {
+                // Log when editor is initialized
+                editor.on('init', function() {
+                    console.log('TinyMCE initialized');
+                });
+            },
+            // Enable automatic uploads of images represented by blob or data URIs
+            automatic_uploads: true,
+            // Add custom handler for images
+            images_upload_handler: function (blobInfo, success, failure) {
+                // This is a simple example that converts the image to a data URL
+                // In a real implementation, you would upload the image to your server
                 const reader = new FileReader();
-                reader.onload = function(event) {
-                    $imageUrl.val(event.target.result);
+                reader.onload = function () {
+                    success(reader.result);
                 };
-                reader.readAsDataURL(file);
+                reader.onerror = function () {
+                    failure('Image upload failed');
+                };
+                reader.readAsDataURL(blobInfo.blob());
             }
-        });
-
-        // Cancel image insertion
-        $('#cancel-image-button').on('click', function() {
-            $imageUrl.val('');
-            $imageAlt.val('');
-            $imageUpload.val('');
-            $imageUploadContainer.hide();
         });
     }
 
@@ -1927,9 +1867,18 @@
                 content = 'Please select a page element to edit.';
         }
 
-        // Set the values in the form
+        // Set the title value
         $('#element-title').val(title);
-        $('#element-content').val(content);
+
+        // Set content in TinyMCE editor
+        // Check if TinyMCE is initialized
+        if (tinymce.get('element-content')) {
+            tinymce.get('element-content').setContent(content);
+        } else {
+            // Fallback to regular textarea if TinyMCE is not initialized
+            $('#element-content').val(content);
+            console.warn('TinyMCE not initialized when loading content');
+        }
     }
 
     // Function to save page content
@@ -2218,7 +2167,16 @@
         $('#save-content-button').on('click', function() {
             const selectedElement = $('#page-element-selector').val();
             const title = $('#element-title').val();
-            const content = $('#element-content').val();
+
+            // Get content from TinyMCE editor
+            let content = '';
+            if (tinymce.get('element-content')) {
+                content = tinymce.get('element-content').getContent();
+            } else {
+                // Fallback to regular textarea if TinyMCE is not initialized
+                content = $('#element-content').val();
+                console.warn('TinyMCE not initialized when saving content');
+            }
 
             if (selectedElement && title && content) {
                 savePageContent(selectedElement, title, content);
@@ -2231,7 +2189,15 @@
         $('#cancel-edit-button').on('click', function() {
             $('#page-element-selector').val('');
             $('#element-title').val('');
-            $('#element-content').val('');
+
+            // Clear TinyMCE editor
+            if (tinymce.get('element-content')) {
+                tinymce.get('element-content').setContent('');
+            } else {
+                // Fallback to regular textarea if TinyMCE is not initialized
+                $('#element-content').val('');
+            }
+
             $('#content-editor-container').hide();
         });
 

@@ -283,37 +283,10 @@
 
                 <div class="field">
                     <label for="element-content">Content:</label>
-                    <textarea id="element-content" name="element-content" rows="10"></textarea>
+                    <textarea id="element-content" name="element-content" rows="15"></textarea>
                 </div>
 
-                <div class="editor-toolbar">
-                    <button class="editor-button" data-command="bold" title="Bold"><strong>B</strong></button>
-                    <button class="editor-button" data-command="italic" title="Italic"><em>I</em></button>
-                    <button class="editor-button" data-command="underline" title="Underline"><u>U</u></button>
-                    <button class="editor-button" data-command="insertUnorderedList" title="Bullet List">• List</button>
-                    <button class="editor-button" data-command="insertOrderedList" title="Numbered List">1. List</button>
-                    <button class="editor-button" data-command="createLink" title="Insert Link">Link</button>
-                    <button class="editor-button" data-command="insertImage" title="Insert Image">Image</button>
-                </div>
-
-                <div class="image-upload-container" style="display: none;">
-                    <div class="field">
-                        <label for="image-url">Image URL:</label>
-                        <input type="text" id="image-url" name="image-url" placeholder="Enter image URL or upload an image" />
-                    </div>
-                    <div class="field">
-                        <label for="image-upload">Or Upload Image:</label>
-                        <input type="file" id="image-upload" name="image-upload" accept="image/*" />
-                    </div>
-                    <div class="field">
-                        <label for="image-alt">Alt Text:</label>
-                        <input type="text" id="image-alt" name="image-alt" placeholder="Describe the image" />
-                    </div>
-                    <ul class="actions">
-                        <li><button type="button" id="insert-image-button" class="button primary">Insert Image</button></li>
-                        <li><button type="button" id="cancel-image-button" class="button">Cancel</button></li>
-                    </ul>
-                </div>
+                <!-- TinyMCE will replace the editor toolbar and image upload functionality -->
 
                 <ul class="actions">
                     <li><button type="button" id="save-content-button" class="button primary">Save Changes</button></li>
@@ -466,6 +439,8 @@
 			<div id="bg"></div>
 
 		<!-- Scripts -->
+			<!-- TinyMCE -->
+			<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 			<script src="assets/js/jquery.min.js"></script>
 			<script src="assets/js/browser.min.js"></script>
 			<script src="assets/js/breakpoints.min.js"></script>
