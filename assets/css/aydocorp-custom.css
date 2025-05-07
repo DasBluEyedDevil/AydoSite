@@ -1606,4 +1606,91 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
         font-size: 0.6rem;
         padding: 0.05rem 0.3rem;
     }
+
+    .hire-us-button {
+        font-size: 1.2rem;
+        padding: 0.8rem 1.5rem;
+    }
+}
+
+/* Hire Us Button Styles */
+.hire-us-button-container {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.hire-us-button {
+    display: inline-block;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+    background: linear-gradient(135deg, #ff3c38, #ff6b37);
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 5px 15px rgba(255, 60, 56, 0.4);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
+    animation: pulse-hire 2s infinite alternate;
+}
+
+.hire-us-button:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 60, 56, 0.6);
+    background: linear-gradient(135deg, #ff6b37, #ff3c38);
+    border-color: rgba(255, 255, 255, 0.5);
+    animation: none;
+}
+
+.hire-us-button:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: 0 2px 10px rgba(255, 60, 56, 0.3);
+}
+
+.hire-us-button::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    opacity: 0;
+}
+
+.hire-us-button:hover::before {
+    opacity: 1;
+    animation: shine 1.5s infinite;
+}
+
+@keyframes pulse-hire {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 5px 15px rgba(255, 60, 56, 0.4);
+    }
+    100% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(255, 60, 56, 0.6);
+    }
+}
+
+@keyframes shine {
+    0% {
+        left: -50%;
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        left: 150%;
+        opacity: 0;
+    }
 }
