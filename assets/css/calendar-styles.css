@@ -1,0 +1,321 @@
+/* Calendar Styles for AydoCorp Employee Portal
+   Created as part of the Employee Portal revamp
+   Includes styles for the events calendar with Star Citizen themed colors
+*/
+
+/* Calendar Grid */
+.calendar-header {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.calendar-header h4 {
+    margin: 0;
+    color: #53e3fb;
+}
+
+.calendar-grid {
+    display: flex;
+    flex-direction: column;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.calendar-day-header {
+    padding: 0.5rem;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+    color: #53e3fb;
+}
+
+.calendar-cells {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-cell {
+    min-height: 2.5rem;
+    padding: 0.3rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+}
+
+.calendar-cell.empty {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.calendar-day-number {
+    font-size: 0.8rem;
+    margin-bottom: 0.3rem;
+}
+
+.calendar-cell.current-day .calendar-day-number {
+    color: #53e3fb;
+    font-weight: bold;
+}
+
+.calendar-events {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+}
+
+/* Event Indicators */
+.event-indicator {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    margin-right: 0.2rem;
+}
+
+.event-indicator.event-general {
+    background-color: #53e3fb; /* AydoCorp blue */
+    box-shadow: 0 0 5px rgba(83, 227, 251, 0.5);
+}
+
+.event-indicator.event-aydoexpress {
+    background-color: #ffa500; /* Orange for AydoExpress */
+    box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+}
+
+.event-indicator.event-empyrion {
+    background-color: #ffcc00; /* Yellow for Empyrion Industries */
+    box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+/* Calendar Modal */
+.calendar-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.calendar-modal-content {
+    background: #1b1f22;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+    box-shadow: 0 0 30px rgba(83, 227, 251, 0.3);
+    border: 1px solid rgba(83, 227, 251, 0.2);
+}
+
+.calendar-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
+}
+
+.calendar-modal-close:hover {
+    color: #53e3fb;
+}
+
+.calendar-modal h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #53e3fb;
+    text-align: center;
+    border-bottom: 1px solid rgba(83, 227, 251, 0.2);
+    padding-bottom: 1rem;
+}
+
+.calendar-modal-body {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+/* Calendar Legend */
+.calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.legend-color {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    display: inline-block;
+}
+
+.legend-color.general {
+    background-color: #53e3fb;
+    box-shadow: 0 0 5px rgba(83, 227, 251, 0.5);
+}
+
+.legend-color.aydoexpress {
+    background-color: #ffa500;
+    box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+}
+
+.legend-color.empyrion {
+    background-color: #ffcc00;
+    box-shadow: 0 0 5px rgba(255, 204, 0, 0.5);
+}
+
+/* Events List */
+.calendar-events-list {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.calendar-events-list h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #53e3fb;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 0.5rem;
+}
+
+.calendar-events-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.event-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.event-item:hover {
+    transform: translateX(5px);
+}
+
+.event-item.general {
+    border-left: 3px solid #53e3fb;
+}
+
+.event-item.aydoexpress {
+    border-left: 3px solid #ffa500;
+}
+
+.event-item.empyrion {
+    border-left: 3px solid #ffcc00;
+}
+
+.event-date {
+    font-weight: bold;
+    margin-right: 1rem;
+    min-width: 60px;
+}
+
+.event-title {
+    flex: 1;
+}
+
+/* Modal Calendar Styles */
+#modal-calendar .calendar-grid {
+    height: 400px;
+}
+
+#modal-calendar .calendar-cell {
+    min-height: 4rem;
+    padding: 0.5rem;
+}
+
+#modal-calendar .calendar-day-number {
+    font-size: 1rem;
+}
+
+#modal-calendar .event-indicator {
+    width: 0.7rem;
+    height: 0.7rem;
+}
+
+/* Responsive Adjustments */
+@media screen and (max-width: 980px) {
+    .calendar-modal-body {
+        grid-template-columns: 1fr;
+    }
+    
+    #modal-calendar .calendar-grid {
+        height: 350px;
+    }
+}
+
+@media screen and (max-width: 736px) {
+    .calendar-legend {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    #modal-calendar .calendar-grid {
+        height: 300px;
+    }
+    
+    #modal-calendar .calendar-cell {
+        min-height: 3rem;
+    }
+}
+
+/* Star Citizen Themed Calendar Styles */
+.calendar-grid {
+    border: 1px solid rgba(83, 227, 251, 0.3);
+    box-shadow: 0 0 15px rgba(83, 227, 251, 0.1);
+}
+
+.calendar-cell.has-events {
+    background: rgba(83, 227, 251, 0.05);
+}
+
+.calendar-cell.current-day {
+    background: rgba(83, 227, 251, 0.1);
+    border: 1px solid rgba(83, 227, 251, 0.3);
+}
+
+/* Star Citizen themed hover effects */
+.calendar-cell:hover {
+    background: rgba(83, 227, 251, 0.1);
+    cursor: pointer;
+}
+
+.event-item.general:hover {
+    background: rgba(83, 227, 251, 0.1);
+}
+
+.event-item.aydoexpress:hover {
+    background: rgba(255, 165, 0, 0.1);
+}
+
+.event-item.empyrion:hover {
+    background: rgba(255, 204, 0, 0.1);
+}
