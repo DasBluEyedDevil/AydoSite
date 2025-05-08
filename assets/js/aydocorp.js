@@ -2125,11 +2125,13 @@
         try {
             console.log('loadUsers() called');
             const $userList = $('#user-list');
+            console.log('User list element exists:', $userList.length > 0);
             $userList.html('<tr><td colspan="5">Loading users...</td></tr>');
 
             const url = getApiUrl('auth/users');
             console.log('API URL:', url);
             if (!url) {
+                console.error('Invalid API URL');
                 AuthUtils.showNotification('Invalid API configuration', 'error');
                 return;
             }
@@ -2137,9 +2139,12 @@
             console.log('Making API request to load users...');
             const response = await AuthUtils.secureRequest(url);
             console.log('API response status:', response.status);
+            console.log('API response headers:', Object.fromEntries(response.headers.entries()));
 
             if (!response.ok) {
                 console.error('Failed to load users:', response.status, response.statusText);
+                const errorText = await response.text();
+                console.error('Error response body:', errorText);
                 $userList.html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
                 return;
             }
@@ -2148,6 +2153,7 @@
             console.log('Users loaded:', users);
 
             if (users.length === 0) {
+                console.log('No users found in response');
                 $userList.html('<tr><td colspan="5">No users found.</td></tr>');
                 return;
             }
@@ -2178,9 +2184,12 @@
                 `;
             });
 
+            console.log('Rendering user list HTML');
             $userList.html(html);
+            console.log('User list HTML rendered');
 
             // Add event listeners
+            console.log('Adding event listeners to user action buttons');
             $('.make-admin').on('click', function() {
                 const userId = $(this).data('user-id');
                 makeUserAdmin(userId);
@@ -2200,9 +2209,11 @@
                 const userId = $(this).data('user-id');
                 editUser(userId);
             });
+            console.log('Event listeners added');
 
         } catch (error) {
             console.error('Error loading users:', error);
+            console.error('Error stack:', error.stack);
             $('#user-list').html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
         }
     }
@@ -2419,8 +2430,73 @@
         // Initialize user management when admin dashboard is shown
         if (window.location.hash === '#admin-dashboard') {
             console.log('Admin dashboard hash detected on page load');
-            loadUsers(); // Load users when admin dashboard is shown
+            const userJson = sessionStorage.getItem('aydocorpUser');
+            console.log('User data from sessionStorage:', userJson);
+            if (userJson) {
+                try {
+                    const user = AuthUtils.safeJsonParse(userJson, null);
+                    console.log('Parsed user data:', user);
+                    if (user && (user.role === 'admin' || user.username === 'Devil')) {
+                        console.log('User is admin, loading users...');
+                        loadUsers(); // Load users when admin dashboard is shown
+                    } else {
+                        console.log('User is not admin:', user);
+                    }
+                } catch (error) {
+                    console.error('Error parsing user data:', error);
+                }
+            } else {
+                console.log('No user data found in sessionStorage');
+            }
         }
+
+        // Handle hash changes for admin dashboard
+        $(window).on('hashchange', function() {
+            console.log('Hash changed to:', window.location.hash);
+            if (window.location.hash === '#admin-dashboard') {
+                console.log('Admin dashboard hash detected on hash change');
+                // Check if user is admin before showing dashboard
+                const userJson = sessionStorage.getItem('aydocorpUser');
+                console.log('User data from sessionStorage on hash change:', userJson);
+                if (userJson) {
+                    try {
+                        const user = AuthUtils.safeJsonParse(userJson, null);
+                        console.log('Parsed user data on hash change:', user);
+                        // Check if user is admin - either by role or by username for specific admin users
+                        if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
+                            // Redirect non-admin users
+                            console.log('User is not admin, redirecting...');
+                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
+                            window.location.href = '#';
+                        } else {
+                            // User is admin, explicitly show the admin dashboard
+                            console.log('User is admin, showing dashboard...');
+                            // This prevents conflicts with the main.js hashchange handler
+                            $('#main').children('article').hide();
+                            $('#admin-dashboard').show().addClass('active');
+                            $('body').addClass('is-article-visible');
+                            $('#header').hide();
+                            $('#footer').hide();
+                            $('#main').show();
+                            console.log('Loading users for admin dashboard...');
+                            loadUsers(); // Load users when admin dashboard is shown
+                        }
+                    } catch (error) {
+                        console.error('Error parsing user data:', error);
+                        AuthUtils.showNotification('An error occurred while checking permissions.', 'error');
+                        window.location.href = '#';
+                    }
+                } else {
+                    // Redirect users who are not logged in
+                    console.log('No user data found, redirecting to login...');
+                    AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
+                    window.location.href = '#login';
+                }
+
+                // Prevent the default hashchange handler in main.js from running
+                return false;
+            }
+        });
 
         // Handle page element selection
         $('#page-element-selector').on('change', function() {
@@ -2451,407 +2527,6 @@
             $('#element-title').val('');
             $('#element-content').val('');
             $('#content-editor-container').hide();
-        });
-
-
-        // Handle hash changes for admin dashboard
-        $(window).on('hashchange', function() {
-            console.log('Hash changed to:', window.location.hash);
-            if (window.location.hash === '#admin-dashboard') {
-                console.log('Admin dashboard hash detected on hash change');
-                // Check if user is admin before showing dashboard
-                const userJson = sessionStorage.getItem('aydocorpUser');
-                if (userJson) {
-                    try {
-                        const user = AuthUtils.safeJsonParse(userJson, null);
-                        console.log('Current user:', user);
-                        // Check if user is admin - either by role or by username for specific admin users
-                        if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
-                            // Redirect non-admin users
-                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
-                            window.location.href = '#';
-                        } else {
-                            // User is admin, explicitly show the admin dashboard
-                            // This prevents conflicts with the main.js hashchange handler
-                            $('#main').children('article').hide();
-                            $('#admin-dashboard').show().addClass('active');
-                            $('body').addClass('is-article-visible');
-                            $('#header').hide();
-                            $('#footer').hide();
-                            $('#main').show();
-                            console.log('Loading users for admin dashboard...');
-                            loadUsers(); // Load users when admin dashboard is shown
-                        }
-                    } catch (error) {
-                        console.error('Error parsing user data:', error);
-                        AuthUtils.showNotification('An error occurred while checking permissions.', 'error');
-                        window.location.href = '#';
-                    }
-                } else {
-                    // Redirect users who are not logged in
-                    AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
-                    window.location.href = '#login';
-                }
-
-                // Prevent the default hashchange handler in main.js from running
-                return false;
-            }
-        });
-
-        // Check admin access on initial load if hash is #admin-dashboard
-        if (window.location.hash === '#admin-dashboard') {
-            const userJson = sessionStorage.getItem('aydocorpUser');
-            if (userJson) {
-                try {
-                    const user = AuthUtils.safeJsonParse(userJson, null);
-                    // Check if user is admin - either by role or by username for specific admin users
-                    if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
-                        AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
-                        window.location.href = '#';
-                    } else {
-                        // User is admin, explicitly show the admin dashboard
-                        // This prevents conflicts with the main.js hashchange handler
-                        setTimeout(function() {
-                            $('#main').children('article').hide();
-                            $('#admin-dashboard').show().addClass('active');
-                            $('body').addClass('is-article-visible');
-                            $('#header').hide();
-                            $('#footer').hide();
-                            $('#main').show();
-                        }, 100); // Small delay to ensure DOM is ready
-                    }
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                    AuthUtils.showNotification('An error occurred while checking permissions.', 'error');
-                    window.location.href = '#';
-                }
-            } else {
-                AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
-                window.location.href = '#login';
-            }
-        }
-
-        // Subsidiary popup functionality
-        $('.subsidiary-more').on('click', function () {
-            const subsidiary = $(this).data('subsidiary');
-            $('#subsidiary-popup').fadeIn(300);
-            $('.subsidiary-popup-content').hide();
-            $(`#${subsidiary}-content`).show();
-        });
-
-        $('.close').on('click', function () {
-            $('#subsidiary-popup').fadeOut(300);
-        });
-
-        $(window).on('click', function (event) {
-            if ($(event.target).is('#subsidiary-popup')) {
-                $('#subsidiary-popup').fadeOut(300);
-            }
-        });
-
-        // Employee Portal tab navigation
-        $portalTab.on('click', function(e) {
-            e.preventDefault();
-
-            // Get the section to show
-            const section = $(this).data('section');
-
-            // Update active tab
-            $portalTab.removeClass('active');
-            $(this).addClass('active');
-
-            // Hide all sections and show the selected one
-            $portalSection.hide();
-            $(`#${section}-section`).show();
-
-            // Load data for the selected section
-            switch(section) {
-                case 'career-paths':
-                    loadCareerPaths();
-                    break;
-                case 'employee-database':
-                    loadEmployees();
-                    break;
-                case 'events':
-                    loadEvents();
-                    break;
-                case 'operations':
-                    loadOperations();
-                    break;
-            }
-        });
-
-        // Edit profile button handler
-        $('#edit-profile-button').on('click', function() {
-            // Hide other containers
-            $('.employee-list-container').hide();
-            $('.employee-profile-container').hide();
-
-            try {
-                // Get current user data
-                const userJson = sessionStorage.getItem('aydocorpUser');
-                if (!userJson) {
-                    AuthUtils.showNotification('You must be logged in to edit your profile.', 'error');
-                    return;
-                }
-
-                const user = AuthUtils.safeJsonParse(userJson, null);
-                if (!user || !user.id) {
-                    AuthUtils.showNotification('Invalid user data. Please log in again.', 'error');
-                    return;
-                }
-
-                const userId = user.id;
-                const url = getApiUrl('employee-portal/employees');
-
-                if (!url) {
-                    AuthUtils.showNotification('Invalid API configuration', 'error');
-                    return;
-                }
-
-                // Try to load existing profile data
-                AuthUtils.secureRequest(url)
-                .then(response => response.json())
-                .then(employees => {
-                    const currentEmployee = employees.find(emp => emp.user._id === userId);
-
-                    if (currentEmployee) {
-                        // Pre-fill form with existing data
-                        $('#employee-fullname').val(currentEmployee.fullName);
-                        $('#employee-photo').val(currentEmployee.photo);
-                        $('#employee-background').val(currentEmployee.backgroundStory);
-                        $('#employee-rank').val(currentEmployee.rank);
-                        $('#employee-department').val(currentEmployee.department);
-                        $('#employee-specializations').val(currentEmployee.specializations.join(', '));
-                        $('#employee-certifications').val(currentEmployee.certifications.join(', '));
-
-                        if (currentEmployee.contactInfo) {
-                            $('#employee-discord').val(currentEmployee.contactInfo.discord || '');
-                            $('#employee-rsi').val(currentEmployee.contactInfo.rsiHandle || '');
-                        }
-                    }
-
-                    // Show the edit form
-                    $('.employee-edit-form-container').show();
-                })
-                .catch(error => {
-                    console.error('Error loading employee data:', error);
-                    AuthUtils.showNotification('Error loading profile data. Please try again.', 'error');
-                    // Show the edit form anyway
-                    $('.employee-edit-form-container').show();
-                });
-            } catch (error) {
-                console.error('Error in edit profile handler:', error);
-                AuthUtils.showNotification('An error occurred. Please try again.', 'error');
-            }
-        });
-
-        // Cancel profile edit button handler
-        $('#cancel-profile-edit').on('click', function() {
-            $('.employee-edit-form-container').hide();
-            $('.employee-list-container').show();
-        });
-
-        // Employee edit form submission handler
-        $('#employee-edit-form').on('submit', async function(event) {
-            event.preventDefault();
-
-            const fullName = $('#employee-fullname').val();
-            const photo = $('#employee-photo').val();
-            const backgroundStory = $('#employee-background').val();
-            const rank = $('#employee-rank').val();
-            const department = $('#employee-department').val();
-            const specializations = $('#employee-specializations').val().split(',').map(s => s.trim()).filter(s => s);
-            const certifications = $('#employee-certifications').val().split(',').map(c => c.trim()).filter(c => c);
-            const discord = $('#employee-discord').val();
-            const rsiHandle = $('#employee-rsi').val();
-
-            // Validation
-            if (!fullName) {
-                AuthUtils.showNotification('Please enter your full name.', 'error');
-                return;
-            }
-
-            try {
-                const url = getApiUrl('employee-portal/employees');
-                if (!url) {
-                    AuthUtils.showNotification('Invalid API configuration', 'error');
-                    return;
-                }
-
-                // Sanitize inputs before sending to server
-                const sanitizedData = {
-                    fullName: AuthUtils.sanitizeHtml(fullName),
-                    photo: AuthUtils.sanitizeHtml(photo),
-                    backgroundStory: AuthUtils.sanitizeHtml(backgroundStory),
-                    rank: AuthUtils.sanitizeHtml(rank),
-                    department: AuthUtils.sanitizeHtml(department),
-                    specializations: specializations.map(s => AuthUtils.sanitizeHtml(s)),
-                    certifications: certifications.map(c => AuthUtils.sanitizeHtml(c)),
-                    contactInfo: {
-                        discord: AuthUtils.sanitizeHtml(discord),
-                        rsiHandle: AuthUtils.sanitizeHtml(rsiHandle)
-                    }
-                };
-
-                const response = await AuthUtils.secureRequest(url, {
-                    method: 'POST',
-                    body: JSON.stringify(sanitizedData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    AuthUtils.showNotification('Failed to save profile: ' + (errorData.message || 'Unknown error'), 'error');
-                    return;
-                }
-
-                // Profile saved successfully
-                AuthUtils.showNotification('Profile saved successfully!', 'success');
-
-                // Hide the edit form and reload employees
-                $('.employee-edit-form-container').hide();
-                $('.employee-list-container').show();
-                loadEmployees();
-
-            } catch (error) {
-                console.error('Profile save error:', error);
-                AuthUtils.showNotification('Error saving profile: ' + (error.message || 'Network error'), 'error');
-            }
-        });
-
-        // Event filter handler
-        $('#event-filter').on('change', function() {
-            const filter = $(this).val();
-
-            if (filter === 'all') {
-                $('.event-item').show();
-            } else {
-                $('.event-item').hide();
-                $(`.event-item.${filter}`).show();
-            }
-        });
-
-        // Operations filter handler
-        $('#operations-filter').on('change', function() {
-            const filter = $(this).val();
-
-            if (filter === 'all') {
-                $('.operation-item').show();
-            } else {
-                $('.operation-item').hide();
-                $(`.operation-item.${filter}`).show();
-            }
-        });
-
-        // Authentication event handlers
-        $('#login-form').on('submit', async function (event) {
-            event.preventDefault();
-
-            const username = $('#username').val();
-            const password = $('#password').val();
-
-            // Show loading state
-            const $loginButton = $(this).find('input[type="submit"]');
-            const originalButtonText = $loginButton.val();
-
-            $loginButton.val('Checking connection...').prop('disabled', true);
-
-            // Check server status first
-            const serverOnline = await checkServerStatus();
-            if (!serverOnline) {
-                alert('Cannot connect to the server. Please try again later.');
-                $loginButton.val(originalButtonText).prop('disabled', false);
-                return;
-            }
-
-            $loginButton.val('Logging in...').prop('disabled', true);
-
-            try {
-                await handleLogin(username, password);
-            } catch (error) {
-                console.error('Login error:', error);
-                alert(error.message || 'Login failed. Please try again.');
-            } finally {
-                // Reset button state
-                $loginButton.val(originalButtonText).prop('disabled', false);
-            }
-        });
-
-        // Toggle between login and register forms
-        $('.show-register').on('click', function (e) {
-            e.preventDefault();
-            $('#login-container').hide();
-            $('#register-container').show();
-        });
-
-        $('.show-login').on('click', function (e) {
-            e.preventDefault();
-            $('#register-container').hide();
-            $('#login-container').show();
-        });
-
-        // Registration form handling
-        $('#register-form').on('submit', async function (event) {
-            event.preventDefault();
-
-            const username = $('#reg-username').val();
-            const email = $('#reg-email').val();
-            const password = $('#reg-password').val();
-            const confirmPassword = $('#reg-confirm-password').val();
-            const $registerButton = $('#register-button');
-
-            // Validation
-            if (!username || !email || !password) {
-                alert('Please fill in all required fields.');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert('Passwords do not match.');
-                return;
-            }
-
-            // Show loading indicator
-            $registerButton.val('Creating account...').prop('disabled', true);
-
-            try {
-                const apiBase = getApiBaseUrl();
-
-                // Send registration request with correct URL format
-                const response = await fetch(`${apiBase}/api/auth/register`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({username, email, password})
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    alert('Registration failed: ' + (errorData.message || 'Unknown error'));
-                    return;
-                }
-
-                // Process successful response but we don't need the data
-                alert('Account created successfully! You can now log in.');
-
-                // Switch to login form
-                $('#register-container').hide();
-                $('#login-container').show();
-
-            } catch (error) {
-                alert('Registration failed: ' + (error.message || 'Network error'));
-                console.error('Registration error:', error);
-            } finally {
-                // Reset button
-                $registerButton.val('Create Account').prop('disabled', false);
-            }
-        });
-
-        // Handle logout
-        $(document).on('click', '.logout', function (event) {
-            event.preventDefault();
-            handleLogout();
         });
 
         // Handle hash changes for navigation
