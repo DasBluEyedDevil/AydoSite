@@ -1,0 +1,257 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <title>AydoCorp Employee Portal</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <link rel="stylesheet" href="assets/css/main.css" />
+    <link rel="stylesheet" href="assets/css/portal-styles.css" />
+    <link rel="stylesheet" href="assets/css/calendar-styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+</head>
+<body class="portal-page">
+    <!-- Login Check Overlay -->
+    <div id="login-check-overlay" class="overlay">
+        <div class="login-check-content">
+            <h2>Verifying Access...</h2>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <!-- Portal Header -->
+    <header id="portal-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="images/aydocorp-logo-small.png" alt="AydoCorp Logo" />
+            </div>
+            <div class="header-text">
+                <h1>Employee Portal</h1>
+                <div class="user-info">
+                    <span class="welcome-message">Welcome, <span id="user-name">Employee</span></span>
+                    <span class="last-login">Last login: <span id="last-login-time"></span></span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="notifications-btn" class="icon-button" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge">0</span>
+                </button>
+                <button id="settings-btn" class="icon-button" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button id="logout-btn" class="icon-button" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div id="portal-container">
+        <!-- Sidebar Navigation -->
+        <nav id="portal-nav">
+            <div class="nav-section">
+                <h3>Main Menu</h3>
+                <ul>
+                    <li class="active">
+                        <a href="#dashboard" data-section="dashboard">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#announcements" data-section="announcements">
+                            <i class="fas fa-bullhorn"></i>
+                            <span>Announcements</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#events" data-section="events">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Events</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3>Corporate</h3>
+                <ul>
+                    <li>
+                        <a href="#archives" data-section="archives">
+                            <i class="fas fa-archive"></i>
+                            <span>Archives</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#hierarchy" data-section="hierarchy">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Hierarchy</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#subsidiaries" data-section="subsidiaries">
+                            <i class="fas fa-building"></i>
+                            <span>Subsidiaries</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3>Resources</h3>
+                <ul>
+                    <li>
+                        <a href="#documents" data-section="documents">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Documents</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#training" data-section="training">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Training</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#certifications" data-section="certifications">
+                            <i class="fas fa-certificate"></i>
+                            <span>Certifications</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="nav-section">
+                <h3>Employee</h3>
+                <ul>
+                    <li>
+                        <a href="#database" data-section="database">
+                            <i class="fas fa-users"></i>
+                            <span>Database</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#profile" data-section="profile">
+                            <i class="fas fa-user"></i>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main id="portal-main">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="portal-section active">
+                <div class="dashboard-grid">
+                    <!-- Welcome Banner -->
+                    <div class="dashboard-banner">
+                        <div class="banner-content">
+                            <h2>Welcome to AydoCorp</h2>
+                            <p>Excellence in shipping and resource consolidation across human and alien space.</p>
+                        </div>
+                        <div class="banner-image">
+                            <img src="images/Hull_E.jpg" alt="AydoCorp Fleet" />
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <i class="fas fa-ship"></i>
+                            <h3>Active Fleet</h3>
+                            <p class="stat-number">42</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <h3>Crew Members</h3>
+                            <p class="stat-number">156</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-box"></i>
+                            <h3>Cargo Missions</h3>
+                            <p class="stat-number">1,284</p>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-star"></i>
+                            <h3>Systems Reached</h3>
+                            <p class="stat-number">18</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity & Upcoming Events -->
+                    <div class="activity-events-container">
+                        <div class="recent-activity">
+                            <h3>Recent Activity</h3>
+                            <div class="activity-list">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                        <div class="upcoming-events">
+                            <h3>Upcoming Events</h3>
+                            <div id="events-calendar"></div>
+                        </div>
+                    </div>
+
+                    <!-- Employee of the Month -->
+                    <div class="eotm-container">
+                        <h3>Employee of the Month</h3>
+                        <div class="eotm-content">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+
+                    <!-- Latest Announcements -->
+                    <div class="announcements-container">
+                        <h3>Latest Announcements</h3>
+                        <div class="announcements-list">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Other sections will be added dynamically -->
+        </main>
+
+        <!-- Quick Access Panel -->
+        <aside id="quick-access-panel">
+            <div class="panel-section">
+                <h3>Quick Links</h3>
+                <ul class="quick-links">
+                    <li><a href="#"><i class="fas fa-file-alt"></i> Employee Handbook</a></li>
+                    <li><a href="#"><i class="fas fa-calendar"></i> Schedule Request</a></li>
+                    <li><a href="#"><i class="fas fa-comments"></i> Team Chat</a></li>
+                    <li><a href="#"><i class="fas fa-tools"></i> Support Ticket</a></li>
+                </ul>
+            </div>
+
+            <div class="panel-section">
+                <h3>Team Status</h3>
+                <div class="team-status">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Footer -->
+    <footer id="portal-footer">
+        <div class="footer-content">
+            <p class="copyright">&copy; Aydo Intergalactic Corporation. All rights reserved.</p>
+            <p class="version">Portal Version: 2953.04.18</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/browser.min.js"></script>
+    <script src="assets/js/breakpoints.min.js"></script>
+    <script src="assets/js/util.js"></script>
+    <script src="assets/js/auth-utils.js"></script>
+    <script src="assets/js/portal.js"></script>
+</body>
+</html> 
