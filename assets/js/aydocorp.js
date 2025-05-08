@@ -2100,6 +2100,9 @@
     // Initialize on document ready
     // ==================================
     $(document).ready(function () {
+        // Ensure subsidiary popup is hidden on page load
+        $('#subsidiary-popup').hide();
+
         // Cache jQuery selectors
         const $portalSection = $('.portal-section');
         const $portalTab = $('.portal-tab');
