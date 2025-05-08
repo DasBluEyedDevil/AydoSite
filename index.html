@@ -125,451 +125,195 @@
             <h3 class="welcome-message">Welcome Back, <span class="username-display">Employee</span>!</h3>
         </div>
 
-        <!-- Portal Layout - Sidebar and Main Content -->
-        <div class="portal-layout">
-            <!-- Sidebar Navigation -->
+        <!-- Picture Carousel -->
+        <div class="org-gallery-carousel">
+            <div class="carousel-container">
+                <div class="carousel-track">
+                    <!-- Images will be loaded dynamically -->
+                </div>
+            </div>
+            <button class="carousel-prev">❮</button>
+            <button class="carousel-next">❯</button>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="portal-main-content">
+            <!-- Left Sidebar Navigation -->
             <div class="portal-sidebar">
-                <ul class="portal-nav">
-                    <li><a href="#" class="portal-nav-item active" data-section="portal-home">Portal Home</a></li>
-                    <li>
-                        <a href="#" class="portal-nav-item" data-section="corporate-archives">Corporate Archives</a>
-                        <ul class="portal-subnav">
-                            <li><a href="#" class="portal-subnav-item" data-subsection="corporate-history">Corporate History</a></li>
-                            <li><a href="#" class="portal-subnav-item" data-subsection="hierarchy-chart">Hierarchy Chart</a></li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#" class="portal-nav-item" data-section="subsidiaries">Subsidiaries</a>
-                        <ul class="portal-subnav">
-                            <li><a href="#" class="portal-subnav-item" data-subsection="aydoexpress">AydoExpress</a></li>
-                            <li><a href="#" class="portal-subnav-item" data-subsection="empyrion-industries">Empyrion Industries</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="#" class="portal-nav-item" data-section="resources">Resources</a></li>
-                    <li>
-                        <a href="#" class="portal-nav-item" data-section="promotional-pathway">Promotional Pathway</a>
-                        <ul class="portal-subnav">
-                            <li><a href="#" class="portal-subnav-item" data-subsection="training-guides">Training Guides</a></li>
-                            <li><a href="#" class="portal-subnav-item" data-subsection="certifications">Certifications</a></li>
-                        </ul>
-                    </li>
-                    <li><a href="#" class="portal-nav-item" data-section="employee-database">Employee Database</a></li>
-                </ul>
+                <nav class="portal-nav">
+                    <ul>
+                        <li><a href="#portal-home" class="active" data-section="portal-home">Portal Home</a></li>
+                        <li><a href="#corporate-archives" data-section="corporate-archives">Corporate Archives</a></li>
+                        <li><a href="#subsidiaries" data-section="subsidiaries">Subsidiaries</a></li>
+                        <li><a href="#resources" data-section="resources">Resources</a></li>
+                        <li><a href="#promotional-pathway" data-section="promotional-pathway">Promotional Pathway</a></li>
+                        <li><a href="#employee-database" data-section="employee-database">Employee Database</a></li>
+                    </ul>
+                </nav>
             </div>
 
-            <!-- Main Content Area -->
-            <div class="portal-main-content">
+            <!-- Content Sections -->
+            <div class="portal-sections">
                 <!-- Portal Home Section -->
-                <div id="portal-home-section" class="portal-section">
-                    <!-- Image Carousel -->
-                    <div class="portal-carousel">
-                        <div class="carousel-container">
-                            <div class="carousel-slide">
-                                <img src="images/AydoOffice1.png" alt="AydoCorp Office">
-                            </div>
-                            <div class="carousel-slide">
-                                <img src="images/logisticsoffice.jpg" alt="Logistics Office">
-                            </div>
-                            <div class="carousel-slide">
-                                <img src="images/Hull_E.jpg" alt="Hull E Ship">
-                            </div>
-                        </div>
-                        <button class="carousel-button prev">&#10094;</button>
-                        <button class="carousel-button next">&#10095;</button>
-                    </div>
-
-                    <!-- Two Column Layout for Events and Announcements -->
-                    <div class="portal-columns">
+                <section id="portal-home" class="portal-section active">
+                    <div class="portal-grid">
                         <!-- Upcoming Events Section -->
-                        <div class="portal-column">
-                            <div class="portal-card">
-                                <h4 class="portal-card-title">Upcoming Events</h4>
-                                <div class="calendar-container">
-                                    <div id="events-calendar"></div>
-                                    <button class="expand-calendar-button">Expand Calendar</button>
-                                </div>
+                        <div class="events-section">
+                            <h3>Upcoming Events</h3>
+                            <div class="calendar-container">
+                                <div id="events-calendar"></div>
                             </div>
                         </div>
 
                         <!-- Announcements Section -->
-                        <div class="portal-column">
-                            <div class="portal-card">
-                                <h4 class="portal-card-title">Announcements</h4>
-                                <div class="announcements-container">
-                                    <div class="announcement">
-                                        <h5>Important Update</h5>
-                                        <p>New training sessions for cargo hauling will begin next week. All members are encouraged to participate.</p>
-                                    </div>
-
-                                    <div class="employee-of-month">
-                                        <h5>Employee of the Month</h5>
-                                        <div class="eom-content">
-                                            <div class="eom-avatar">
-                                                <img src="images/Aydo_Corp_logo_employees.png" alt="Employee of the Month">
-                                            </div>
-                                            <div class="eom-details">
-                                                <h6>Delta_Dart_42</h6>
-                                                <p>For exceptional leadership during the Jumptown operation and helping new members learn the ropes.</p>
-                                            </div>
-                                        </div>
-                                    </div>
+                        <div class="announcements-section">
+                            <h3>Announcements</h3>
+                            <div class="announcements-container">
+                                <!-- Announcements will be loaded dynamically -->
+                            </div>
+                            <div class="employee-of-month">
+                                <h4>Employee of the Month</h4>
+                                <div class="eotm-container">
+                                    <!-- Employee of the month will be loaded dynamically -->
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Corporate Archives Section -->
-                <div id="corporate-archives-section" class="portal-section" style="display: none;">
-                    <h3>Corporate Archives</h3>
-
-                    <!-- Corporate History Subsection -->
-                    <div id="corporate-history-subsection" class="portal-subsection">
-                        <h4>Corporate History</h4>
-                        <p>Based in the Ellis system on the planet Green, the Aydo Intergalactic Corporation (more commonly referred to as "AydoCorp") is an amalgamation of not only several companies within the system but also containing subsidiaries in a multitude of other systems.</p>
-
-                        <div class="history-timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-date">2943</div>
-                                <div class="timeline-content">
-                                    <h5>Humble Beginnings</h5>
-                                    <p>Aydo City Delivery founded by Christoff Revan as a small one-man delivery company in the city of Aydo on Green (Ellis System).</p>
-                                </div>
+                <section id="corporate-archives" class="portal-section">
+                    <div class="archives-content">
+                        <div class="corporate-history">
+                            <h3>Corporate History</h3>
+                            <div class="history-content">
+                                <!-- History content will be loaded dynamically -->
                             </div>
-
-                            <div class="timeline-item">
-                                <div class="timeline-date">2946</div>
-                                <div class="timeline-content">
-                                    <h5>First Expansion</h5>
-                                    <p>Merger with Seahorse Fisheries from Neo Taurii on Kampos, forming "Aydo Amalgamated Industries".</p>
+                        </div>
+                        <div class="hierarchy-chart">
+                            <h3>Organization Hierarchy</h3>
+                            <div class="org-structure">
+                                <div class="main-ranks">
+                                    <h4>Main Organization Ranks</h4>
+                                    <ul class="rank-list">
+                                        <li>Board of Executives</li>
+                                        <li>Director</li>
+                                        <li>Manager</li>
+                                        <li>Supervisor</li>
+                                        <li>Senior Employee</li>
+                                        <li>Employee</li>
+                                        <li>Intern/Freelancer</li>
+                                    </ul>
                                 </div>
-                            </div>
-
-                            <div class="timeline-item">
-                                <div class="timeline-date">2950</div>
-                                <div class="timeline-content">
-                                    <h5>Corporate Formation</h5>
-                                    <p>After acquiring multiple subsidiaries and expanding operations, the company transforms into "AydoCorp" as we know it today.</p>
+                                <div class="subsidiary-ranks">
+                                    <div class="ae-ranks">
+                                        <h4>AydoExpress Ranks</h4>
+                                        <ul class="rank-list">
+                                            <li>Director</li>
+                                            <li>Sub-Director</li>
+                                            <li>Overseer</li>
+                                            <li>Loadmaster</li>
+                                            <li>Senior Service Agent</li>
+                                            <li>Service Agent</li>
+                                            <li>Associate</li>
+                                            <li>Trainee</li>
+                                        </ul>
+                                    </div>
+                                    <div class="ei-ranks">
+                                        <h4>Empyrion Industries Ranks</h4>
+                                        <ul class="rank-list">
+                                            <li>Director</li>
+                                            <li>Sub-Director</li>
+                                            <li>Overseer</li>
+                                            <li>Specialist</li>
+                                            <li>Senior Technician</li>
+                                            <li>Technician</li>
+                                            <li>Journeyman</li>
+                                            <li>Apprentice</li>
+                                        </ul>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Hierarchy Chart Subsection -->
-                    <div id="hierarchy-chart-subsection" class="portal-subsection" style="display: none;">
-                        <h4>Hierarchy Chart</h4>
-
-                        <div class="rank-columns">
-                            <div class="rank-column">
-                                <h5>General Org Ranks</h5>
-                                <ul class="rank-list">
-                                    <li class="rank-item" data-wage="350000">Board of Executives</li>
-                                    <li class="rank-item" data-wage="200000">Director</li>
-                                    <li class="rank-item" data-wage="150000">Manager</li>
-                                    <li class="rank-item" data-wage="120000">Supervisor</li>
-                                    <li class="rank-item" data-wage="100000">Senior Employee</li>
-                                    <li class="rank-item" data-wage="80000">Employee</li>
-                                    <li class="rank-item" data-wage="48000">Intern/Freelancer</li>
-                                </ul>
-                            </div>
-
-                            <div class="rank-column">
-                                <h5>AydoExpress Ranks</h5>
-                                <ul class="rank-list">
-                                    <li class="rank-item" data-wage="115000">Director</li>
-                                    <li class="rank-item" data-wage="100000">Sub-Director</li>
-                                    <li class="rank-item" data-wage="85000">Overseer</li>
-                                    <li class="rank-item" data-wage="70000">Loadmaster</li>
-                                    <li class="rank-item" data-wage="55000">Senior Service Agent</li>
-                                    <li class="rank-item" data-wage="40000">Service Agent</li>
-                                    <li class="rank-item" data-wage="25000">Associate</li>
-                                    <li class="rank-item" data-wage="10000">Trainee</li>
-                                </ul>
-                            </div>
-
-                            <div class="rank-column">
-                                <h5>Empyrion Industries Ranks</h5>
-                                <ul class="rank-list">
-                                    <li class="rank-item" data-wage="115000">Director</li>
-                                    <li class="rank-item" data-wage="100000">Sub-Director</li>
-                                    <li class="rank-item" data-wage="85000">Overseer</li>
-                                    <li class="rank-item" data-wage="70000">Specialist</li>
-                                    <li class="rank-item" data-wage="55000">Senior Technician</li>
-                                    <li class="rank-item" data-wage="40000">Technician</li>
-                                    <li class="rank-item" data-wage="25000">Journeyman</li>
-                                    <li class="rank-item" data-wage="10000">Apprentice</li>
-                                </ul>
-                            </div>
-                        </div>
-
                         <div class="leadership-tree">
-                            <h5>Current Leadership</h5>
-
-                            <div class="org-chart">
-                                <div class="org-level level-1">
-                                    <div class="org-box ceo">
-                                        <div class="org-title">CEO</div>
-                                        <div class="org-name">Christoff Revan</div>
-                                        <div class="org-username">UdonMan</div>
-                                    </div>
-                                </div>
-
-                                <div class="org-level level-2">
-                                    <div class="org-box board">
-                                        <div class="org-title">CSO</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">DasBlueEyedDevil</div>
-                                    </div>
-
-                                    <div class="org-box board">
-                                        <div class="org-title">COO</div>
-                                        <div class="org-name">Kaibo Zaiber</div>
-                                        <div class="org-username">Kaibo_Z</div>
-                                    </div>
-
-                                    <div class="org-box board">
-                                        <div class="org-title">CTO</div>
-                                        <div class="org-name">Ike Days</div>
-                                        <div class="org-username">IDays</div>
-                                    </div>
-                                </div>
-
-                                <div class="org-level level-3">
-                                    <div class="org-box director">
-                                        <div class="org-title">AydoExpress Director</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">TBD</div>
-                                    </div>
-
-                                    <div class="org-box director">
-                                        <div class="org-title">Empyrion Industries Director</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">TBD</div>
-                                    </div>
-                                </div>
-
-                                <div class="org-level level-4">
-                                    <div class="org-box manager">
-                                        <div class="org-title">Manager</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">Delta_Dart_42</div>
-                                    </div>
-
-                                    <div class="org-box manager">
-                                        <div class="org-title">Manager</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">MR-GR33N</div>
-                                    </div>
-
-                                    <div class="org-box manager">
-                                        <div class="org-title">Manager</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">ArcZeroNine</div>
-                                    </div>
-
-                                    <div class="org-box manager">
-                                        <div class="org-title">Manager</div>
-                                        <div class="org-name"></div>
-                                        <div class="org-username">RamboSteph</div>
-                                    </div>
-                                </div>
+                            <h3>Current Leadership</h3>
+                            <div class="org-tree">
+                                <!-- Leadership tree will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Subsidiaries Section -->
-                <div id="subsidiaries-section" class="portal-section" style="display: none;">
-                    <h3>Subsidiaries</h3>
-
-                    <!-- AydoExpress Subsection -->
-                    <div id="aydoexpress-subsection" class="portal-subsection">
-                        <h4>AydoExpress</h4>
+                <section id="subsidiaries" class="portal-section">
+                    <div class="subsidiaries-content">
+                        <div class="subsidiary-tabs">
+                            <button class="subsidiary-tab active" data-subsidiary="aydoexpress">AydoExpress</button>
+                            <button class="subsidiary-tab" data-subsidiary="empyrion">Empyrion Industries</button>
+                        </div>
                         <div class="subsidiary-info">
-                            <div class="subsidiary-logo">
-                                <img src="images/Logistics_logo_DISC.png" alt="AydoExpress Logo">
-                            </div>
-                            <div class="subsidiary-description">
-                                <p>The bread and butter of the organization, AydoExpress deals with cargo hauling and personnel transport. Gameplay offered are things like trading, deliveries, transport, and really just hauling anything in general that the organization needs.</p>
-                                <p>As the game gets more complex, this gameplay will become more and more important, with it also being more engaging and purposeful. To keep the organization working smoothly we will need the help of everyone in AydoExpress, without them there would be no movement of people and resources and operations would be at a halt.</p>
-                            </div>
+                            <!-- Subsidiary information will be loaded dynamically -->
                         </div>
                     </div>
-
-                    <!-- Empyrion Industries Subsection -->
-                    <div id="empyrion-industries-subsection" class="portal-subsection" style="display: none;">
-                        <h4>Empyrion Industries</h4>
-                        <div class="subsidiary-info">
-                            <div class="subsidiary-logo">
-                                <img src="images/Empyrion_Industries_disc.png" alt="Empyrion Industries Logo">
-                            </div>
-                            <div class="subsidiary-description">
-                                <p>Keeping the coffers full, Empyrion Industries deals with industrial gameplay to sustain the organization with resources and a great deal of profits. Gameplay offered are things like mining and salvaging operations, as well as refueling.</p>
-                                <p>The operations that this subsidiary carries out are meant to help drive the greatest amount of income for the organization, in addition to providing the resources for the rest of the subsidiaries to take advantage of. When things like refining, full manual repair, engineering, and more come to the game there will be many more endeavors to be a part of with this subsidiary.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </section>
 
                 <!-- Resources Section -->
-                <div id="resources-section" class="portal-section" style="display: none;">
-                    <h3>Resources</h3>
-                    <p>Access useful links, documents, and other resources for AydoCorp members.</p>
-
-                    <div class="resources-grid">
-                        <div class="resource-card">
-                            <div class="resource-icon"><i class="fas fa-file-pdf"></i></div>
-                            <h4>Operations Manual</h4>
-                            <p>Standard operating procedures for all AydoCorp activities.</p>
-                            <a href="#" class="resource-button">Download</a>
+                <section id="resources" class="portal-section">
+                    <div class="resources-content">
+                        <div class="useful-links">
+                            <h3>Useful Links</h3>
+                            <div class="links-container">
+                                <!-- Links will be loaded dynamically -->
+                            </div>
                         </div>
-
-                        <div class="resource-card">
-                            <div class="resource-icon"><i class="fas fa-link"></i></div>
-                            <h4>Discord Resources</h4>
-                            <p>Links to important Discord channels and resources.</p>
-                            <a href="https://discord.com/channels/946161520918822962/985703804488007710/1102000292783980584" target="_blank" class="resource-button">Visit</a>
-                        </div>
-
-                        <div class="resource-card">
-                            <div class="resource-icon"><i class="fas fa-ship"></i></div>
-                            <h4>Ship Loadouts</h4>
-                            <p>Recommended configurations for organization vessels.</p>
-                            <a href="#" class="resource-button">View</a>
-                        </div>
-
-                        <div class="resource-card">
-                            <div class="resource-icon"><i class="fas fa-map-marked-alt"></i></div>
-                            <h4>Trade Routes</h4>
-                            <p>Profitable and safe trade routes for haulers.</p>
-                            <a href="#" class="resource-button">Explore</a>
+                        <div class="documentation">
+                            <h3>Documentation</h3>
+                            <div class="docs-container">
+                                <!-- Documentation will be loaded dynamically -->
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Promotional Pathway Section -->
-                <div id="promotional-pathway-section" class="portal-section" style="display: none;">
-                    <h3>Promotional Pathway</h3>
-
-                    <!-- Training Guides Subsection -->
-                    <div id="training-guides-subsection" class="portal-subsection">
-                        <h4>Training Guides</h4>
-                        <p>Our training guides are currently under development. Check back soon for comprehensive training materials.</p>
-
-                        <div class="training-placeholder">
-                            <img src="images/starcitizen-hulla.webp" alt="Training in Progress">
-                            <p>Our team is working hard to create detailed training guides for all organization roles.</p>
+                <section id="promotional-pathway" class="portal-section">
+                    <div class="pathway-content">
+                        <div class="training-guides">
+                            <h3>Training Guides</h3>
+                            <div class="guides-container">
+                                <!-- Training guides will be loaded dynamically -->
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Certifications Subsection -->
-                    <div id="certifications-subsection" class="portal-subsection" style="display: none;">
-                        <h4>Certifications</h4>
-                        <p>AydoCorp offers various certifications to recognize member skills and expertise.</p>
-
-                        <div class="certifications-grid">
-                            <div class="certification-card">
-                                <div class="certification-icon"><img src="images/Logistics_logo_DISC.png" alt="Hauling Certification"></div>
-                                <h5>Cargo Hauling</h5>
-                                <p>Certified for safe and efficient cargo transport operations.</p>
-                            </div>
-
-                            <div class="certification-card">
-                                <div class="certification-icon"><img src="images/Empyrion_Industries_disc.png" alt="Mining Certification"></div>
-                                <h5>Mining Operations</h5>
-                                <p>Certified for resource extraction and processing.</p>
-                            </div>
-
-                            <div class="certification-card">
-                                <div class="certification-icon"><img src="images/Board_member_tag.png" alt="Combat Certification"></div>
-                                <h5>Combat Escort</h5>
-                                <p>Certified for protection and security operations.</p>
-                            </div>
-
-                            <div class="certification-card">
-                                <div class="certification-icon"><img src="images/Aydo_Corp_logo_Silver.png" alt="Salvage Certification"></div>
-                                <h5>Salvage Operations</h5>
-                                <p>Certified for salvage and reclamation operations.</p>
+                        <div class="certifications">
+                            <h3>Certifications</h3>
+                            <div class="certs-container">
+                                <!-- Certifications will be loaded dynamically -->
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- Employee Database Section -->
-                <div id="employee-database-section" class="portal-section" style="display: none;">
-                    <h3>Employee Database</h3>
-                    <p>View and manage employee profiles and information.</p>
-
-                    <div class="employee-controls">
-                        <button id="edit-profile-button" class="button">Edit My Profile</button>
-                        <label for="employee-search">Search employees:</label>
-                        <input type="text" id="employee-search" placeholder="Search employees..." />
-                    </div>
-
-                    <div class="employee-list-container">
-                        <!-- Employee list will be loaded here -->
-                    </div>
-
-                    <div class="employee-profile-container" style="display: none;">
-                        <!-- Selected employee profile will be shown here -->
-                    </div>
-
-                    <div class="employee-edit-form-container" style="display: none;">
-                        <h3>Edit Profile</h3>
-                        <form id="employee-edit-form">
-                            <div class="fields">
-                                <div class="field">
-                                    <label for="employee-fullname">Full Name</label>
-                                    <input type="text" id="employee-fullname" name="fullName" required />
-                                </div>
-                                <div class="field">
-                                    <label for="employee-photo">Photo URL</label>
-                                    <input type="text" id="employee-photo" name="photo" />
-                                </div>
-                                <div class="field">
-                                    <label for="employee-background">Background Story</label>
-                                    <textarea id="employee-background" name="backgroundStory" rows="4"></textarea>
-                                </div>
-                                <div class="field half">
-                                    <label for="employee-rank">Rank</label>
-                                    <input type="text" id="employee-rank" name="rank" />
-                                </div>
-                                <div class="field half">
-                                    <label for="employee-department">Department</label>
-                                    <input type="text" id="employee-department" name="department" />
-                                </div>
-                                <div class="field">
-                                    <label for="employee-specializations">Specializations (comma separated)</label>
-                                    <input type="text" id="employee-specializations" name="specializations" />
-                                </div>
-                                <div class="field">
-                                    <label for="employee-certifications">Certifications (comma separated)</label>
-                                    <input type="text" id="employee-certifications" name="certifications" />
-                                </div>
-                                <div class="field half">
-                                    <label for="employee-discord">Discord</label>
-                                    <input type="text" id="employee-discord" name="discord" />
-                                </div>
-                                <div class="field half">
-                                    <label for="employee-rsi">RSI Handle</label>
-                                    <input type="text" id="employee-rsi" name="rsiHandle" />
-                                </div>
-                                <div class="field">
-                                    <label for="employee-system">Home System</label>
-                                    <input type="text" id="employee-system" name="homeSystem" placeholder="e.g., Stanton, Pyro, Terra" />
-                                </div>
-                                <div class="field">
-                                    <label for="employee-planet">Home Planet</label>
-                                    <input type="text" id="employee-planet" name="homePlanet" placeholder="e.g., ArcCorp, Microtech, Hurston" />
-                                </div>
+                <section id="employee-database" class="portal-section">
+                    <div class="database-content">
+                        <div class="employee-controls">
+                            <button id="edit-profile-button" class="button">Edit My Profile</button>
+                            <div class="search-container">
+                                <label for="employee-search">Search employees:</label>
+                                <input type="text" id="employee-search" placeholder="Search employees..." />
                             </div>
-                            <ul class="actions">
-                                <li><input type="submit" value="Save Profile" class="primary" /></li>
-                                <li><button type="button" id="cancel-profile-edit" class="button">Cancel</button></li>
-                            </ul>
-                        </form>
+                        </div>
+                        <div class="employee-list-container">
+                            <!-- Employee list will be loaded dynamically -->
+                        </div>
+                        <div class="employee-profile-container" style="display: none;">
+                            <!-- Employee profile will be loaded dynamically -->
+                        </div>
+                        <div class="employee-edit-form-container" style="display: none;">
+                            <!-- Employee edit form will be loaded dynamically -->
+                        </div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     </div>
