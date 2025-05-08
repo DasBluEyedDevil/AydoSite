@@ -52,6 +52,7 @@
      * @returns {Promise} - Fetch promise
      */
     async function secureRequest(url, options = {}) {
+        console.log('secureRequest called for URL:', url);
         const defaultOptions = {
             credentials: 'include',
             headers: {
@@ -61,13 +62,18 @@
         };
 
         const token = sessionStorage.getItem('aydocorpToken');
+        console.log('Token exists:', !!token);
         if (token) {
             defaultOptions.headers['Authorization'] = `Bearer ${token}`;
             defaultOptions.headers['x-auth-token'] = token;
+            console.log('Added token to headers');
+        } else {
+            console.warn('No token found in sessionStorage');
         }
 
         if (csrfToken) {
             defaultOptions.headers['X-CSRF-Token'] = csrfToken;
+            console.log('Added CSRF token to headers');
         }
 
         const mergedOptions = {
@@ -79,13 +85,24 @@
             }
         };
 
+        console.log('Request options:', {
+            ...mergedOptions,
+            headers: {
+                ...mergedOptions.headers,
+                Authorization: mergedOptions.headers.Authorization ? 'Bearer [REDACTED]' : undefined,
+                'x-auth-token': mergedOptions.headers['x-auth-token'] ? '[REDACTED]' : undefined
+            }
+        });
+
         try {
             let retries = 2;
             let response;
 
             while (retries >= 0) {
                 try {
+                    console.log(`Making request (${retries} retries left)...`);
                     response = await fetch(url, mergedOptions);
+                    console.log('Response status:', response.status);
                     break;
                 } catch (fetchError) {
                     if (retries === 0) {

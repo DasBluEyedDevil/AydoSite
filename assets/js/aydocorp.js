@@ -108,14 +108,17 @@
      * Log in a user and store credentials.
      */
     async function handleLogin(username, password) {
+        console.log('handleLogin called for username:', username);
         if (!username || !password) return Promise.reject(new Error('Please enter both username and password.'));
         if (!await testApiConnection()) return Promise.reject(new Error('Cannot connect to the server. Please try again later.'));
         try {
+            console.log('Making login request...');
             const response = await fetch(getApiUrl('auth/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
             });
+            console.log('Login response status:', response.status);
             if (!response.ok) {
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
@@ -127,7 +130,10 @@
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 const data = await response.json();
+                console.log('Login response data:', { ...data, token: data.token ? '[REDACTED]' : undefined });
                 if (!data.token) return Promise.reject(new Error('Server did not return an authentication token.'));
+                
+                console.log('Storing token and user data...');
                 localStorage.setItem('aydocorpToken', data.token);
                 localStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
                 localStorage.setItem('aydocorpLoggedIn', 'true');
@@ -135,6 +141,8 @@
                 sessionStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
                 sessionStorage.setItem('aydocorpLoggedIn', 'true');
                 document.cookie = `aydocorpToken=${data.token}; path=/; max-age=86400; SameSite=Strict`;
+                
+                console.log('Token and user data stored successfully');
                 AuthUtils.showNotification(`Welcome back, ${data.user?.username || 'User'}!`, 'success');
                 checkLoginStatus();
                 window.location.href = '#';
@@ -142,6 +150,7 @@
                 return Promise.reject(new Error('Unexpected response format from server.'));
             }
         } catch (error) {
+            console.error('Login error:', error);
             AuthUtils.showNotification(error.message || 'Login failed', 'error');
             throw error;
         }
@@ -2114,24 +2123,29 @@
      */
     async function loadUsers() {
         try {
+            console.log('loadUsers() called');
             const $userList = $('#user-list');
             $userList.html('<tr><td colspan="5">Loading users...</td></tr>');
 
             const url = getApiUrl('auth/users');
+            console.log('API URL:', url);
             if (!url) {
                 AuthUtils.showNotification('Invalid API configuration', 'error');
                 return;
             }
 
+            console.log('Making API request to load users...');
             const response = await AuthUtils.secureRequest(url);
+            console.log('API response status:', response.status);
 
             if (!response.ok) {
-                console.error('Failed to load users');
+                console.error('Failed to load users:', response.status, response.statusText);
                 $userList.html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
                 return;
             }
 
             const users = await response.json();
+            console.log('Users loaded:', users);
 
             if (users.length === 0) {
                 $userList.html('<tr><td colspan="5">No users found.</td></tr>');
@@ -2398,8 +2412,15 @@
         const $newPostFormContainer = $('#new-post-form-container');
 
         // Admin Dashboard Initialization
+        console.log('Initializing admin dashboard...');
         // Initialize the rich text editor when the page loads
         initRichTextEditor();
+
+        // Initialize user management when admin dashboard is shown
+        if (window.location.hash === '#admin-dashboard') {
+            console.log('Admin dashboard hash detected on page load');
+            loadUsers(); // Load users when admin dashboard is shown
+        }
 
         // Handle page element selection
         $('#page-element-selector').on('change', function() {
@@ -2435,12 +2456,15 @@
 
         // Handle hash changes for admin dashboard
         $(window).on('hashchange', function() {
+            console.log('Hash changed to:', window.location.hash);
             if (window.location.hash === '#admin-dashboard') {
+                console.log('Admin dashboard hash detected on hash change');
                 // Check if user is admin before showing dashboard
                 const userJson = sessionStorage.getItem('aydocorpUser');
                 if (userJson) {
                     try {
                         const user = AuthUtils.safeJsonParse(userJson, null);
+                        console.log('Current user:', user);
                         // Check if user is admin - either by role or by username for specific admin users
                         if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
                             // Redirect non-admin users
@@ -2455,6 +2479,8 @@
                             $('#header').hide();
                             $('#footer').hide();
                             $('#main').show();
+                            console.log('Loading users for admin dashboard...');
+                            loadUsers(); // Load users when admin dashboard is shown
                         }
                     } catch (error) {
                         console.error('Error parsing user data:', error);
