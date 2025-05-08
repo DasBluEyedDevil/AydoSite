@@ -1968,6 +1968,37 @@
             updatePageContent(pageElement, title, content);
 
             let dbUpdateSuccess = false;
+            let fileUpdateSuccess = false;
+
+            // Try to update the HTML file on the server
+            try {
+                console.log(`Updating HTML file for ${pageElement}...`);
+                const fileUpdateResponse = await fetch('/update-content.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageElement: pageElement,
+                        title: title,
+                        content: content
+                    })
+                });
+
+                const fileUpdateResult = await fileUpdateResponse.json();
+
+                if (fileUpdateResponse.ok && fileUpdateResult.success) {
+                    console.log(`HTML file updated successfully for ${pageElement}`);
+                    fileUpdateSuccess = true;
+                } else {
+                    console.warn(`Failed to update HTML file: ${fileUpdateResult.message}`);
+                    // Continue anyway since we've already updated the DOM
+                }
+            } catch (fileError) {
+                console.warn('HTML file update failed, but content was updated in the DOM:', fileError);
+                // Continue since we've already updated the DOM
+            }
+
             try {
                 // Try to create/update the content in the database
                 // First check if the page exists
@@ -2029,16 +2060,32 @@
                 // Continue since we've already updated the DOM
             }
 
-            // Show appropriate success message based on database update status
-            if (dbUpdateSuccess) {
-                AuthUtils.showNotification(`Content for "${pageElement}" has been saved successfully!`, 'success');
+            // Show appropriate success message based on update status
+            if (fileUpdateSuccess) {
+                if (dbUpdateSuccess) {
+                    AuthUtils.showNotification(`Content for "${pageElement}" has been saved successfully!`, 'success');
+                } else {
+                    AuthUtils.showNotification(
+                        `Content for "${pageElement}" has been updated on the page and will persist after refresh, but could not be saved to the database.`, 
+                        'success'
+                    );
+                }
             } else {
-                AuthUtils.showNotification(
-                    `Content for "${pageElement}" has been updated on the page, but could not be saved to the database. ` +
-                    `Your changes will be visible to users but may not persist after server restarts.`, 
-                    'warning',
-                    6000 // Show for longer (6 seconds) since this is important information
-                );
+                if (dbUpdateSuccess) {
+                    AuthUtils.showNotification(
+                        `Content for "${pageElement}" has been saved to the database but could not be permanently updated on the website. ` +
+                        `Your changes will be visible now but may not persist after refresh.`, 
+                        'warning',
+                        6000
+                    );
+                } else {
+                    AuthUtils.showNotification(
+                        `Content for "${pageElement}" has been updated on the page, but could not be saved permanently. ` +
+                        `Your changes will be visible to users but will not persist after page refresh.`, 
+                        'warning',
+                        6000 // Show for longer (6 seconds) since this is important information
+                    );
+                }
             }
 
             // Reset the form
