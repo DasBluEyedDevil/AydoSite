@@ -109,22 +109,14 @@ function checkLoginStatus() {
                 sessionStorage.setItem('aydocorpUser', JSON.stringify(data));
                 checkLoginStatus(); // re-run with user info now available
             } else {
-                // Token invalid or user not found, clear state
-                localStorage.removeItem('aydocorpToken');
-                localStorage.removeItem('aydocorpUser');
-                sessionStorage.removeItem('aydocorpToken');
-                sessionStorage.removeItem('aydocorpUser');
-                document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                // Token invalid or user not found, clear all authentication data
+                clearAllAuthData();
                 hideLoginOverlay();
                 showLoginRequiredMessage();
             }
         })
         .catch(() => {
-            localStorage.removeItem('aydocorpToken');
-            localStorage.removeItem('aydocorpUser');
-            sessionStorage.removeItem('aydocorpToken');
-            sessionStorage.removeItem('aydocorpUser');
-            document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            clearAllAuthData();
             hideLoginOverlay();
             showLoginRequiredMessage();
         });
@@ -153,11 +145,7 @@ function checkLoginStatus() {
             }
         } else {
             console.error('[Portal] Token invalid, clearing session and showing login required message.');
-            localStorage.removeItem('aydocorpToken');
-            localStorage.removeItem('aydocorpUser');
-            sessionStorage.removeItem('aydocorpToken');
-            sessionStorage.removeItem('aydocorpUser');
-            document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            clearAllAuthData();
             hideLoginOverlay();
             showLoginRequiredMessage();
             if (portalMain) {
@@ -458,15 +446,64 @@ function initializeEventHandlers() {
     }
 }
 
-// Unified handleLogout
-function handleLogout() {
+// Function to clear all authentication data
+function clearAllAuthData() {
+    // Clear localStorage
     localStorage.removeItem('aydocorpToken');
     localStorage.removeItem('aydocorpUser');
     localStorage.removeItem('aydocorpLoggedIn');
+
+    // Clear sessionStorage
     sessionStorage.removeItem('aydocorpToken');
     sessionStorage.removeItem('aydocorpUser');
     sessionStorage.removeItem('aydocorpLoggedIn');
+    sessionStorage.removeItem('aydocorpValidationFallback');
+    sessionStorage.removeItem('fallbackWarningShown');
+    sessionStorage.removeItem('tokenValidationRetries');
+    sessionStorage.removeItem('lastLoginTime');
+
+    // Clear cookies
     document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+    // Clear any other potential storage
+    try {
+        // Clear all localStorage items related to aydocorp
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.toLowerCase().includes('aydocorp')) {
+                localStorage.removeItem(key);
+            }
+        }
+
+        // Clear all sessionStorage items related to aydocorp
+        for (let i = 0; i < sessionStorage.length; i++) {
+            const key = sessionStorage.key(i);
+            if (key && key.toLowerCase().includes('aydocorp')) {
+                sessionStorage.removeItem(key);
+            }
+        }
+
+        // Clear all cookies
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i];
+            const eqPos = cookie.indexOf("=");
+            const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
+
+        console.log('[Portal] All authentication data cleared successfully');
+    } catch (e) {
+        console.error('[Portal] Error clearing storage:', e);
+    }
+}
+
+// Unified handleLogout
+function handleLogout() {
+    // Clear all authentication data
+    clearAllAuthData();
+
+    // Redirect to login page
     window.location.href = 'index.html#login';
 }
 
