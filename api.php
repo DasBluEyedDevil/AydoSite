@@ -39,8 +39,7 @@ if (strpos($path, "/api/") === 0) {
     // Forward to Node.js server
     // Try multiple possible Node.js server addresses
     $node_servers = [
-        "https://aydocorp.space/api/",  // Primary production URL
-        "http://aydocorp.space:8080/api/", // Fallback production URL
+        "http://aydocorp.space:8080/api/", // Primary production URL
         "http://localhost:8080/api/",  // Local development fallback
         "http://127.0.0.1:8080/api/"   // Alternative local fallback
     ];
