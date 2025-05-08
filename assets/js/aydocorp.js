@@ -216,8 +216,7 @@
      */
     async function testApiConnection() {
         try {
-            const apiBase = getApiBaseUrl();
-            const url = `${apiBase}/test`;
+            const url = getApiUrl('test');
             console.log('Testing API connection to:', url);
 
             const response = await fetch(url);
