@@ -1830,7 +1830,7 @@
         // Add TinyMCE script dynamically if it's not already loaded
         if (!window.tinymce) {
             const script = document.createElement('script');
-            script.src = 'https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js';
+            script.src = 'https://cdn.tiny.cloud/1/dfjp0m1prdsyswkg18dqr12k27zcz32ncqx9ep9e2q70lob1/tinymce/5/tinymce.min.js';
             script.referrerPolicy = 'origin';
             document.head.appendChild(script);
 
