@@ -80,18 +80,30 @@ function checkLoginStatus() {
     if (!token || !user) {
         hideLoginOverlay();
         showLoginRequiredMessage();
+        // Hide main portal content
+        const portalMain = document.getElementById('portal-main');
+        if (portalMain) portalMain.style.display = 'none';
         return;
     }
     validateToken().then(isValid => {
         if (isValid) {
             hideLoginOverlay();
             loadUserData(user);
+            // Hide login-required message if present
+            const loginMsg = document.getElementById('login-required-message');
+            if (loginMsg) loginMsg.style.display = 'none';
+            // Show main portal content
+            const portalMain = document.getElementById('portal-main');
+            if (portalMain) portalMain.style.display = '';
         } else {
             console.error('Token invalid, clearing session and showing login required message.');
             sessionStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
             hideLoginOverlay();
             showLoginRequiredMessage();
+            // Hide main portal content
+            const portalMain = document.getElementById('portal-main');
+            if (portalMain) portalMain.style.display = 'none';
         }
     });
 }
