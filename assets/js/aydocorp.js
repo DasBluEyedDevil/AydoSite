@@ -558,7 +558,7 @@
                     <div class="user-status">
                         <span class="username">${safeUsername}</span>
                         <div class="dropdown-container">
-                            ${isAdmin ? '<a href="#admin-panel" class="admin-badge">ADMIN</a>' : ''}
+                            ${isAdmin ? '<a href="#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
                             <span class="logout-option">
                                 <a href="#" class="logout">Logout</a>
                             </span>
