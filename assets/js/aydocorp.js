@@ -1963,7 +1963,36 @@
         try {
             console.log(`Saving content: ${title} - ${content.substring(0, 50)}...`);
 
-            // Construct the API endpoint URL - use the pageName in the URL and add /sections for POST requests
+            // First check if the page exists
+            const checkUrl = getApiUrl(`page-content/pages/${pageElement}`);
+            const checkResponse = await AuthUtils.secureRequest(checkUrl);
+
+            // If page doesn't exist (404), create it first
+            if (checkResponse.status === 404) {
+                console.log(`Page ${pageElement} not found, creating it first...`);
+                const createPageUrl = getApiUrl('page-content/pages');
+                const createPageResponse = await AuthUtils.secureRequest(createPageUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        pageName: pageElement,
+                        pageTitle: title,
+                        description: '',
+                        sections: [],
+                        isPublished: true
+                    })
+                });
+
+                if (!createPageResponse.ok) {
+                    return Promise.reject(new Error(`Failed to create page: ${createPageResponse.status} ${createPageResponse.statusText}`));
+                }
+
+                console.log(`Page ${pageElement} created successfully`);
+            }
+
+            // Now add the section to the page
             const url = getApiUrl(`page-content/pages/${pageElement}/sections`);
 
             // Send the data to the server
