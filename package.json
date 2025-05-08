@@ -1,0 +1,8 @@
+{
+  "name": "aydocorp-site",
+  "version": "1.0.0",
+  "description": "AydoCorp Website and API",
+  "scripts": {
+    "start": "cd nodejs/aydocorp-api && npm start"
+  }
+} 
