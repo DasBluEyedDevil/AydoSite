@@ -128,6 +128,9 @@
             if (contentType && contentType.includes('application/json')) {
                 const data = await response.json();
                 if (!data.token) return Promise.reject(new Error('Server did not return an authentication token.'));
+                localStorage.setItem('aydocorpToken', data.token);
+                localStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
+                localStorage.setItem('aydocorpLoggedIn', 'true');
                 sessionStorage.setItem('aydocorpToken', data.token);
                 sessionStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
                 sessionStorage.setItem('aydocorpLoggedIn', 'true');
@@ -149,22 +152,26 @@
      */
     async function handleLogout() {
         try {
+            localStorage.removeItem('aydocorpUser');
+            localStorage.removeItem('aydocorpLoggedIn');
+            localStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
             sessionStorage.removeItem('aydocorpToken');
-            document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'aydocorp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             $('.user-status').remove();
             $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
             AuthUtils.showNotification('You have been logged out successfully.', 'info');
             window.location.href = '#';
             checkLoginStatus();
         } catch (error) {
+            localStorage.removeItem('aydocorpUser');
+            localStorage.removeItem('aydocorpLoggedIn');
+            localStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
             sessionStorage.removeItem('aydocorpToken');
-            document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            document.cookie = 'aydocorp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             $('.user-status').remove();
             $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
             AuthUtils.showNotification('An error occurred during logout, but you have been logged out locally.', 'warning');
@@ -178,14 +185,11 @@
      */
     async function checkLoginStatus() {
         try {
-            const isLoggedIn = sessionStorage.getItem('aydocorpLoggedIn') === 'true';
-            const userJson = sessionStorage.getItem('aydocorpUser');
-            if (isLoggedIn && userJson) {
-                const user = AuthUtils.safeJsonParse(userJson, null);
-                if (!user) {
-                    await handleLogout();
-                    return;
-                }
+            let token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
+            let userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
+            let isLoggedIn = (localStorage.getItem('aydocorpLoggedIn') === 'true') || (sessionStorage.getItem('aydocorpLoggedIn') === 'true') || !!token;
+            const user = AuthUtils.safeJsonParse(userJson, null);
+            if (isLoggedIn && user) {
                 const isAdmin = user.role === 'admin' || user.username === 'Devil';
                 let tokenValidationRetries = parseInt(sessionStorage.getItem('tokenValidationRetries') || '0');
                 const maxRetries = 5;
@@ -2094,8 +2098,13 @@
         });
     }
 
-
-
+    // Utility to get cookie value by name
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
 
     // Initialize on document ready
     // ==================================
