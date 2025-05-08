@@ -134,7 +134,7 @@
                 const data = await response.json();
                 console.log('Login response data:', { ...data, token: data.token ? '[REDACTED]' : undefined });
                 if (!data.token) return Promise.reject(new Error('Server did not return an authentication token.'));
-                
+
                 console.log('Storing token and user data...');
                 localStorage.setItem('aydocorpToken', data.token);
                 localStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
@@ -143,7 +143,7 @@
                 sessionStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
                 sessionStorage.setItem('aydocorpLoggedIn', 'true');
                 document.cookie = `aydocorpToken=${data.token}; path=/; max-age=86400; SameSite=Strict`;
-                
+
                 console.log('Token and user data stored successfully');
                 AuthUtils.showNotification(`Welcome back, ${data.user?.username || 'User'}!`, 'success');
                 checkLoginStatus();
@@ -2125,6 +2125,47 @@
     // ==================================
 
     /**
+     * Helper function to render the user list
+     */
+    function renderUserList(users, $userList) {
+        if (!users || users.length === 0) {
+            console.log('No users found in response');
+            $userList.html('<tr><td colspan="5">No users found.</td></tr>');
+            return;
+        }
+
+        // Render users
+        let html = '';
+        users.forEach(user => {
+            const createdDate = new Date(user.createdAt).toLocaleDateString();
+            html += `
+                <tr data-user-id="${user._id}">
+                    <td>${AuthUtils.sanitizeHtml(user.username)}</td>
+                    <td>${AuthUtils.sanitizeHtml(user.email)}</td>
+                    <td>
+                        <span class="user-role ${user.role}">${user.role}</span>
+                    </td>
+                    <td>${createdDate}</td>
+                    <td>
+                        <div class="user-actions">
+                            ${user.role !== 'admin' ? 
+                                `<button class="make-admin button small" data-user-id="${user._id}">Make Admin</button>` :
+                                `<button class="remove-admin button small" data-user-id="${user._id}">Remove Admin</button>`
+                            }
+                            <button class="reset-password button small" data-user-id="${user._id}">Reset Password</button>
+                            <button class="edit-user button small" data-user-id="${user._id}">Edit</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        console.log('Rendering user list HTML');
+        $userList.html(html);
+        console.log('User list HTML rendered');
+    }
+
+    /**
      * Load all users from the API
      */
     async function loadUsers() {
@@ -2133,6 +2174,10 @@
             const $userList = $('#user-list');
             console.log('User list element exists:', $userList.length > 0);
             $userList.html('<tr><td colspan="5">Loading users...</td></tr>');
+
+            // Run auth debug to check token status
+            console.log('Running auth debug before loading users...');
+            await debugAuth();
 
             const url = getApiUrl('auth/users');
             console.log('API URL:', url);
@@ -2151,6 +2196,16 @@
             const token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
             console.log('Token exists:', !!token);
 
+            if (!token) {
+                console.error('No authentication token found');
+                AuthUtils.showNotification('Authentication required. Please log in again.', 'error');
+                $userList.html('<tr><td colspan="5">Authentication required. Please log in again.</td></tr>');
+                return;
+            }
+
+            // Ensure token is in sessionStorage for AuthUtils.secureRequest
+            sessionStorage.setItem('aydocorpToken', token);
+
             console.log('Making API request to load users...');
             const response = await AuthUtils.secureRequest(url);
             console.log('API response status:', response.status);
@@ -2160,6 +2215,29 @@
                 console.error('Failed to load users:', response.status, response.statusText);
                 const errorText = await response.text();
                 console.error('Error response body:', errorText);
+
+                if (response.status === 404) {
+                    // Try direct fetch with explicit headers as a fallback
+                    console.log('Trying direct fetch as fallback...');
+                    const fallbackResponse = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                            'x-auth-token': token
+                        }
+                    });
+
+                    if (fallbackResponse.ok) {
+                        console.log('Fallback request succeeded');
+                        const users = await fallbackResponse.json();
+                        renderUserList(users, $userList);
+                        return;
+                    } else {
+                        console.error('Fallback request failed:', fallbackResponse.status);
+                    }
+                }
+
                 $userList.html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
                 return;
             }
@@ -2167,41 +2245,8 @@
             const users = await response.json();
             console.log('Users loaded:', users);
 
-            if (users.length === 0) {
-                console.log('No users found in response');
-                $userList.html('<tr><td colspan="5">No users found.</td></tr>');
-                return;
-            }
-
-            // Render users
-            let html = '';
-            users.forEach(user => {
-                const createdDate = new Date(user.createdAt).toLocaleDateString();
-                html += `
-                    <tr data-user-id="${user._id}">
-                        <td>${AuthUtils.sanitizeHtml(user.username)}</td>
-                        <td>${AuthUtils.sanitizeHtml(user.email)}</td>
-                        <td>
-                            <span class="user-role ${user.role}">${user.role}</span>
-                        </td>
-                        <td>${createdDate}</td>
-                        <td>
-                            <div class="user-actions">
-                                ${user.role !== 'admin' ? 
-                                    `<button class="make-admin button small" data-user-id="${user._id}">Make Admin</button>` :
-                                    `<button class="remove-admin button small" data-user-id="${user._id}">Remove Admin</button>`
-                                }
-                                <button class="reset-password button small" data-user-id="${user._id}">Reset Password</button>
-                                <button class="edit-user button small" data-user-id="${user._id}">Edit</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            console.log('Rendering user list HTML');
-            $userList.html(html);
-            console.log('User list HTML rendered');
+            // Use the renderUserList helper function
+            renderUserList(users, $userList);
 
             // Add event listeners
             console.log('Adding event listeners to user action buttons');
@@ -2368,7 +2413,7 @@
 
             // Remove existing modal if any
             $('#edit-user-modal').remove();
-            
+
             // Add new modal to body
             $('body').append(modalHtml);
 
@@ -2582,7 +2627,7 @@
             e.preventDefault();
             const username = $('#username').val();
             const password = $('#password').val();
-            
+
             try {
                 await handleLogin(username, password);
             } catch (error) {

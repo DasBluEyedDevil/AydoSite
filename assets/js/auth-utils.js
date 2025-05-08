@@ -221,6 +221,30 @@ async function debugAuth() {
         }
     }
 
+    // Check auth headers with the server
+    try {
+        const baseUrl = getApiBaseUrl();
+        const url = `${baseUrl}/api/auth-debug`;
+        console.log('Checking auth headers with server at:', url);
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': token ? `Bearer ${token}` : '',
+                'x-auth-token': token || ''
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Server auth debug response:', data);
+        } else {
+            console.error('Auth debug request failed:', response.status);
+        }
+    } catch (e) {
+        console.error('Auth debug request error:', e);
+    }
+
     console.groupEnd();
 
     return {

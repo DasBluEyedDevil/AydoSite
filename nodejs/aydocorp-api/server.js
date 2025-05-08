@@ -78,6 +78,19 @@ app.get('/api/health-check', (req, res) => {
     });
 });
 
+// Debug route to check auth headers
+app.get('/api/auth-debug', (req, res) => {
+    const token = req.header('x-auth-token') || (req.header('Authorization') ? req.header('Authorization').replace('Bearer ', '') : null);
+    res.json({
+        hasToken: !!token,
+        tokenPreview: token ? `${token.substring(0, 10)}...` : null,
+        headers: {
+            authorization: req.header('Authorization'),
+            xAuthToken: req.header('x-auth-token')
+        }
+    });
+});
+
 // Add this alongside your other basic routes
 app.post('/api/test-post', (req, res) => {
     res.json({
@@ -104,9 +117,40 @@ app.get('/api/employee-portal-events', (req, res) => {
     res.redirect('/api/employee-portal/events');
 });
 
+// Add a specific route for /api/auth/users to ensure it's accessible
+// Import the auth middleware directly here to ensure it's applied
+const auth = require('./middleware/auth');
+app.get('/api/auth/users', auth, async (req, res) => {
+    console.log('Direct /api/auth/users route hit, handling directly');
+
+    try {
+        // Check if user is admin
+        const isAdmin = req.user.user.role === 'admin';
+        console.log('Is admin:', isAdmin);
+
+        if (!isAdmin) {
+            console.log(`Access denied for user ${req.user.user.id} (role: ${req.user.user.role})`);
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        // Get all users from database, excluding passwords
+        const User = require('./models/User');
+        const users = await User.find().select('-password');
+        console.log(`Found ${users.length} users`);
+        res.json(users);
+    } catch (err) {
+        console.error('Error fetching users:', err.message);
+        res.status(500).json({
+            message: 'Server error while fetching users',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
 // Catch-all route for undefined API routes (added based on 500-ERROR-FIX-UPDATE.md)
 // Moved to the end of route definitions to ensure it doesn't catch valid routes
 app.all('/api/*', (req, res) => {
+    console.log('Catch-all route hit for:', req.originalUrl, req.method);
     res.status(404).json({
         message: 'API endpoint not found',
         path: req.originalUrl,
