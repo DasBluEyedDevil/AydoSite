@@ -2572,6 +2572,20 @@
             checkLoginStatus();
         });
 
+        // Handle login form submission
+        $('#login-form').on('submit', async function(e) {
+            e.preventDefault();
+            const username = $('#username').val();
+            const password = $('#password').val();
+            
+            try {
+                await handleLogin(username, password);
+            } catch (error) {
+                console.error('Login error:', error);
+                AuthUtils.showNotification(error.message || 'Login failed', 'error');
+            }
+        });
+
         // Back to employee portal button
         $('#back-to-employee-portal').on('click', function () {
             window.location.href = '#employee-portal';
