@@ -1,12 +1,26 @@
 const axios = require('axios');
 
-// Replace with your actual JWT token
-const token = 'your-jwt-token';
+// Login credentials
+const credentials = {
+  username: 'Devil',
+  password: 'noob1'
+};
+
+// Get token from login endpoint
+async function getToken() {
+  try {
+    const response = await axios.post('http://localhost:8080/api/auth/login', credentials);
+    return response.data.token;
+  } catch (error) {
+    console.error('Login failed:', error.response?.data);
+    throw error;
+  }
+}
 
 // Test with Authorization: Bearer header
-async function testAuthorizationBearer() {
+async function testAuthorizationBearer(token) {
   try {
-    const response = await axios.get('http://localhost:8080/api/employee-portal/employees', {
+    const response = await axios.get('http://localhost:8080/api/auth/users', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -22,9 +36,9 @@ async function testAuthorizationBearer() {
 }
 
 // Test with x-auth-token header
-async function testXAuthToken() {
+async function testXAuthToken(token) {
   try {
-    const response = await axios.get('http://localhost:8080/api/employee-portal/employees', {
+    const response = await axios.get('http://localhost:8080/api/auth/users', {
       headers: {
         'x-auth-token': token
       }
@@ -41,10 +55,18 @@ async function testXAuthToken() {
 
 // Run tests
 async function runTests() {
-  console.log('Testing authentication with different header formats...');
-  await testAuthorizationBearer();
-  console.log('\n----------------------------\n');
-  await testXAuthToken();
+  try {
+    console.log('Getting token from login endpoint...');
+    const token = await getToken();
+    console.log('Token obtained successfully');
+    
+    console.log('\nTesting authentication with different header formats...');
+    await testAuthorizationBearer(token);
+    console.log('\n----------------------------\n');
+    await testXAuthToken(token);
+  } catch (error) {
+    console.error('Test failed:', error.message);
+  }
 }
 
 runTests();
