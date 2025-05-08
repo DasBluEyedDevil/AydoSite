@@ -30,12 +30,19 @@ function getApiUrl(endpoint) {
     return baseWithSlash + cleanEndpoint;
 }
 
+// Utility to get cookie value by name
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+}
+
 // Unified token validation logic
-async function validateToken() {
+async function validateToken(token) {
     try {
-        const token = sessionStorage.getItem('aydocorpToken');
         if (!token) {
-            console.warn('[Portal] validateToken: No token in sessionStorage');
+            console.warn('[Portal] validateToken: No token provided');
             return false;
         }
         try {
@@ -76,8 +83,8 @@ async function validateToken() {
 
 // Unified checkLoginStatus
 function checkLoginStatus() {
-    const token = sessionStorage.getItem('aydocorpToken');
-    const userJson = sessionStorage.getItem('aydocorpUser');
+    const token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
+    const userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
     let user = null;
     try { user = JSON.parse(userJson); } catch {}
     console.log('[Portal] checkLoginStatus: token:', token, 'user:', user);
@@ -90,7 +97,7 @@ function checkLoginStatus() {
         if (portalMain) portalMain.style.display = 'none';
         return;
     }
-    validateToken().then(isValid => {
+    validateToken(token).then(isValid => {
         console.log('[Portal] validateToken result:', isValid);
         if (isValid) {
             hideLoginOverlay();
@@ -106,6 +113,8 @@ function checkLoginStatus() {
             }
         } else {
             console.error('[Portal] Token invalid, clearing session and showing login required message.');
+            localStorage.removeItem('aydocorpToken');
+            localStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
             hideLoginOverlay();
