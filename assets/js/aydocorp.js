@@ -1,529 +1,218 @@
 (function ($) {
-    // API and Authentication Utilities
-    // ==================================
+    // API Utilities
     /**
-     * Get the base URL for API requests
-     * @returns {string} The base URL for API requests
+     * Get the base URL for API requests.
      */
     function getApiBaseUrl() {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:8080';
-        } else {
-            // Return just the origin without '/api' suffix
-            // The API path will be added in getApiUrl
-            // This matches the recommendation in api-debug.php
-            return window.location.origin;
         }
+        return window.location.origin;
     }
 
     /**
-     * Construct a proper API URL with validation
-     * @param {string} endpoint - The API endpoint to call
-     * @returns {string} The complete API URL
+     * Build a validated API URL.
      */
     function getApiUrl(endpoint) {
         if (!endpoint) {
             console.error('Invalid endpoint provided to getApiUrl');
             return null;
         }
-
         const baseUrl = getApiBaseUrl();
-
-        // Ensure baseUrl ends with a slash
         const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
-
-        // Clean the endpoint (remove leading slash)
         let cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
-
-        // Ensure the endpoint starts with 'api/' if it doesn't already
-        // This is crucial since we removed '/api' from the baseUrl for non-localhost environments
-        if (!cleanEndpoint.startsWith('api/')) {
-            cleanEndpoint = 'api/' + cleanEndpoint;
-        }
-
-        // Validate the endpoint to prevent injection
+        if (!cleanEndpoint.startsWith('api/')) cleanEndpoint = 'api/' + cleanEndpoint;
         if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
             console.error('Invalid characters in API endpoint');
             return null;
         }
-
         return baseWithSlash + cleanEndpoint;
     }
 
     /**
-     * Debug helper for API connectivity issues
+     * Output API connection info for debugging.
      */
     function debugApiConnection() {
         console.group('API Connection Debug');
-
         const baseUrl = getApiBaseUrl();
         console.log('Base URL:', baseUrl);
-
-        // Test various endpoints
-        const testEndpoints = [
-            'api/test',
-            'api/auth',
-            'test',
-            'auth'
-        ];
-
-        console.log('Testing endpoints:');
-            // Use Promise.race to try both endpoints simultaneously
-            // This is more efficient than sequential requests
-        testEndpoints.forEach(endpoint => {
+        ['api/test', 'api/auth', 'test', 'auth'].forEach(endpoint => {
             const url = getApiUrl(endpoint);
             console.log(`${endpoint} -> ${url}`);
         });
-
-        // Show server info
-        console.log('Server Info:');
-        console.log('  Hostname:', window.location.hostname);
-        console.log('  Origin:', window.location.origin);
-        console.log('  Protocol:', window.location.protocol);
-
+        console.log('Hostname:', window.location.hostname);
+        console.log('Origin:', window.location.origin);
+        console.log('Protocol:', window.location.protocol);
         console.groupEnd();
     }
 
-    // Call the debug function immediately
-
     /**
-     * Check if the server is online and reachable
-     * @returns {Promise<boolean>} True if the server is online
+     * Check if the server is reachable.
      */
     async function checkServerStatus() {
-        console.log('Checking server status');
         try {
-            // Try to connect to the auth endpoint
             const authResponse = await fetch(getApiUrl('auth'));
-            if (authResponse.ok) {
-                console.log('Server is online at /auth');
-                return true;
-            }
-
-            // If auth endpoint fails, try the test endpoint
+            if (authResponse.ok) return true;
             const testResponse = await fetch(getApiUrl('test'));
-            if (testResponse.ok) {
-                console.log('Server is online at /test');
-                return true;
-            }
-
-            console.error('Server is offline or unreachable');
-            return false;
+            return testResponse.ok;
         } catch (error) {
-            console.error('Server status check failed:', error);
             return false;
         }
     }
 
     /**
-     * Validate the authentication token with the server
-     * @returns {Promise<boolean>} True if the token is valid
+     * Validate the authentication token with the server.
      */
     async function validateToken() {
         try {
             const token = sessionStorage.getItem('aydocorpToken');
             if (!token) return false;
-
-            // Try standard endpoint first
             try {
                 const response = await AuthUtils.secureRequest(getApiUrl('auth/validate'));
                 if (response.ok) return true;
-
-                // Only log non-404 errors for the standard endpoint
-                if (response.status !== 404) {
-                    console.warn(`Standard validate endpoint failed with status: ${response.status}`);
-                }
-                console.log('Standard validate endpoint failed, trying alternatives...');
-            } catch (e) {
-                // Log network errors but continue to alternatives
-                console.log('Standard validate endpoint failed, trying alternatives...');
-            }
-
-            // Try alternative endpoints
-            const alternativeEndpoints = [
-                'auth/check', 
-                'auth/status'
-            ];
-
-            for (const endpoint of alternativeEndpoints) {
+                if (response.status !== 404) console.warn(`Standard validate endpoint failed: ${response.status}`);
+            } catch {}
+            for (const endpoint of ['auth/check', 'auth/status']) {
                 try {
                     const altResponse = await AuthUtils.secureRequest(getApiUrl(endpoint));
                     if (altResponse.ok) return true;
-
-                    // Don't log 404 errors for alternative endpoints as they might not exist
-                    if (altResponse.status !== 404) {
-                        console.warn(`Alternative endpoint ${endpoint} failed with status: ${altResponse.status}`);
-                    }
-                } catch (e) {
-                    // Silently continue to next endpoint without logging the error
-                    // This prevents console errors for endpoints that don't exist
-                }
+                } catch {}
             }
-
-            // If we're in development mode or if the server is reachable but validation endpoints are missing,
-            // allow proceeding even with invalid token
-            if (window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1' ||
-                await testApiConnection()) {
-                console.info('Using fallback authentication mode - validation endpoints unavailable but server is reachable');
-
-                // Set a flag in sessionStorage to indicate we're in fallback mode
-                // This can be used to show a warning to the user if needed
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || await testApiConnection()) {
                 sessionStorage.setItem('aydocorpValidationFallback', 'true');
-
                 return true;
             }
-
-            // If we get here, all validation attempts failed and we're not in development mode
-            // and the server is not reachable
-            console.error('Token validation failed and server is not reachable');
             sessionStorage.removeItem('aydocorpValidationFallback');
-
             return false;
-        } catch (error) {
-            console.error('Token validation error:', error);
-
-            // If we're in development mode or if the server is reachable but validation is failing,
-            // allow proceeding even with errors
-            try {
-                if (window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' ||
-                    await testApiConnection()) {
-                    console.info('Using fallback authentication mode - validation error occurred but server is reachable');
-
-                    // Set a flag in sessionStorage to indicate we're in fallback mode
-                    // This can be used to show a warning to the user if needed
-                    sessionStorage.setItem('aydocorpValidationFallback', 'true');
-
-                    return true;
-                }
-            } catch (e) {
-                console.error('Failed to test API connection during validation error handling:', e);
-            }
-
-            // If we get here, validation failed with an error and we're not in development mode
-            // and the server is not reachable
-            console.error('Token validation failed with an error and server is not reachable');
+        } catch {
             sessionStorage.removeItem('aydocorpValidationFallback');
-
             return false;
         }
     }
 
     /**
-     * Test if the API server is reachable
-     * @returns {Promise<boolean>} True if the API is reachable
+     * Test if the API server is reachable.
      */
     async function testApiConnection() {
         try {
             const url = getApiUrl('test');
-            console.log('Testing API connection to:', url);
-
             const response = await fetch(url);
-            const status = response.status;
-            console.log('API test response status:', status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('API test response data:', data);
-                return true;
-            } else {
-                console.error('API test failed with status:', status);
-                return false;
-            }
-        } catch (error) {
-            console.error('API connection test failed with error:', error);
+            return response.ok;
+        } catch {
             return false;
         }
     }
 
-    // Authentication Functions
-    // ==================================
+    // Authentication
     /**
-     * Handle user login with secure authentication
-     * @param {string} username - The username
-     * @param {string} password - The password
-     * @returns {Promise<void>}
+     * Log in a user and store credentials.
      */
     async function handleLogin(username, password) {
-        // Input validation outside try-catch
-        if (!username || !password) {
-            return Promise.reject(new Error('Please enter both username and password.'));
-        }
-
-        // Connection test outside try-catch
-        const connectionTest = await testApiConnection();
-        if (!connectionTest) {
-            return Promise.reject(new Error('Cannot connect to the server. Please try again later.'));
-        }
-
+        if (!username || !password) return Promise.reject(new Error('Please enter both username and password.'));
+        if (!await testApiConnection()) return Promise.reject(new Error('Cannot connect to the server. Please try again later.'));
         try {
-
-            // In your handleLogin function
-            console.log('Attempting login at:', getApiUrl('auth/login'));
-
-            // Attempt login
-            // Use secure request with CSRF protection
             const response = await fetch(getApiUrl('auth/login'), {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({username, password})
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
-
-            // Parse response
             if (!response.ok) {
-            // Check response type and handle accordingly
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const errorData = await response.json();
                     return Promise.reject(new Error(errorData.message || 'Login failed. Please check your credentials.'));
-                } else {
-                    return Promise.reject(new Error(`Login failed with status: ${response.status}`));
                 }
+                return Promise.reject(new Error(`Login failed with status: ${response.status}`));
             }
-
-            // Handle successful login
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
-                // Parse JSON response
                 const data = await response.json();
-                console.log('Login successful');
-
-                if (!data.token) {
-                    return Promise.reject(new Error('Server did not return an authentication token.'));
-                }
-
-                // Store token and user info in sessionStorage
+                if (!data.token) return Promise.reject(new Error('Server did not return an authentication token.'));
                 sessionStorage.setItem('aydocorpToken', data.token);
-                    // We'll store this in sessionStorage which is cleared when the browser is closed
                 sessionStorage.setItem('aydocorpUser', JSON.stringify(data.user || {}));
                 sessionStorage.setItem('aydocorpLoggedIn', 'true');
-
-                // Store token in a cookie for APIs that use cookie auth
                 document.cookie = `aydocorpToken=${data.token}; path=/; max-age=86400; SameSite=Strict`;
-
-                // Show success message
                 AuthUtils.showNotification(`Welcome back, ${data.user?.username || 'User'}!`, 'success');
-
-                // Update UI
-                    // Update UI to show admin badge if applicable
                 checkLoginStatus();
-
-                // Redirect to landing page instead of employee portal
                 window.location.href = '#';
             } else {
                 return Promise.reject(new Error('Unexpected response format from server.'));
             }
         } catch (error) {
-            console.error('Login error:', error);
             AuthUtils.showNotification(error.message || 'Login failed', 'error');
             throw error;
         }
     }
 
     /**
-     * Handle user logout with secure authentication
-     * Note: This implementation handles the case where server-side logout endpoints
-     * may not be available, focusing on client-side logout for reliability.
+     * Log out the user and clear credentials.
      */
     async function handleLogout() {
         try {
-            // Since server-side logout endpoints are not currently available,
-            // we'll skip the server-side logout attempts to avoid unnecessary network requests
-            // and proceed directly with client-side logout
-
-            // For future server-side logout implementation, uncomment this section:
-            /*
-            // Try to call logout endpoint to clear the secure cookie
-            let logoutSuccess = false;
-
-            // Try standard endpoint first
-            const standardUrl = getApiUrl('auth/logout');
-            if (standardUrl) {
-                try {
-                    const response = await AuthUtils.secureRequest(standardUrl, {
-                        method: 'POST'
-                    });
-                    logoutSuccess = response.ok;
-                } catch (e) {
-                    console.warn('Standard logout endpoint failed:', e);
-                }
-            }
-
-            // If standard endpoint fails, try alternatives
-            if (!logoutSuccess) {
-                console.log('Standard logout endpoint failed, trying alternatives...');
-
-                // Try alternative endpoint 1
-                const altUrl1 = getApiUrl('auth/signout');
-                if (altUrl1) {
-                    try {
-                        const response = await AuthUtils.secureRequest(altUrl1, {
-                            method: 'POST'
-                        });
-                        logoutSuccess = response.ok;
-                    } catch (e) {
-                        console.warn('Alternative logout endpoint 1 failed:', e);
-                    }
-                }
-
-                // Try alternative endpoint 2
-                if (!logoutSuccess) {
-                    const altUrl2 = getApiUrl('logout');
-                    if (altUrl2) {
-                        try {
-                            const response = await AuthUtils.secureRequest(altUrl2, {
-                                method: 'POST'
-                            });
-                            logoutSuccess = response.ok;
-                        } catch (e) {
-                            console.warn('Alternative logout endpoint 2 failed:', e);
-                        }
-                    }
-                }
-            }
-            */
-
-            console.info('Performing client-side logout');
-
-            // Clear all authentication data from sessionStorage
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
-            sessionStorage.removeItem('aydocorpToken'); // Also remove the token if it exists
-
-            // Clear any cookies by setting them to expire in the past
+            sessionStorage.removeItem('aydocorpToken');
             document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             document.cookie = 'aydocorp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-            // Update UI
             $('.user-status').remove();
             $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
-
-            // Show notification
             AuthUtils.showNotification('You have been logged out successfully.', 'info');
-
-            // Redirect to home
             window.location.href = '#';
-
-            // Update UI state
             checkLoginStatus();
         } catch (error) {
-            console.error('Logout error:', error);
-
-            // Even if there's an error, still clear client-side data
             sessionStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpLoggedIn');
-            sessionStorage.removeItem('aydocorpToken'); // Also remove the token if it exists
-
-            // Clear any cookies
+            sessionStorage.removeItem('aydocorpToken');
             document.cookie = 'aydocorp_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             document.cookie = 'aydocorp_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-
-            // Update UI
             $('.user-status').remove();
             $('#logout-nav').attr('id', '').find('a').text('Member Login').attr('href', '#login').removeClass('logout');
-
             AuthUtils.showNotification('An error occurred during logout, but you have been logged out locally.', 'warning');
-
-            // Redirect to home
             window.location.href = '#';
-
-            // Update UI state
             checkLoginStatus();
         }
     }
 
     /**
-     * Check user login status and update UI accordingly
-     * Uses sessionStorage for UI state and validates with the server
+     * Update UI based on login status.
      */
     async function checkLoginStatus() {
-        console.log('checkLoginStatus called');
-
         try {
-            // First check sessionStorage for quick UI updates
             const isLoggedIn = sessionStorage.getItem('aydocorpLoggedIn') === 'true';
             const userJson = sessionStorage.getItem('aydocorpUser');
-
             if (isLoggedIn && userJson) {
-                // Parse user data safely
                 const user = AuthUtils.safeJsonParse(userJson, null);
-
                 if (!user) {
-                    console.error('Invalid user data in session storage');
                     await handleLogout();
                     return;
                 }
-
-                console.log('User data from sessionStorage:', user);
-                // Check if user is admin - either by role or by username for specific admin users
                 const isAdmin = user.role === 'admin' || user.username === 'Devil';
-                console.log('Is admin?', isAdmin);
-
-                // Validate token with server in the background
-                // Don't immediately log out on validation failure
-                // Instead, set a flag to retry validation later
                 let tokenValidationRetries = parseInt(sessionStorage.getItem('tokenValidationRetries') || '0');
-                const maxRetries = 5; // Increased from 3 to 5 for more tolerance
-
+                const maxRetries = 5;
                 validateToken().then(isValid => {
-                    // Check if we're in fallback mode
                     const inFallbackMode = sessionStorage.getItem('aydocorpValidationFallback') === 'true';
-
-                    if (inFallbackMode) {
-                        console.warn('Operating in validation fallback mode');
-
-                        // Show a subtle warning to the user that we're in fallback mode
-                        // Only show this once per session to avoid annoying the user
-                        if (!sessionStorage.getItem('fallbackWarningShown')) {
-                            AuthUtils.showNotification(
-                                'Some authentication services are currently unavailable. You can continue using the portal, but some features might have limited functionality.',
-                                'info',
-                                8000 // Show for 8 seconds
-                            );
-                            sessionStorage.setItem('fallbackWarningShown', 'true');
-                        }
+                    if (inFallbackMode && !sessionStorage.getItem('fallbackWarningShown')) {
+                        AuthUtils.showNotification(
+                            'Some authentication services are currently unavailable. You can continue using the portal, but some features might have limited functionality.',
+                            'info', 8000
+                        );
+                        sessionStorage.setItem('fallbackWarningShown', 'true');
                     }
-
                     if (!isValid) {
-                        console.warn(`Token validation failed (attempt ${tokenValidationRetries + 1}/${maxRetries})`);
-
-                        // Only log out after maxRetries failed attempts
                         if (tokenValidationRetries >= maxRetries - 1) {
-                            console.warn(`Token validation failed ${maxRetries} times, showing warning to user`);
-
-                            // Instead of automatic logout, show a warning to the user
                             AuthUtils.showNotification(
                                 'Your session may have validation issues. You can continue using the portal, but some features might not work correctly. Try refreshing the page if you encounter problems.',
-                                'warning',
-                                10000 // Show for 10 seconds
+                                'warning', 10000
                             );
-
-                            // Reset counter but don't log out
                             sessionStorage.removeItem('tokenValidationRetries');
-
-                            // Try one more time after a longer delay
-                            setTimeout(() => {
-                                validateToken().catch(err => {
-                                    console.warn('Final validation attempt failed:', err);
-                                });
-                            }, 60000); // Try again after 1 minute
+                            setTimeout(() => { validateToken().catch(() => {}); }, 60000);
                         } else {
-                            // Increment retry counter
                             sessionStorage.setItem('tokenValidationRetries', (tokenValidationRetries + 1).toString());
-
-                            // Schedule another validation attempt with increasing delay
-                            const delay = 30000 + (tokenValidationRetries * 10000); // 30s, 40s, 50s, etc.
+                            const delay = 30000 + (tokenValidationRetries * 10000);
                             setTimeout(() => {
                                 validateToken().then(retryValid => {
-                                    if (!retryValid) {
-                                        console.warn(`Retry token validation failed (attempt ${tokenValidationRetries + 1}/${maxRetries})`);
-                                    } else {
-                                        console.log('Retry token validation succeeded');
+                                    if (retryValid) {
                                         sessionStorage.removeItem('tokenValidationRetries');
-                                        // Also clear fallback mode if validation succeeds
                                         sessionStorage.removeItem('aydocorpValidationFallback');
                                         sessionStorage.removeItem('fallbackWarningShown');
                                     }
@@ -531,29 +220,17 @@
                             }, delay);
                         }
                     } else {
-                        // Reset retry counter on successful validation
                         sessionStorage.removeItem('tokenValidationRetries');
-
-                        // Also clear fallback mode if validation succeeds
                         if (inFallbackMode) {
-                            console.log('Exiting fallback mode after successful validation');
                             sessionStorage.removeItem('aydocorpValidationFallback');
                             sessionStorage.removeItem('fallbackWarningShown');
                         }
                     }
                 });
-
-                // Show employee portal content
                 $('#employee-portal-login-required').hide();
                 $('#employee-portal-content').show();
-
-                // Add user status indicator to the top right
                 $('.user-status').remove();
-
-                // Sanitize username before inserting into HTML
                 const safeUsername = AuthUtils.sanitizeHtml(user.username);
-
-                // Revert to the original user status HTML in the checkLoginStatus function
                 const userStatusHtml = `
                     <div class="user-status">
                         <span class="username">${safeUsername}</span>
@@ -565,38 +242,21 @@
                         </div>
                     </div>
                 `;
-
-                // Append to body
                 $('body').append(userStatusHtml);
-
-                // Replace the "Member Login" link with just "Logout"
                 const $loginLink = $('header nav ul li a[href="#login"]');
                 if ($loginLink.length) {
-                    $loginLink.text('Logout')
-                             .attr('href', '#')
-                             .addClass('logout')
-                             .closest('li')
-                             .attr('id', 'logout-nav');
+                    $loginLink.text('Logout').attr('href', '#').addClass('logout').closest('li').attr('id', 'logout-nav');
                 }
             } else {
-                // User is not logged in
                 $('#employee-portal-content').hide();
                 $('#employee-portal-login-required').show();
-
-                // Ensure login link is correct
                 const $logoutLink = $('header nav ul li a.logout');
                 if ($logoutLink.length) {
-                    $logoutLink.text('Member Login')
-                              .attr('href', '#login')
-                              .removeClass('logout')
-                              .closest('li')
-                              .removeAttr('id');
+                    $logoutLink.text('Member Login').attr('href', '#login').removeClass('logout').closest('li').removeAttr('id');
                 }
                 $('.user-status').remove();
             }
-        } catch (error) {
-            console.error('Error checking login status:', error);
-            // Handle error gracefully
+        } catch {
             $('#employee-portal-content').hide();
             $('#employee-portal-login-required').show();
             AuthUtils.showNotification('An error occurred while checking login status.', 'error');
@@ -2691,7 +2351,7 @@
             const rank = $('#employee-rank').val();
             const department = $('#employee-department').val();
             const specializations = $('#employee-specializations').val().split(',').map(s => s.trim()).filter(s => s);
-            const certifications = $('#employee-certifications').val().split(',').map(s => s.trim()).filter(s => s);
+            const certifications = $('#employee-certifications').val().split(',').map(c => c.trim()).filter(c => c);
             const discord = $('#employee-discord').val();
             const rsiHandle = $('#employee-rsi').val();
 
