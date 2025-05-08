@@ -105,6 +105,7 @@ app.get('/api/employee-portal-events', (req, res) => {
 });
 
 // Catch-all route for undefined API routes (added based on 500-ERROR-FIX-UPDATE.md)
+// Moved to the end of route definitions to ensure it doesn't catch valid routes
 app.all('/api/*', (req, res) => {
     res.status(404).json({
         message: 'API endpoint not found',
@@ -112,6 +113,7 @@ app.all('/api/*', (req, res) => {
         method: req.method
     });
 });
+
 
 
 // MongoDB connection with proper error handling AND keep-alive options
