@@ -9,7 +9,7 @@
             return 'http://localhost:8080';
         }
         // For production, use the current origin
-        return window.location.origin;
+        return 'https://aydocorp.space';
     }
 
     /**
