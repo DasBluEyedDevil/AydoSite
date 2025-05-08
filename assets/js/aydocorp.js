@@ -1827,98 +1827,87 @@
 
     // Function to initialize the rich text editor
     function initRichTextEditor() {
-        // Cache jQuery selectors
-        const $imageUploadContainer = $('.image-upload-container');
-        const $editorButton = $('.editor-button');
+        // Add TinyMCE script dynamically if it's not already loaded
+        if (!window.tinymce) {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js';
+            script.referrerPolicy = 'origin';
+            document.head.appendChild(script);
 
-        // Add event listeners to editor buttons
-        $editorButton.on('click', function(e) {
-            e.preventDefault();
-            const command = $(this).data('command');
+            script.onload = function() {
+                initTinyMCE();
+            };
+        } else {
+            initTinyMCE();
+        }
 
-            if (command === 'createLink') {
-                const url = prompt('Enter the link URL:');
-                if (url) {
-                    document.execCommand(command, false, url);
+        // Initialize TinyMCE editor
+        function initTinyMCE() {
+            tinymce.init({
+                selector: '#element-content',
+                height: 400,
+                menubar: false,
+                plugins: [
+                    'advlist autolink lists link image charmap print preview anchor',
+                    'searchreplace visualblocks code fullscreen',
+                    'insertdatetime media table paste code help wordcount'
+                ],
+                toolbar: 'undo redo | formatselect | ' +
+                    'bold italic backcolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | link image | help',
+                toolbar_mode: 'floating',
+                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }',
+                convert_urls: false,
+                relative_urls: false,
+                remove_script_host: false,
+                image_advtab: true,
+                image_uploadtab: true,
+                images_upload_handler: function (blobInfo, success, failure) {
+                    // Convert the blob to a base64 data URL
+                    const reader = new FileReader();
+                    reader.onload = function() {
+                        success(reader.result);
+                    };
+                    reader.readAsDataURL(blobInfo.blob());
+                },
+                setup: function(editor) {
+                    // Handle content change
+                    editor.on('change', function() {
+                        // Update the original textarea
+                        editor.save();
+                    });
+
+                    // Add custom button for markdown headings
+                    editor.ui.registry.addButton('markdownheading', {
+                        text: 'Add Section',
+                        tooltip: 'Add a new section with heading',
+                        onAction: function() {
+                            const headingText = prompt('Enter section heading:');
+                            if (headingText) {
+                                editor.insertContent('<h3>' + headingText + '</h3><p>Section content goes here.</p>');
+                            }
+                        }
+                    });
                 }
-            } else if (command === 'insertImage') {
-                // Show image upload container
-                $imageUploadContainer.show();
-            } else {
-                // Execute the command
-                document.execCommand(command, false, null);
+            });
 
-                // Toggle active class for style buttons
-                if (['bold', 'italic', 'underline'].includes(command)) {
-                    $(this).toggleClass('active');
-                }
-            }
-        });
+            // Handle the image upload container (for backward compatibility)
+            const $imageUploadContainer = $('.image-upload-container');
 
-        // Handle image insertion
-        $('#insert-image-button').on('click', function() {
-            const $imageUrl = $('#image-url');
-            const $imageAlt = $('#image-alt');
-            const imageUrl = $imageUrl.val();
-            const altText = $imageAlt.val() || 'Image';
-
-            if (imageUrl) {
-                // Get the textarea element
-                const $textarea = $('#element-content');
-
-                // Get current cursor position
-                const cursorPos = $textarea[0].selectionStart;
-
-                // Get current content
-                const content = $textarea.val();
-
-                // Create markdown-style image syntax
-                const imageSyntax = `![${altText}](${imageUrl})`;
-
-                // Insert the image syntax at cursor position
-                const newContent = content.substring(0, cursorPos) + imageSyntax + content.substring(cursorPos);
-
-                // Update the textarea content
-                $textarea.val(newContent);
-
-                // Set focus back to the textarea
-                $textarea.focus();
-
-                // Set cursor position after the inserted image syntax
-                $textarea[0].setSelectionRange(cursorPos + imageSyntax.length, cursorPos + imageSyntax.length);
-
-                // Clear fields and hide container
-                $imageUrl.val('');
-                $imageAlt.val('');
+            // Cancel image insertion
+            $('#cancel-image-button').on('click', function() {
+                $('#image-url').val('');
+                $('#image-alt').val('');
+                $('#image-upload').val('');
                 $imageUploadContainer.hide();
+            });
 
-                // Show success message
-                AuthUtils.showNotification('Image inserted successfully. It will appear as markdown syntax in the editor.', 'success');
-            } else {
-                alert('Please enter an image URL.');
-            }
-        });
-
-        // Handle image upload
-        const $imageUpload = $('#image-upload');
-        $imageUpload.on('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    $imageUrl.val(event.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Cancel image insertion
-        $('#cancel-image-button').on('click', function() {
-            $imageUrl.val('');
-            $imageAlt.val('');
-            $imageUpload.val('');
-            $imageUploadContainer.hide();
-        });
+            // Show notification that the editor has been upgraded
+            setTimeout(function() {
+                AuthUtils.showNotification('The text editor has been upgraded with rich formatting capabilities. You can now add headings, lists, links, and images more easily.', 'info', 5000);
+            }, 1000);
+        }
     }
 
     // Function to load page content for editing
@@ -1926,36 +1915,163 @@
         // Show the content editor
         $('#content-editor-container').show();
 
-        // In a real implementation, this would fetch the content from the server
-        // For now, we'll use placeholder data
+        // Get the title and content from the DOM
         let title;
-        let content;
+        let htmlContent;
+        let $article;
 
         switch(pageElement) {
             case 'about':
-                title = 'About AydoCorp';
-                content = $('#about h2').text() + '\n\n' + $('#about p').text();
+                $article = $('#about');
+                title = $article.find('h2.major').text();
+
+                // Get all content HTML
+                let aboutContent = '';
+
+                // Get the image if it exists
+                const $aboutImage = $article.find('span.image.main');
+                if ($aboutImage.length) {
+                    aboutContent += $aboutImage.prop('outerHTML') + '<br><br>';
+                }
+
+                // Get all h3 headings and their following paragraphs
+                $article.find('h3').each(function() {
+                    const heading = $(this).text();
+                    const paragraphs = [];
+
+                    // Add the heading
+                    aboutContent += `<h3>${heading}</h3>`;
+
+                    // Get all paragraphs that follow this heading until the next heading
+                    let $nextElem = $(this).next();
+                    while($nextElem.length && !$nextElem.is('h3')) {
+                        if ($nextElem.is('p')) {
+                            aboutContent += $nextElem.prop('outerHTML');
+                        }
+                        $nextElem = $nextElem.next();
+                    }
+
+                    // Add a spacer
+                    aboutContent += '<br>';
+                });
+
+                htmlContent = aboutContent.trim();
                 break;
+
             case 'services':
-                title = 'Our Services';
-                content = $('#services h2').text() + '\n\n' + $('#services p').text();
+                $article = $('#services');
+                title = $article.find('h2.major').text();
+
+                // Get all content HTML
+                let servicesContent = '';
+
+                // Get the image if it exists
+                const $servicesImage = $article.find('span.image.main');
+                if ($servicesImage.length) {
+                    servicesContent += $servicesImage.prop('outerHTML') + '<br><br>';
+                }
+
+                // Add intro paragraph if it exists
+                const $introPara = $article.find('h2.major').nextAll('p').first();
+                if ($introPara.length) {
+                    servicesContent += $introPara.prop('outerHTML');
+                }
+
+                // Get all h3 headings and their following paragraphs
+                $article.find('h3').each(function() {
+                    const heading = $(this).text();
+
+                    // Add the heading
+                    servicesContent += `<h3>${heading}</h3>`;
+
+                    // Get all paragraphs that follow this heading until the next heading
+                    let $nextElem = $(this).next();
+                    while($nextElem.length && !$nextElem.is('h3')) {
+                        if ($nextElem.is('p')) {
+                            servicesContent += $nextElem.prop('outerHTML');
+                        }
+                        $nextElem = $nextElem.next();
+                    }
+
+                    // Add a spacer
+                    servicesContent += '<br>';
+                });
+
+                // Add final paragraph if it exists
+                const $finalPara = $article.find('.hire-us-button-container').prev('p');
+                if ($finalPara.length) {
+                    servicesContent += $finalPara.prop('outerHTML');
+                }
+
+                htmlContent = servicesContent.trim();
                 break;
+
             case 'subsidiaries':
-                title = 'Our Subsidiaries';
-                content = $('#subsidiaries h2').text() + '\n\n' + $('#subsidiaries p').text();
+                $article = $('#subsidiaries');
+                title = $article.find('h2.major').text();
+
+                // Get all subsidiary cards
+                let subsidiariesContent = '';
+
+                $article.find('.subsidiary-card').each(function() {
+                    const cardTitle = $(this).find('h3').text();
+                    const cardImage = $(this).find('span.image.subsidiary').prop('outerHTML');
+                    const cardContent = $(this).find('p').text();
+
+                    subsidiariesContent += `<h3>${cardTitle}</h3>`;
+                    subsidiariesContent += cardImage;
+                    subsidiariesContent += `<p>${cardContent}</p><br>`;
+                });
+
+                htmlContent = subsidiariesContent.trim();
                 break;
+
             case 'contact':
-                title = 'Contact Us';
-                content = $('#contact h2').text() + '\n\n' + $('#contact p').text();
+                $article = $('#contact');
+                title = $article.find('h2.major').text();
+
+                // Get content after the form
+                let contactContent = '';
+
+                // Get h3 headings and paragraphs after the form
+                const $contactInfo = $article.find('form').nextAll();
+                $contactInfo.each(function() {
+                    if ($(this).is('h3')) {
+                        contactContent += `<h3>${$(this).text()}</h3>`;
+                    } else if ($(this).is('p')) {
+                        contactContent += $(this).prop('outerHTML');
+                    } else if ($(this).is('ul.contact-info')) {
+                        contactContent += '<h4>Contact channels:</h4><ul>';
+                        $(this).find('li').each(function() {
+                            contactContent += `<li>${$(this).text()}</li>`;
+                        });
+                        contactContent += '</ul><br>';
+                    }
+                });
+
+                htmlContent = contactContent.trim();
                 break;
+
             default:
                 title = 'Select a page element';
-                content = 'Please select a page element to edit.';
+                htmlContent = '<p>Please select a page element to edit.</p>';
         }
 
-        // Set the values in the form
+        // Set the title value
         $('#element-title').val(title);
-        $('#element-content').val(content);
+
+        // Set the content in the TinyMCE editor if it's initialized
+        if (window.tinymce && tinymce.get('element-content')) {
+            tinymce.get('element-content').setContent(htmlContent);
+        } else {
+            // Fallback to setting the value directly
+            $('#element-content').val(htmlContent);
+
+            // Try to initialize TinyMCE if it's not already initialized
+            if (typeof initRichTextEditor === 'function') {
+                initRichTextEditor();
+            }
+        }
     }
 
     // Function to save page content
@@ -2101,38 +2217,157 @@
 
     // Function to update page content in the DOM
     function updatePageContent(pageElement, title, content) {
+        // Get the HTML content from TinyMCE if it's initialized
+        let htmlContent = content;
+        if (window.tinymce && tinymce.get('element-content')) {
+            htmlContent = tinymce.get('element-content').getContent();
+        }
+
         // Update the content in the DOM based on the page element
         switch(pageElement) {
             case 'about':
-                // Split content into title and body
-                const aboutParts = content.split('\n\n');
-                if (aboutParts.length > 1) {
-                    $('#about h2').text(title);
-                    $('#about p').text(aboutParts[1]);
-                }
+                // Update the title
+                $('#about h2.major').text(title);
+
+                // Clear existing content except the title and image
+                const $aboutArticle = $('#about');
+                const $aboutTitle = $aboutArticle.find('h2.major').clone();
+                const $aboutImage = $aboutArticle.find('span.image.main').clone();
+                $aboutArticle.empty().append($aboutTitle).append($aboutImage);
+
+                // Create a temporary div to parse the HTML content
+                const $aboutTemp = $('<div></div>').html(htmlContent);
+
+                // Process the content
+                processEditorContent($aboutTemp, $aboutArticle);
                 break;
+
             case 'services':
-                const servicesParts = content.split('\n\n');
-                if (servicesParts.length > 1) {
-                    $('#services h2').text(title);
-                    $('#services p').text(servicesParts[1]);
-                }
+                // Update the title
+                $('#services h2.major').text(title);
+
+                // Clear existing content except the title and image
+                const $servicesArticle = $('#services');
+                const $servicesTitle = $servicesArticle.find('h2.major').clone();
+                const $servicesImage = $servicesArticle.find('span.image.main').clone();
+                $servicesArticle.empty().append($servicesTitle).append($servicesImage);
+
+                // Create a temporary div to parse the HTML content
+                const $servicesTemp = $('<div></div>').html(htmlContent);
+
+                // Process the content
+                processEditorContent($servicesTemp, $servicesArticle);
+
+                // Preserve the hire-us button if it exists
+                const $hireUsButton = $('<div class="hire-us-button-container"><a href="https://docs.google.com/forms/d/e/1FAIpQLSekyn2ZhdU9czvQrcLSpo1b0wIzRX__DxLFk89L4Y0NZ8FiwQ/viewform?usp=header" target="_blank" class="hire-us-button">Hire Us!</a></div>');
+                $servicesArticle.append($hireUsButton);
                 break;
+
             case 'subsidiaries':
-                const subsidiariesParts = content.split('\n\n');
-                if (subsidiariesParts.length > 1) {
-                    $('#subsidiaries h2').text(title);
-                    $('#subsidiaries p').text(subsidiariesParts[1]);
-                }
+                // Update the title
+                $('#subsidiaries h2.major').text(title);
+
+                // Clear existing content except the title
+                const $subsidiariesArticle = $('#subsidiaries');
+                const $subsidiariesTitle = $subsidiariesArticle.find('h2.major').clone();
+                $subsidiariesArticle.empty().append($subsidiariesTitle);
+
+                // Create the subsidiaries grid
+                const $subsidiariesGrid = $('<div class="subsidiaries-grid"></div>');
+                $subsidiariesArticle.append($subsidiariesGrid);
+
+                // Create a temporary div to parse the HTML content
+                const $subsidiariesTemp = $('<div></div>').html(htmlContent);
+
+                // Process each h3 section as a subsidiary card
+                $subsidiariesTemp.find('h3').each(function() {
+                    const heading = $(this).text();
+                    const cardId = heading.toLowerCase().replace(/\s+/g, '-') + '-card';
+                    const subsidiaryName = heading.toLowerCase().replace(/\s+/g, '');
+
+                    // Find the image and paragraph that follow this heading
+                    let $image = $(this).next('span.image.subsidiary');
+                    if (!$image.length) {
+                        // If no image found, use default based on subsidiary name
+                        $image = $(`<span class="image subsidiary"><img src="images/${subsidiaryName === 'aydoexpress' ? 'Logistics_logo_DISC.png' : 'Empyrion_Industries_disc.png'}" alt="${heading} Logo" /></span>`);
+                    }
+
+                    let $paragraph = $image.next('p');
+                    if (!$paragraph.length) {
+                        $paragraph = $(this).next('p');
+                    }
+
+                    // Create the card
+                    const $card = $('<div></div>')
+                        .addClass('subsidiary-card')
+                        .attr('id', cardId)
+                        .append($('<h3></h3>').text(heading))
+                        .append($image.clone())
+                        .append($paragraph.clone())
+                        .append($('<button></button>')
+                            .addClass('subsidiary-more')
+                            .attr('data-subsidiary', subsidiaryName)
+                            .text('Learn More'));
+
+                    $subsidiariesGrid.append($card);
+                });
                 break;
+
             case 'contact':
-                const contactParts = content.split('\n\n');
-                if (contactParts.length > 1) {
-                    $('#contact h2').text(title);
-                    $('#contact p').text(contactParts[1]);
-                }
+                // Update the title
+                $('#contact h2.major').text(title);
+
+                // Get the form
+                const $contactArticle = $('#contact');
+                const $contactForm = $contactArticle.find('form').clone();
+
+                // Clear existing content except the title
+                const $contactTitle = $contactArticle.find('h2.major').clone();
+                $contactArticle.empty().append($contactTitle).append($contactForm);
+
+                // Create a temporary div to parse the HTML content
+                const $contactTemp = $('<div></div>').html(htmlContent);
+
+                // Process the content
+                $contactTemp.children().each(function() {
+                    const $elem = $(this);
+
+                    if ($elem.is('h3')) {
+                        // Add headings directly
+                        $contactArticle.append($elem.clone());
+                    } else if ($elem.is('h4') && $elem.text() === 'Contact channels:') {
+                        // Handle contact channels list
+                        const $list = $elem.next('ul');
+                        if ($list.length) {
+                            const $contactInfo = $('<ul class="contact-info"></ul>');
+                            $list.find('li').each(function() {
+                                $contactInfo.append($(this).clone());
+                            });
+                            $contactArticle.append($contactInfo);
+                        }
+                    } else if ($elem.is('p')) {
+                        // Add paragraphs directly
+                        $contactArticle.append($elem.clone());
+                    }
+                });
                 break;
         }
+    }
+
+    // Helper function to process editor content and add it to the target element
+    function processEditorContent($source, $target) {
+        // Process each element in the source
+        $source.children().each(function() {
+            const $elem = $(this);
+
+            // Skip the image if it's already in the target (we preserved it)
+            if ($elem.is('span.image.main') && $target.find('span.image.main').length) {
+                return;
+            }
+
+            // Add the element to the target
+            $target.append($elem.clone());
+        });
     }
 
 
