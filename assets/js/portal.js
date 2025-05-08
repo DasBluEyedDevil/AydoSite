@@ -34,7 +34,10 @@ function getApiUrl(endpoint) {
 async function validateToken() {
     try {
         const token = sessionStorage.getItem('aydocorpToken');
-        if (!token) return false;
+        if (!token) {
+            console.warn('[Portal] validateToken: No token in sessionStorage');
+            return false;
+        }
         try {
             const response = await fetch(getApiUrl('auth/validate'), {
                 method: 'GET',
@@ -45,10 +48,10 @@ async function validateToken() {
                 },
                 credentials: 'include'
             });
-            console.log('Token validation response:', response.status);
+            console.log('[Portal] Token validation response:', response.status);
             if (response.ok) return true;
-            if (response.status !== 404) console.warn(`Standard validate endpoint failed: ${response.status}`);
-        } catch (err) { console.warn('Error in /auth/validate:', err); }
+            if (response.status !== 404) console.warn('[Portal] Standard validate endpoint failed:', response.status);
+        } catch (err) { console.warn('[Portal] Error in /auth/validate:', err); }
         for (const endpoint of ['auth/check', 'auth/status']) {
             try {
                 const altResponse = await fetch(getApiUrl(endpoint), {
@@ -60,13 +63,13 @@ async function validateToken() {
                     },
                     credentials: 'include'
                 });
-                console.log(`Token validation response (${endpoint}):`, altResponse.status);
+                console.log(`[Portal] Token validation response (${endpoint}):`, altResponse.status);
                 if (altResponse.ok) return true;
-            } catch (err) { console.warn(`Error in /${endpoint}:`, err); }
+            } catch (err) { console.warn(`[Portal] Error in /${endpoint}:`, err); }
         }
         return false;
     } catch (err) {
-        console.error('validateToken error:', err);
+        console.error('[Portal] validateToken error:', err);
         return false;
     }
 }
@@ -77,33 +80,40 @@ function checkLoginStatus() {
     const userJson = sessionStorage.getItem('aydocorpUser');
     let user = null;
     try { user = JSON.parse(userJson); } catch {}
+    console.log('[Portal] checkLoginStatus: token:', token, 'user:', user);
+    const portalMain = document.getElementById('portal-main');
+    if (!portalMain) console.warn('[Portal] #portal-main not found in DOM');
     if (!token || !user) {
+        console.warn('[Portal] No token or user found. Hiding overlay, showing login-required message.');
         hideLoginOverlay();
         showLoginRequiredMessage();
-        // Hide main portal content
-        const portalMain = document.getElementById('portal-main');
         if (portalMain) portalMain.style.display = 'none';
         return;
     }
     validateToken().then(isValid => {
+        console.log('[Portal] validateToken result:', isValid);
         if (isValid) {
             hideLoginOverlay();
             loadUserData(user);
-            // Hide login-required message if present
             const loginMsg = document.getElementById('login-required-message');
-            if (loginMsg) loginMsg.style.display = 'none';
-            // Show main portal content
-            const portalMain = document.getElementById('portal-main');
-            if (portalMain) portalMain.style.display = '';
+            if (loginMsg) {
+                loginMsg.style.display = 'none';
+                console.log('[Portal] Hiding login-required message.');
+            }
+            if (portalMain) {
+                portalMain.style.display = '';
+                console.log('[Portal] Showing #portal-main. Computed display:', getComputedStyle(portalMain).display);
+            }
         } else {
-            console.error('Token invalid, clearing session and showing login required message.');
+            console.error('[Portal] Token invalid, clearing session and showing login required message.');
             sessionStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
             hideLoginOverlay();
             showLoginRequiredMessage();
-            // Hide main portal content
-            const portalMain = document.getElementById('portal-main');
-            if (portalMain) portalMain.style.display = 'none';
+            if (portalMain) {
+                portalMain.style.display = 'none';
+                console.log('[Portal] Hiding #portal-main. Computed display:', getComputedStyle(portalMain).display);
+            }
         }
     });
 }
