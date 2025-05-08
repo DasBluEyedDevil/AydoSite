@@ -8,32 +8,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Check if user is logged in
 function checkLoginStatus() {
-    const loginStatus = localStorage.getItem('isLoggedIn');
-    const loginToken = localStorage.getItem('loginToken');
+    const token = sessionStorage.getItem('aydocorpToken');
+    const user = JSON.parse(sessionStorage.getItem('aydocorpUser'));
     
-    if (!loginStatus || !loginToken) {
+    if (!token || !user) {
         window.location.href = 'index.html#login';
         return;
     }
 
     // Verify token with server
-    verifyLoginToken(loginToken);
+    verifyLoginToken(token, user);
 }
 
 // Verify login token
-function verifyLoginToken(token) {
-    // Simulate API call to verify token
-    setTimeout(() => {
-        const isValid = true; // This would be the server response
-        if (isValid) {
+async function verifyLoginToken(token, user) {
+    try {
+        const response = await fetch(getApiUrl('auth/verify'), {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'x-auth-token': token
+            }
+        });
+
+        if (response.ok) {
             hideLoginOverlay();
-            loadUserData();
+            loadUserData(user);
         } else {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('loginToken');
+            sessionStorage.removeItem('aydocorpToken');
+            sessionStorage.removeItem('aydocorpUser');
             window.location.href = 'index.html#login';
         }
-    }, 1000);
+    } catch (error) {
+        console.error('Error verifying token:', error);
+        hideLoginOverlay();
+        showError('Error verifying login status. Some features may be limited.');
+    }
+}
+
+// Get API URL helper
+function getApiUrl(endpoint) {
+    const baseUrl = sessionStorage.getItem('aydocorpApiUrl') || 'http://localhost:8080/api';
+    return `${baseUrl}/${endpoint}`;
 }
 
 // Hide login overlay
@@ -47,13 +63,20 @@ function hideLoginOverlay() {
     }
 }
 
+// Show error message
+function showError(message) {
+    // Implementation for showing error messages
+    console.error(message);
+}
+
 // Load user data
-function loadUserData() {
-    const username = localStorage.getItem('username');
-    const lastLogin = localStorage.getItem('lastLoginTime');
+function loadUserData(user) {
+    if (!user) return;
     
-    document.getElementById('user-name').textContent = username || 'Employee';
-    document.getElementById('last-login-time').textContent = lastLogin || 'First login';
+    document.getElementById('user-name').textContent = user.username || 'Employee';
+    
+    const lastLogin = sessionStorage.getItem('lastLoginTime') || new Date().toLocaleString();
+    document.getElementById('last-login-time').textContent = lastLogin;
 }
 
 // Initialize portal functionality
@@ -321,9 +344,8 @@ function initializeEventHandlers() {
 
 // Handle logout
 function handleLogout() {
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('loginToken');
-    localStorage.removeItem('username');
+    sessionStorage.removeItem('aydocorpToken');
+    sessionStorage.removeItem('aydocorpUser');
     window.location.href = 'index.html#login';
 }
 
