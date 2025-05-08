@@ -114,6 +114,7 @@ function checkLoginStatus() {
                 localStorage.removeItem('aydocorpUser');
                 sessionStorage.removeItem('aydocorpToken');
                 sessionStorage.removeItem('aydocorpUser');
+                document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
                 hideLoginOverlay();
                 showLoginRequiredMessage();
             }
@@ -123,6 +124,7 @@ function checkLoginStatus() {
             localStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
+            document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             hideLoginOverlay();
             showLoginRequiredMessage();
         });
@@ -155,6 +157,7 @@ function checkLoginStatus() {
             localStorage.removeItem('aydocorpUser');
             sessionStorage.removeItem('aydocorpToken');
             sessionStorage.removeItem('aydocorpUser');
+            document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
             hideLoginOverlay();
             showLoginRequiredMessage();
             if (portalMain) {
@@ -185,9 +188,9 @@ function showError(message) {
 // Load user data
 function loadUserData(user) {
     if (!user) return;
-    
+
     document.getElementById('user-name').textContent = user.username || 'Employee';
-    
+
     const lastLogin = sessionStorage.getItem('lastLoginTime') || new Date().toLocaleString();
     document.getElementById('last-login-time').textContent = lastLogin;
 }
@@ -204,16 +207,16 @@ function initializePortal() {
 // Initialize navigation
 function initializeNavigation() {
     const navLinks = document.querySelectorAll('#portal-nav a');
-    
+
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             const section = this.getAttribute('data-section');
-            
+
             // Update active states
             navLinks.forEach(l => l.closest('li').classList.remove('active'));
             this.closest('li').classList.add('active');
-            
+
             // Load section content
             loadSectionContent(section);
         });
@@ -225,9 +228,9 @@ function initializeMobileMenu() {
     const menuButton = document.createElement('button');
     menuButton.className = 'mobile-menu-toggle';
     menuButton.innerHTML = '<i class="fas fa-bars"></i>';
-    
+
     document.querySelector('.header-content').prepend(menuButton);
-    
+
     menuButton.addEventListener('click', function() {
         document.getElementById('portal-nav').classList.toggle('active');
     });
@@ -457,8 +460,13 @@ function initializeEventHandlers() {
 
 // Unified handleLogout
 function handleLogout() {
+    localStorage.removeItem('aydocorpToken');
+    localStorage.removeItem('aydocorpUser');
+    localStorage.removeItem('aydocorpLoggedIn');
     sessionStorage.removeItem('aydocorpToken');
     sessionStorage.removeItem('aydocorpUser');
+    sessionStorage.removeItem('aydocorpLoggedIn');
+    document.cookie = 'aydocorpToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     window.location.href = 'index.html#login';
 }
 
