@@ -1967,6 +1967,7 @@
             // This ensures the web server content is updated even if the database operations fail
             updatePageContent(pageElement, title, content);
 
+            let dbUpdateSuccess = false;
             try {
                 // Try to create/update the content in the database
                 // First check if the page exists
@@ -2021,14 +2022,24 @@
                     // Continue anyway since we've already updated the DOM
                 } else {
                     console.log(`Content saved successfully to database`);
+                    dbUpdateSuccess = true;
                 }
             } catch (dbError) {
                 console.warn('Database operations failed, but content was updated in the DOM:', dbError);
                 // Continue since we've already updated the DOM
             }
 
-            // Show success message
-            AuthUtils.showNotification(`Content for "${pageElement}" has been saved successfully!`, 'success');
+            // Show appropriate success message based on database update status
+            if (dbUpdateSuccess) {
+                AuthUtils.showNotification(`Content for "${pageElement}" has been saved successfully!`, 'success');
+            } else {
+                AuthUtils.showNotification(
+                    `Content for "${pageElement}" has been updated on the page, but could not be saved to the database. ` +
+                    `Your changes will be visible to users but may not persist after server restarts.`, 
+                    'warning',
+                    6000 // Show for longer (6 seconds) since this is important information
+                );
+            }
 
             // Reset the form
             $('#page-element-selector').val('');
