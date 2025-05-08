@@ -1634,11 +1634,6 @@
                 $('#image-upload').val('');
                 $imageUploadContainer.hide();
             });
-
-            // Show notification that the editor has been upgraded
-            setTimeout(function() {
-                AuthUtils.showNotification('The text editor has been upgraded with rich formatting capabilities. You can now add headings, lists, links, and images more easily.', 'info', 5000);
-            }, 1000);
         }
     }
 
