@@ -2,447 +2,340 @@
 // AydoCorp Employee Portal - Core Functionality
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize portal components
+    checkLoginStatus();
     initializePortal();
-    initializeNavigation();
-    initializeCarousel();
-    initializeCalendar();
-    initializeEmployeeSearch();
-    loadAnnouncements();
-    loadEmployeeOfMonth();
-    initializeSubsidiaryTabs();
-    initializeResources();
 });
 
-// Initialize portal
-function initializePortal() {
-    // Handle portal navigation
-    const portalLink = document.querySelector('a[href="#employee-portal"]');
-    if (portalLink) {
-        portalLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            showPortal();
-        });
+// Check if user is logged in
+function checkLoginStatus() {
+    const loginStatus = localStorage.getItem('isLoggedIn');
+    const loginToken = localStorage.getItem('loginToken');
+    
+    if (!loginStatus || !loginToken) {
+        window.location.href = 'index.html#login';
+        return;
     }
 
-    // Add close button to portal
-    const portal = document.getElementById('employee-portal');
-    if (portal) {
-        const closeButton = document.createElement('button');
-        closeButton.className = 'portal-close';
-        closeButton.innerHTML = '×';
-        closeButton.addEventListener('click', hidePortal);
-        portal.insertBefore(closeButton, portal.firstChild);
-    }
+    // Verify token with server
+    verifyLoginToken(loginToken);
+}
 
-    // Handle escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && portal.classList.contains('active')) {
-            hidePortal();
+// Verify login token
+function verifyLoginToken(token) {
+    // Simulate API call to verify token
+    setTimeout(() => {
+        const isValid = true; // This would be the server response
+        if (isValid) {
+            hideLoginOverlay();
+            loadUserData();
+        } else {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('loginToken');
+            window.location.href = 'index.html#login';
         }
-    });
+    }, 1000);
 }
 
-// Show portal
-function showPortal() {
-    const portal = document.getElementById('employee-portal');
-    if (portal) {
-        portal.classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent scrolling of main content
-        checkLoginState(); // Check login state when showing portal
+// Hide login overlay
+function hideLoginOverlay() {
+    const overlay = document.getElementById('login-check-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
     }
 }
 
-// Hide portal
-function hidePortal() {
-    const portal = document.getElementById('employee-portal');
-    if (portal) {
-        portal.classList.remove('active');
-        document.body.style.overflow = ''; // Restore scrolling
-    }
+// Load user data
+function loadUserData() {
+    const username = localStorage.getItem('username');
+    const lastLogin = localStorage.getItem('lastLoginTime');
+    
+    document.getElementById('user-name').textContent = username || 'Employee';
+    document.getElementById('last-login-time').textContent = lastLogin || 'First login';
 }
 
-// Navigation functionality
+// Initialize portal functionality
+function initializePortal() {
+    initializeNavigation();
+    initializeMobileMenu();
+    loadDashboardData();
+    initializeNotifications();
+    initializeEventHandlers();
+}
+
+// Initialize navigation
 function initializeNavigation() {
-    const navLinks = document.querySelectorAll('.portal-nav a');
-    const sections = document.querySelectorAll('.portal-section');
-    const subNavItems = document.querySelectorAll('.portal-subnav-item');
-
+    const navLinks = document.querySelectorAll('#portal-nav a');
+    
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
+            const section = this.getAttribute('data-section');
             
             // Update active states
-            navLinks.forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
+            navLinks.forEach(l => l.closest('li').classList.remove('active'));
+            this.closest('li').classList.add('active');
             
-            // Show/hide sections
-            sections.forEach(section => {
-                section.classList.remove('active');
-                if (section.id === targetId) {
-                    section.classList.add('active');
-                }
-            });
-
-            // Handle sub-navigation
-            const parentItem = this.closest('.portal-nav-item');
-            if (parentItem) {
-                const subNav = parentItem.querySelector('.portal-subnav');
-                if (subNav) {
-                    parentItem.classList.toggle('active');
-                }
-            }
-        });
-    });
-
-    subNavItems.forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href').substring(1);
-            
-            // Update active states
-            subNavItems.forEach(i => i.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show target section
-            sections.forEach(section => {
-                section.classList.remove('active');
-                if (section.id === targetId) {
-                    section.classList.add('active');
-                }
-            });
+            // Load section content
+            loadSectionContent(section);
         });
     });
 }
 
-// Carousel functionality
-function initializeCarousel() {
-    const carousel = document.querySelector('.carousel-container');
-    if (!carousel) return;
-
-    const track = carousel.querySelector('.carousel-track');
-    const slides = Array.from(track.children);
-    const nextButton = carousel.querySelector('.carousel-next');
-    const prevButton = carousel.querySelector('.carousel-prev');
+// Initialize mobile menu
+function initializeMobileMenu() {
+    const menuButton = document.createElement('button');
+    menuButton.className = 'mobile-menu-toggle';
+    menuButton.innerHTML = '<i class="fas fa-bars"></i>';
     
-    let currentIndex = 0;
-    const slideWidth = carousel.offsetWidth;
-
-    // Set initial positions
-    slides.forEach((slide, index) => {
-        slide.style.left = slideWidth * index + 'px';
+    document.querySelector('.header-content').prepend(menuButton);
+    
+    menuButton.addEventListener('click', function() {
+        document.getElementById('portal-nav').classList.toggle('active');
     });
-
-    // Move to slide
-    function moveToSlide(index) {
-        track.style.transform = `translateX(-${slideWidth * index}px)`;
-        currentIndex = index;
-    }
-
-    // Next slide
-    nextButton.addEventListener('click', () => {
-        if (currentIndex < slides.length - 1) {
-            moveToSlide(currentIndex + 1);
-        } else {
-            moveToSlide(0);
-        }
-    });
-
-    // Previous slide
-    prevButton.addEventListener('click', () => {
-        if (currentIndex > 0) {
-            moveToSlide(currentIndex - 1);
-        } else {
-            moveToSlide(slides.length - 1);
-        }
-    });
-
-    // Auto-advance slides
-    setInterval(() => {
-        if (currentIndex < slides.length - 1) {
-            moveToSlide(currentIndex + 1);
-        } else {
-            moveToSlide(0);
-        }
-    }, 5000);
 }
 
-// Calendar functionality
-function initializeCalendar() {
+// Load dashboard data
+function loadDashboardData() {
+    loadRecentActivity();
+    loadUpcomingEvents();
+    loadEmployeeOfMonth();
+    loadAnnouncements();
+    loadTeamStatus();
+}
+
+// Load recent activity
+function loadRecentActivity() {
+    const activityList = document.querySelector('.activity-list');
+    if (!activityList) return;
+
+    // Simulate API call
+    const activities = [
+        {
+            type: 'mission',
+            text: 'Completed cargo delivery to Hurston',
+            time: '2 hours ago'
+        },
+        {
+            type: 'training',
+            text: 'Completed Advanced Navigation course',
+            time: '5 hours ago'
+        },
+        {
+            type: 'achievement',
+            text: 'Earned "Master Pilot" certification',
+            time: '1 day ago'
+        }
+    ];
+
+    activityList.innerHTML = activities.map(activity => `
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-${getActivityIcon(activity.type)}"></i>
+            </div>
+            <div class="activity-details">
+                <p>${activity.text}</p>
+                <small>${activity.time}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Get activity icon
+function getActivityIcon(type) {
+    const icons = {
+        mission: 'rocket',
+        training: 'graduation-cap',
+        achievement: 'trophy',
+        default: 'circle'
+    };
+    return icons[type] || icons.default;
+}
+
+// Load upcoming events
+function loadUpcomingEvents() {
     const calendar = document.getElementById('events-calendar');
     if (!calendar) return;
 
     // Initialize calendar with events
     const events = [
         {
-            title: 'Quarterly Review',
-            start: new Date(new Date().setDate(new Date().getDate() + 7)),
-            allDay: true
+            title: 'Fleet Week',
+            start: new Date(new Date().setDate(new Date().getDate() + 3)),
+            end: new Date(new Date().setDate(new Date().getDate() + 10)),
+            className: 'event-special'
         },
         {
-            title: 'Team Building',
-            start: new Date(new Date().setDate(new Date().getDate() + 14)),
-            allDay: true
+            title: 'Cargo Run: Crusader',
+            start: new Date(new Date().setDate(new Date().getDate() + 1)),
+            className: 'event-mission'
         },
         {
-            title: 'Project Deadline',
-            start: new Date(new Date().setDate(new Date().getDate() + 21)),
-            allDay: true
+            title: 'Team Training',
+            start: new Date(new Date().setHours(new Date().getHours() + 4)),
+            className: 'event-training'
         }
     ];
 
-    // Add event click handler
-    calendar.addEventListener('click', function(e) {
-        const target = e.target;
-        if (target.classList.contains('fc-event')) {
-            showEventDetails(target.dataset.eventId);
-        }
-    });
-
-    // Expand calendar button
-    const expandButton = document.querySelector('.expand-calendar-button');
-    if (expandButton) {
-        expandButton.addEventListener('click', function() {
-            calendar.classList.toggle('expanded');
-            this.textContent = calendar.classList.contains('expanded') ? 
-                'Collapse Calendar' : 'Expand Calendar';
-        });
-    }
+    // Calendar initialization would go here
+    // This is a placeholder for the actual calendar implementation
 }
 
-// Event details modal
-function showEventDetails(eventId) {
-    const event = events.find(e => e.id === eventId);
-    if (!event) return;
+// Load employee of the month
+function loadEmployeeOfMonth() {
+    const eotmContent = document.querySelector('.eotm-content');
+    if (!eotmContent) return;
 
-    const modal = document.createElement('div');
-    modal.className = 'event-modal';
-    modal.innerHTML = `
-        <div class="event-modal-content">
-            <h3>${event.title}</h3>
-            <p>Date: ${event.start.toLocaleDateString()}</p>
-            <p>${event.description || ''}</p>
-            <button class="close-modal">Close</button>
+    const eotm = {
+        name: 'Sarah Chen',
+        position: 'Senior Pilot',
+        achievement: 'Completed 100 successful cargo missions with zero losses',
+        image: 'assets/images/employees/sarah-chen.jpg'
+    };
+
+    eotmContent.innerHTML = `
+        <div class="eotm-card">
+            <div class="eotm-image">
+                <img src="${eotm.image}" alt="${eotm.name}" />
+            </div>
+            <div class="eotm-info">
+                <h4>${eotm.name}</h4>
+                <p class="position">${eotm.position}</p>
+                <p class="achievement">${eotm.achievement}</p>
+            </div>
         </div>
     `;
-
-    document.body.appendChild(modal);
-    modal.querySelector('.close-modal').addEventListener('click', () => {
-        modal.remove();
-    });
 }
 
 // Load announcements
 function loadAnnouncements() {
-    const announcementsSection = document.querySelector('.announcements-section');
-    if (!announcementsSection) return;
+    const announcementsList = document.querySelector('.announcements-list');
+    if (!announcementsList) return;
 
     const announcements = [
         {
-            title: 'New Office Location',
-            content: 'We are excited to announce our new office location in downtown.',
-            date: '2024-03-15'
+            title: 'New Trade Routes Established',
+            content: 'We have established new trade routes in the Stanton system.',
+            date: '2024-03-15',
+            priority: 'high'
         },
         {
-            title: 'System Maintenance',
-            content: 'Scheduled maintenance this weekend. Please save your work.',
-            date: '2024-03-14'
+            title: 'Fleet Maintenance Schedule',
+            content: 'Upcoming maintenance schedule for all vessels.',
+            date: '2024-03-14',
+            priority: 'medium'
         },
         {
-            title: 'Employee Recognition',
-            content: 'Congratulations to our Q1 outstanding performers!',
-            date: '2024-03-13'
+            title: 'Employee Benefits Update',
+            content: 'New benefits package available for all employees.',
+            date: '2024-03-13',
+            priority: 'normal'
         }
     ];
 
-    const announcementsList = announcementsSection.querySelector('.announcements-list');
-    if (announcementsList) {
-        announcements.forEach(announcement => {
-            const announcementElement = document.createElement('div');
-            announcementElement.className = 'announcement';
-            announcementElement.innerHTML = `
-                <h4>${announcement.title}</h4>
-                <p>${announcement.content}</p>
-                <small>Posted on ${announcement.date}</small>
-            `;
-            announcementsList.appendChild(announcementElement);
-        });
-    }
+    announcementsList.innerHTML = announcements.map(announcement => `
+        <div class="announcement-card priority-${announcement.priority}">
+            <h4>${announcement.title}</h4>
+            <p>${announcement.content}</p>
+            <small>Posted on ${announcement.date}</small>
+        </div>
+    `).join('');
 }
 
-// Load Employee of the Month
-function loadEmployeeOfMonth() {
-    const eotmSection = document.querySelector('.employee-of-month');
-    if (!eotmSection) return;
+// Load team status
+function loadTeamStatus() {
+    const teamStatus = document.querySelector('.team-status');
+    if (!teamStatus) return;
 
-    const eotm = {
-        name: 'John Smith',
-        position: 'Senior Developer',
-        department: 'Engineering',
-        achievement: 'Led the successful launch of Project Phoenix',
-        avatar: 'assets/images/employees/john-smith.jpg'
-    };
-
-    const eotmContainer = eotmSection.querySelector('.eotm-container');
-    if (eotmContainer) {
-        eotmContainer.innerHTML = `
-            <div class="eotm-avatar">
-                <img src="${eotm.avatar}" alt="${eotm.name}">
-            </div>
-            <div class="eotm-details">
-                <h4>${eotm.name}</h4>
-                <p>${eotm.position} - ${eotm.department}</p>
-                <p>${eotm.achievement}</p>
-            </div>
-        `;
-    }
-}
-
-// Initialize subsidiary tabs
-function initializeSubsidiaryTabs() {
-    const tabs = document.querySelectorAll('.subsidiary-tab');
-    const infoSections = document.querySelectorAll('.subsidiary-info');
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const targetId = this.dataset.target;
-            
-            // Update active states
-            tabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show target section
-            infoSections.forEach(section => {
-                section.style.display = section.id === targetId ? 'block' : 'none';
-            });
-        });
-    });
-}
-
-// Initialize resources
-function initializeResources() {
-    const resourceLinks = document.querySelectorAll('.resource-link');
-    
-    resourceLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const resourceId = this.dataset.resourceId;
-            // Handle resource click (e.g., open in new tab, show preview, etc.)
-            window.open(this.href, '_blank');
-        });
-    });
-}
-
-// Employee search functionality
-function initializeEmployeeSearch() {
-    const searchInput = document.getElementById('employee-search');
-    const departmentFilter = document.getElementById('department-filter');
-    const employeeGrid = document.querySelector('.employee-grid');
-
-    if (!searchInput || !departmentFilter || !employeeGrid) return;
-
-    // Sample employee data
-    const employees = [
+    const teams = [
         {
-            id: 1,
-            name: 'Alice Johnson',
-            position: 'Software Engineer',
-            department: 'Engineering',
-            email: 'alice.johnson@aydocorp.com',
-            avatar: 'assets/images/employees/alice-j.jpg'
+            name: 'Alpha Team',
+            status: 'active',
+            mission: 'Cargo Run - Hurston'
         },
         {
-            id: 2,
-            name: 'Bob Wilson',
-            position: 'Product Manager',
-            department: 'Product',
-            email: 'bob.wilson@aydocorp.com',
-            avatar: 'assets/images/employees/bob-w.jpg'
+            name: 'Beta Team',
+            status: 'standby',
+            mission: 'None'
         },
-        // Add more employees as needed
+        {
+            name: 'Delta Team',
+            status: 'maintenance',
+            mission: 'Vehicle Maintenance'
+        }
     ];
 
-    function filterEmployees() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const department = departmentFilter.value;
-
-        const filteredEmployees = employees.filter(employee => {
-            const matchesSearch = employee.name.toLowerCase().includes(searchTerm) ||
-                                employee.position.toLowerCase().includes(searchTerm) ||
-                                employee.email.toLowerCase().includes(searchTerm);
-            const matchesDepartment = department === 'all' || employee.department === department;
-            return matchesSearch && matchesDepartment;
-        });
-
-        displayEmployees(filteredEmployees);
-    }
-
-    function displayEmployees(employees) {
-        employeeGrid.innerHTML = '';
-        employees.forEach(employee => {
-            const employeeCard = document.createElement('div');
-            employeeCard.className = 'employee-card';
-            employeeCard.innerHTML = `
-                <div class="employee-avatar">
-                    <img src="${employee.avatar}" alt="${employee.name}">
-                </div>
-                <div class="employee-info">
-                    <h4>${employee.name}</h4>
-                    <p>${employee.position}</p>
-                    <p>${employee.department}</p>
-                    <a href="mailto:${employee.email}">${employee.email}</a>
-                </div>
-            `;
-            employeeGrid.appendChild(employeeCard);
-        });
-    }
-
-    // Event listeners
-    searchInput.addEventListener('input', filterEmployees);
-    departmentFilter.addEventListener('change', filterEmployees);
-
-    // Initial display
-    displayEmployees(employees);
+    teamStatus.innerHTML = teams.map(team => `
+        <div class="team-status-card status-${team.status}">
+            <h4>${team.name}</h4>
+            <p class="status">Status: ${team.status.toUpperCase()}</p>
+            <p class="mission">Current Mission: ${team.mission}</p>
+        </div>
+    `).join('');
 }
 
-// Login verification
-function verifyLogin() {
-    const loginForm = document.getElementById('login-form');
-    if (!loginForm) return;
+// Initialize notifications
+function initializeNotifications() {
+    const notificationBtn = document.getElementById('notifications-btn');
+    if (!notificationBtn) return;
 
-    loginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const username = this.querySelector('#username').value;
-        const password = this.querySelector('#password').value;
-
-        // Here you would typically make an API call to verify credentials
-        // For demo purposes, we'll use a simple check
-        if (username && password) {
-            document.querySelector('.login-message').style.display = 'none';
-            document.querySelector('.portal-content').style.display = 'block';
-            // Store login state
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('username', username);
+    // Simulate new notifications
+    setTimeout(() => {
+        const badge = notificationBtn.querySelector('.notification-badge');
+        if (badge) {
+            badge.textContent = '3';
         }
+    }, 2000);
+
+    notificationBtn.addEventListener('click', function() {
+        // Show notifications panel
+        showNotifications();
     });
 }
 
-// Check login state on page load
-function checkLoginState() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-    const loginMessage = document.querySelector('.login-message');
-    const portalContent = document.querySelector('.portal-content');
+// Show notifications panel
+function showNotifications() {
+    // Implementation for notifications panel
+}
 
-    if (isLoggedIn) {
-        loginMessage.style.display = 'none';
-        portalContent.style.display = 'block';
-    } else {
-        loginMessage.style.display = 'block';
-        portalContent.style.display = 'none';
+// Initialize event handlers
+function initializeEventHandlers() {
+    // Logout button
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            handleLogout();
+        });
+    }
+
+    // Settings button
+    const settingsBtn = document.getElementById('settings-btn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', function() {
+            showSettings();
+        });
     }
 }
 
-// Initialize login verification
-verifyLogin();
-checkLoginState(); 
+// Handle logout
+function handleLogout() {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('loginToken');
+    localStorage.removeItem('username');
+    window.location.href = 'index.html#login';
+}
+
+// Show settings
+function showSettings() {
+    // Implementation for settings panel
+}
+
+// Load section content
+function loadSectionContent(section) {
+    // Implementation for loading different sections
+    console.log(`Loading section: ${section}`);
+    // This would typically involve an API call to get the content
+    // and then updating the main content area
+} 
