@@ -1963,8 +1963,8 @@
         try {
             console.log(`Saving content: ${title} - ${content.substring(0, 50)}...`);
 
-            // Construct the API endpoint URL
-            const url = getApiUrl('page-content/pages');
+            // Construct the API endpoint URL - use the pageName in the URL and add /sections for POST requests
+            const url = getApiUrl(`page-content/pages/${pageElement}/sections`);
 
             // Send the data to the server
             const response = await AuthUtils.secureRequest(url, {
@@ -1973,16 +1973,10 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    pageName: pageElement,
-                    pageTitle: title,
-                    description: '',
-                    sections: [{
-                        title: title,
-                        content: content,
-                        order: 0,
-                        isVisible: true
-                    }],
-                    isPublished: true
+                    title: title,
+                    content: content,
+                    order: 0,
+                    isVisible: true
                 })
             });
 
