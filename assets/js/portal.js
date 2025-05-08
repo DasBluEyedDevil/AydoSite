@@ -84,12 +84,50 @@ async function validateToken(token) {
 // Unified checkLoginStatus
 function checkLoginStatus() {
     const token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
-    const userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
+    let userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
     let user = null;
     try { user = JSON.parse(userJson); } catch {}
     console.log('[Portal] checkLoginStatus: token:', token, 'user:', user);
     const portalMain = document.getElementById('portal-main');
     if (!portalMain) console.warn('[Portal] #portal-main not found in DOM');
+    // If token exists but user info is missing, fetch user info from backend
+    if (token && !user) {
+        fetch(getApiUrl('auth/validate'), {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'x-auth-token': token,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+            if (data && (data.username || data.id)) {
+                // Store the returned user object
+                localStorage.setItem('aydocorpUser', JSON.stringify(data));
+                sessionStorage.setItem('aydocorpUser', JSON.stringify(data));
+                checkLoginStatus(); // re-run with user info now available
+            } else {
+                // Token invalid or user not found, clear state
+                localStorage.removeItem('aydocorpToken');
+                localStorage.removeItem('aydocorpUser');
+                sessionStorage.removeItem('aydocorpToken');
+                sessionStorage.removeItem('aydocorpUser');
+                hideLoginOverlay();
+                showLoginRequiredMessage();
+            }
+        })
+        .catch(() => {
+            localStorage.removeItem('aydocorpToken');
+            localStorage.removeItem('aydocorpUser');
+            sessionStorage.removeItem('aydocorpToken');
+            sessionStorage.removeItem('aydocorpUser');
+            hideLoginOverlay();
+            showLoginRequiredMessage();
+        });
+        return;
+    }
     if (!token || !user) {
         console.warn('[Portal] No token or user found. Hiding overlay, showing login-required message.');
         hideLoginOverlay();
