@@ -23,32 +23,45 @@ function checkLoginStatus() {
 // Verify login token
 async function verifyLoginToken(token, user) {
     try {
-        const response = await fetch(getApiUrl('auth/verify'), {
+        const apiUrl = getApiUrl('auth/verify');
+        console.log('Verifying token at:', apiUrl);
+        
+        const response = await fetch(apiUrl, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
-                'x-auth-token': token
-            }
+                'x-auth-token': token,
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
         });
 
         if (response.ok) {
-            hideLoginOverlay();
-            loadUserData(user);
-        } else {
-            sessionStorage.removeItem('aydocorpToken');
-            sessionStorage.removeItem('aydocorpUser');
-            window.location.href = 'index.html#login';
+            const data = await response.json();
+            if (data.valid) {
+                hideLoginOverlay();
+                loadUserData(user);
+                return true;
+            }
         }
+        
+        // If we get here, the token is invalid
+        console.error('Invalid token or server error');
+        sessionStorage.removeItem('aydocorpToken');
+        sessionStorage.removeItem('aydocorpUser');
+        window.location.href = 'index.html#login';
+        return false;
     } catch (error) {
         console.error('Error verifying token:', error);
         hideLoginOverlay();
         showError('Error verifying login status. Some features may be limited.');
+        return false;
     }
 }
 
 // Get API URL helper
 function getApiUrl(endpoint) {
-    const baseUrl = sessionStorage.getItem('aydocorpApiUrl') || 'http://localhost:8080/api';
+    const baseUrl = sessionStorage.getItem('aydocorpApiUrl') || 'https://aydocorp.space/api';
     return `${baseUrl}/${endpoint}`;
 }
 
@@ -356,8 +369,82 @@ function showSettings() {
 
 // Load section content
 function loadSectionContent(section) {
-    // Implementation for loading different sections
-    console.log(`Loading section: ${section}`);
-    // This would typically involve an API call to get the content
-    // and then updating the main content area
+    const mainContent = document.getElementById('portal-main');
+    if (!mainContent) return;
+
+    // Hide all sections first
+    document.querySelectorAll('.portal-section').forEach(s => s.classList.remove('active'));
+
+    // Create section if it doesn't exist
+    let sectionElement = document.getElementById(section);
+    if (!sectionElement) {
+        sectionElement = document.createElement('section');
+        sectionElement.id = section;
+        sectionElement.className = 'portal-section';
+        mainContent.appendChild(sectionElement);
+    }
+
+    // Show the section
+    sectionElement.classList.add('active');
+
+    // Load section-specific content
+    switch (section) {
+        case 'database':
+            loadDatabaseSection(sectionElement);
+            break;
+        case 'profile':
+            loadProfileSection(sectionElement);
+            break;
+        // Add other sections as needed
+    }
+}
+
+// Load database section
+function loadDatabaseSection(container) {
+    container.innerHTML = `
+        <div class="database-content">
+            <div class="employee-controls">
+                <div class="search-container">
+                    <input type="text" id="employee-database-search" placeholder="Search employees..." />
+                    <button class="search-button">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="filter-container">
+                    <select id="department-filter">
+                        <option value="">All Departments</option>
+                        <option value="operations">Operations</option>
+                        <option value="logistics">Logistics</option>
+                        <option value="management">Management</option>
+                    </select>
+                </div>
+            </div>
+            <div class="employee-list">
+                <!-- Employee list will be populated dynamically -->
+            </div>
+        </div>
+    `;
+
+    // Initialize search functionality
+    const searchInput = document.getElementById('employee-database-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Implement search functionality
+            console.log('Searching for:', this.value);
+        });
+    }
+}
+
+// Load profile section
+function loadProfileSection(container) {
+    container.innerHTML = `
+        <div class="profile-content">
+            <div class="profile-header">
+                <h2>My Profile</h2>
+            </div>
+            <div class="profile-details">
+                <!-- Profile details will be populated dynamically -->
+            </div>
+        </div>
+    `;
 } 
