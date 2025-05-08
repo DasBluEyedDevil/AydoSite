@@ -1,509 +1,448 @@
 // Employee Portal JavaScript
-(function ($) {
-    'use strict';
+// AydoCorp Employee Portal - Core Functionality
 
-    // Portal Navigation
-    function initPortalNavigation() {
-        const $navLinks = $('.portal-nav a');
-        const $sections = $('.portal-section');
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize portal components
+    initializePortal();
+    initializeNavigation();
+    initializeCarousel();
+    initializeCalendar();
+    initializeEmployeeSearch();
+    loadAnnouncements();
+    loadEmployeeOfMonth();
+    initializeSubsidiaryTabs();
+    initializeResources();
+});
 
-        $navLinks.on('click', function (e) {
+// Initialize portal
+function initializePortal() {
+    // Handle portal navigation
+    const portalLink = document.querySelector('a[href="#employee-portal"]');
+    if (portalLink) {
+        portalLink.addEventListener('click', function(e) {
             e.preventDefault();
-            const targetSection = $(this).data('section');
+            showPortal();
+        });
+    }
+
+    // Add close button to portal
+    const portal = document.getElementById('employee-portal');
+    if (portal) {
+        const closeButton = document.createElement('button');
+        closeButton.className = 'portal-close';
+        closeButton.innerHTML = '×';
+        closeButton.addEventListener('click', hidePortal);
+        portal.insertBefore(closeButton, portal.firstChild);
+    }
+
+    // Handle escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && portal.classList.contains('active')) {
+            hidePortal();
+        }
+    });
+}
+
+// Show portal
+function showPortal() {
+    const portal = document.getElementById('employee-portal');
+    if (portal) {
+        portal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling of main content
+        checkLoginState(); // Check login state when showing portal
+    }
+}
+
+// Hide portal
+function hidePortal() {
+    const portal = document.getElementById('employee-portal');
+    if (portal) {
+        portal.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+}
+
+// Navigation functionality
+function initializeNavigation() {
+    const navLinks = document.querySelectorAll('.portal-nav a');
+    const sections = document.querySelectorAll('.portal-section');
+    const subNavItems = document.querySelectorAll('.portal-subnav-item');
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
             
             // Update active states
-            $navLinks.removeClass('active');
-            $(this).addClass('active');
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
             
-            // Show target section
-            $sections.removeClass('active');
-            $(`#${targetSection}`).addClass('active');
+            // Show/hide sections
+            sections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === targetId) {
+                    section.classList.add('active');
+                }
+            });
 
-            // Update URL hash
-            window.location.hash = targetSection;
-        });
-    }
-
-    // Picture Carousel
-    function initCarousel() {
-        const $track = $('.carousel-track');
-        const $slides = $track.find('img');
-        const $prev = $('.carousel-prev');
-        const $next = $('.carousel-next');
-        let currentIndex = 0;
-
-        // Load carousel images
-        const images = [
-            'images/AydoOffice1.png',
-            'images/logisticsoffice.jpg',
-            'images/Hull_E.jpg',
-            'images/Aydo_Corp_logo_Silver.png'
-        ];
-
-        images.forEach(src => {
-            $track.append(`<img src="${src}" alt="Organization Gallery">`);
-        });
-
-        function updateCarousel() {
-            const offset = -currentIndex * 100;
-            $track.css('transform', `translateX(${offset}%)`);
-        }
-
-        $prev.on('click', () => {
-            currentIndex = Math.max(currentIndex - 1, 0);
-            updateCarousel();
-        });
-
-        $next.on('click', () => {
-            currentIndex = Math.min(currentIndex + 1, $slides.length - 1);
-            updateCarousel();
-        });
-
-        // Auto-advance carousel
-        setInterval(() => {
-            currentIndex = (currentIndex + 1) % $slides.length;
-            updateCarousel();
-        }, 5000);
-    }
-
-    // Calendar Integration
-    function initCalendar() {
-        const calendarEl = document.getElementById('events-calendar');
-        if (!calendarEl) return;
-
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            events: '/api/employee-portal/events',
-            eventColor: '#53e3fb',
-            eventClick: function(info) {
-                showEventDetails(info.event);
+            // Handle sub-navigation
+            const parentItem = this.closest('.portal-nav-item');
+            if (parentItem) {
+                const subNav = parentItem.querySelector('.portal-subnav');
+                if (subNav) {
+                    parentItem.classList.toggle('active');
+                }
             }
         });
+    });
 
-        calendar.render();
+    subNavItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1);
+            
+            // Update active states
+            subNavItems.forEach(i => i.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show target section
+            sections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === targetId) {
+                    section.classList.add('active');
+                }
+            });
+        });
+    });
+}
+
+// Carousel functionality
+function initializeCarousel() {
+    const carousel = document.querySelector('.carousel-container');
+    if (!carousel) return;
+
+    const track = carousel.querySelector('.carousel-track');
+    const slides = Array.from(track.children);
+    const nextButton = carousel.querySelector('.carousel-next');
+    const prevButton = carousel.querySelector('.carousel-prev');
+    
+    let currentIndex = 0;
+    const slideWidth = carousel.offsetWidth;
+
+    // Set initial positions
+    slides.forEach((slide, index) => {
+        slide.style.left = slideWidth * index + 'px';
+    });
+
+    // Move to slide
+    function moveToSlide(index) {
+        track.style.transform = `translateX(-${slideWidth * index}px)`;
+        currentIndex = index;
     }
 
-    // Event Details Modal
-    function showEventDetails(event) {
-        const modal = `
-            <div class="event-modal">
-                <div class="event-modal-content">
-                    <h3>${event.title}</h3>
-                    <p>${event.description}</p>
-                    <div class="event-details">
-                        <p><strong>Date:</strong> ${event.start.toLocaleDateString()}</p>
-                        <p><strong>Time:</strong> ${event.start.toLocaleTimeString()}</p>
-                        <p><strong>Location:</strong> ${event.extendedProps.location || 'TBD'}</p>
-                    </div>
-                    <button class="close-modal">Close</button>
+    // Next slide
+    nextButton.addEventListener('click', () => {
+        if (currentIndex < slides.length - 1) {
+            moveToSlide(currentIndex + 1);
+        } else {
+            moveToSlide(0);
+        }
+    });
+
+    // Previous slide
+    prevButton.addEventListener('click', () => {
+        if (currentIndex > 0) {
+            moveToSlide(currentIndex - 1);
+        } else {
+            moveToSlide(slides.length - 1);
+        }
+    });
+
+    // Auto-advance slides
+    setInterval(() => {
+        if (currentIndex < slides.length - 1) {
+            moveToSlide(currentIndex + 1);
+        } else {
+            moveToSlide(0);
+        }
+    }, 5000);
+}
+
+// Calendar functionality
+function initializeCalendar() {
+    const calendar = document.getElementById('events-calendar');
+    if (!calendar) return;
+
+    // Initialize calendar with events
+    const events = [
+        {
+            title: 'Quarterly Review',
+            start: new Date(new Date().setDate(new Date().getDate() + 7)),
+            allDay: true
+        },
+        {
+            title: 'Team Building',
+            start: new Date(new Date().setDate(new Date().getDate() + 14)),
+            allDay: true
+        },
+        {
+            title: 'Project Deadline',
+            start: new Date(new Date().setDate(new Date().getDate() + 21)),
+            allDay: true
+        }
+    ];
+
+    // Add event click handler
+    calendar.addEventListener('click', function(e) {
+        const target = e.target;
+        if (target.classList.contains('fc-event')) {
+            showEventDetails(target.dataset.eventId);
+        }
+    });
+
+    // Expand calendar button
+    const expandButton = document.querySelector('.expand-calendar-button');
+    if (expandButton) {
+        expandButton.addEventListener('click', function() {
+            calendar.classList.toggle('expanded');
+            this.textContent = calendar.classList.contains('expanded') ? 
+                'Collapse Calendar' : 'Expand Calendar';
+        });
+    }
+}
+
+// Event details modal
+function showEventDetails(eventId) {
+    const event = events.find(e => e.id === eventId);
+    if (!event) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'event-modal';
+    modal.innerHTML = `
+        <div class="event-modal-content">
+            <h3>${event.title}</h3>
+            <p>Date: ${event.start.toLocaleDateString()}</p>
+            <p>${event.description || ''}</p>
+            <button class="close-modal">Close</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.remove();
+    });
+}
+
+// Load announcements
+function loadAnnouncements() {
+    const announcementsSection = document.querySelector('.announcements-section');
+    if (!announcementsSection) return;
+
+    const announcements = [
+        {
+            title: 'New Office Location',
+            content: 'We are excited to announce our new office location in downtown.',
+            date: '2024-03-15'
+        },
+        {
+            title: 'System Maintenance',
+            content: 'Scheduled maintenance this weekend. Please save your work.',
+            date: '2024-03-14'
+        },
+        {
+            title: 'Employee Recognition',
+            content: 'Congratulations to our Q1 outstanding performers!',
+            date: '2024-03-13'
+        }
+    ];
+
+    const announcementsList = announcementsSection.querySelector('.announcements-list');
+    if (announcementsList) {
+        announcements.forEach(announcement => {
+            const announcementElement = document.createElement('div');
+            announcementElement.className = 'announcement';
+            announcementElement.innerHTML = `
+                <h4>${announcement.title}</h4>
+                <p>${announcement.content}</p>
+                <small>Posted on ${announcement.date}</small>
+            `;
+            announcementsList.appendChild(announcementElement);
+        });
+    }
+}
+
+// Load Employee of the Month
+function loadEmployeeOfMonth() {
+    const eotmSection = document.querySelector('.employee-of-month');
+    if (!eotmSection) return;
+
+    const eotm = {
+        name: 'John Smith',
+        position: 'Senior Developer',
+        department: 'Engineering',
+        achievement: 'Led the successful launch of Project Phoenix',
+        avatar: 'assets/images/employees/john-smith.jpg'
+    };
+
+    const eotmContainer = eotmSection.querySelector('.eotm-container');
+    if (eotmContainer) {
+        eotmContainer.innerHTML = `
+            <div class="eotm-avatar">
+                <img src="${eotm.avatar}" alt="${eotm.name}">
+            </div>
+            <div class="eotm-details">
+                <h4>${eotm.name}</h4>
+                <p>${eotm.position} - ${eotm.department}</p>
+                <p>${eotm.achievement}</p>
+            </div>
+        `;
+    }
+}
+
+// Initialize subsidiary tabs
+function initializeSubsidiaryTabs() {
+    const tabs = document.querySelectorAll('.subsidiary-tab');
+    const infoSections = document.querySelectorAll('.subsidiary-info');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetId = this.dataset.target;
+            
+            // Update active states
+            tabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show target section
+            infoSections.forEach(section => {
+                section.style.display = section.id === targetId ? 'block' : 'none';
+            });
+        });
+    });
+}
+
+// Initialize resources
+function initializeResources() {
+    const resourceLinks = document.querySelectorAll('.resource-link');
+    
+    resourceLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const resourceId = this.dataset.resourceId;
+            // Handle resource click (e.g., open in new tab, show preview, etc.)
+            window.open(this.href, '_blank');
+        });
+    });
+}
+
+// Employee search functionality
+function initializeEmployeeSearch() {
+    const searchInput = document.getElementById('employee-search');
+    const departmentFilter = document.getElementById('department-filter');
+    const employeeGrid = document.querySelector('.employee-grid');
+
+    if (!searchInput || !departmentFilter || !employeeGrid) return;
+
+    // Sample employee data
+    const employees = [
+        {
+            id: 1,
+            name: 'Alice Johnson',
+            position: 'Software Engineer',
+            department: 'Engineering',
+            email: 'alice.johnson@aydocorp.com',
+            avatar: 'assets/images/employees/alice-j.jpg'
+        },
+        {
+            id: 2,
+            name: 'Bob Wilson',
+            position: 'Product Manager',
+            department: 'Product',
+            email: 'bob.wilson@aydocorp.com',
+            avatar: 'assets/images/employees/bob-w.jpg'
+        },
+        // Add more employees as needed
+    ];
+
+    function filterEmployees() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const department = departmentFilter.value;
+
+        const filteredEmployees = employees.filter(employee => {
+            const matchesSearch = employee.name.toLowerCase().includes(searchTerm) ||
+                                employee.position.toLowerCase().includes(searchTerm) ||
+                                employee.email.toLowerCase().includes(searchTerm);
+            const matchesDepartment = department === 'all' || employee.department === department;
+            return matchesSearch && matchesDepartment;
+        });
+
+        displayEmployees(filteredEmployees);
+    }
+
+    function displayEmployees(employees) {
+        employeeGrid.innerHTML = '';
+        employees.forEach(employee => {
+            const employeeCard = document.createElement('div');
+            employeeCard.className = 'employee-card';
+            employeeCard.innerHTML = `
+                <div class="employee-avatar">
+                    <img src="${employee.avatar}" alt="${employee.name}">
                 </div>
-            </div>
-        `;
-
-        $('body').append(modal);
-        $('.event-modal').fadeIn();
-
-        $('.close-modal').on('click', function() {
-            $('.event-modal').fadeOut(function() {
-                $(this).remove();
-            });
+                <div class="employee-info">
+                    <h4>${employee.name}</h4>
+                    <p>${employee.position}</p>
+                    <p>${employee.department}</p>
+                    <a href="mailto:${employee.email}">${employee.email}</a>
+                </div>
+            `;
+            employeeGrid.appendChild(employeeCard);
         });
     }
 
-    // Announcements
-    function loadAnnouncements() {
-        const $container = $('.announcements-container');
-        
-        // Fetch announcements from API
-        $.get('/api/employee-portal/announcements')
-            .done(function(announcements) {
-                const html = announcements.map(announcement => `
-                    <div class="announcement">
-                        <h4>${announcement.title}</h4>
-                        <p>${announcement.content}</p>
-                        <small>Posted: ${new Date(announcement.date).toLocaleDateString()}</small>
-                    </div>
-                `).join('');
-                
-                $container.html(html);
-            })
-            .fail(function() {
-                $container.html('<p>Failed to load announcements.</p>');
-            });
+    // Event listeners
+    searchInput.addEventListener('input', filterEmployees);
+    departmentFilter.addEventListener('change', filterEmployees);
+
+    // Initial display
+    displayEmployees(employees);
+}
+
+// Login verification
+function verifyLogin() {
+    const loginForm = document.getElementById('login-form');
+    if (!loginForm) return;
+
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = this.querySelector('#username').value;
+        const password = this.querySelector('#password').value;
+
+        // Here you would typically make an API call to verify credentials
+        // For demo purposes, we'll use a simple check
+        if (username && password) {
+            document.querySelector('.login-message').style.display = 'none';
+            document.querySelector('.portal-content').style.display = 'block';
+            // Store login state
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('username', username);
+        }
+    });
+}
+
+// Check login state on page load
+function checkLoginState() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const loginMessage = document.querySelector('.login-message');
+    const portalContent = document.querySelector('.portal-content');
+
+    if (isLoggedIn) {
+        loginMessage.style.display = 'none';
+        portalContent.style.display = 'block';
+    } else {
+        loginMessage.style.display = 'block';
+        portalContent.style.display = 'none';
     }
+}
 
-    // Employee of the Month
-    function loadEmployeeOfTheMonth() {
-        const $container = $('.eotm-container');
-        
-        // Fetch employee of the month from API
-        $.get('/api/employee-portal/employee-of-month')
-            .done(function(data) {
-                const html = `
-                    <div class="eotm-avatar">
-                        <img src="${data.photo || 'images/default-avatar.png'}" alt="${data.name}">
-                    </div>
-                    <div class="eotm-details">
-                        <h4>${data.name}</h4>
-                        <p>${data.achievement}</p>
-                    </div>
-                `;
-                
-                $container.html(html);
-            })
-            .fail(function() {
-                $container.html('<p>Failed to load employee of the month.</p>');
-            });
-    }
-
-    // Corporate History
-    function loadCorporateHistory() {
-        const $container = $('.history-content');
-        
-        // Fetch corporate history from API
-        $.get('/api/employee-portal/corporate-history')
-            .done(function(history) {
-                const html = `
-                    <div class="history-timeline">
-                        ${history.events.map(event => `
-                            <div class="timeline-item">
-                                <div class="timeline-date">${event.year}</div>
-                                <div class="timeline-content">
-                                    <h4>${event.title}</h4>
-                                    <p>${event.description}</p>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                
-                $container.html(html);
-            })
-            .fail(function() {
-                $container.html('<p>Failed to load corporate history.</p>');
-            });
-    }
-
-    // Leadership Tree
-    function loadLeadershipTree() {
-        const $container = $('.org-tree');
-        
-        // Fetch leadership data from API
-        $.get('/api/employee-portal/leadership')
-            .done(function(data) {
-                const html = `
-                    <div class="org-chart">
-                        ${renderOrgLevel(data)}
-                    </div>
-                `;
-                
-                $container.html(html);
-            })
-            .fail(function() {
-                $container.html('<p>Failed to load leadership tree.</p>');
-            });
-    }
-
-    function renderOrgLevel(level) {
-        return `
-            <div class="org-level">
-                ${level.members.map(member => `
-                    <div class="org-box ${member.role.toLowerCase()}">
-                        <div class="org-title">${member.title}</div>
-                        <div class="org-name">${member.name}</div>
-                        <div class="org-username">${member.username}</div>
-                    </div>
-                `).join('')}
-                ${level.children ? `<div class="org-children">${renderOrgLevel(level.children)}</div>` : ''}
-            </div>
-        `;
-    }
-
-    // Subsidiary Tabs
-    function initSubsidiaryTabs() {
-        const $tabs = $('.subsidiary-tab');
-        const $info = $('.subsidiary-info');
-
-        $tabs.on('click', function() {
-            const subsidiary = $(this).data('subsidiary');
-            
-            $tabs.removeClass('active');
-            $(this).addClass('active');
-            
-            // Load subsidiary info
-            $.get(`/api/employee-portal/subsidiaries/${subsidiary}`)
-                .done(function(data) {
-                    const html = `
-                        <div class="subsidiary-logo">
-                            <img src="${data.logo}" alt="${data.name} Logo">
-                        </div>
-                        <div class="subsidiary-description">
-                            <h3>${data.name}</h3>
-                            <p>${data.description}</p>
-                        </div>
-                    `;
-                    
-                    $info.html(html);
-                })
-                .fail(function() {
-                    $info.html('<p>Failed to load subsidiary information.</p>');
-                });
-        });
-    }
-
-    // Resources
-    function loadResources() {
-        const $linksContainer = $('.links-container');
-        const $docsContainer = $('.docs-container');
-        
-        // Load useful links
-        $.get('/api/employee-portal/resources/links')
-            .done(function(links) {
-                const html = links.map(link => `
-                    <div class="resource-link">
-                        <a href="${link.url}" target="_blank">${link.title}</a>
-                        <p>${link.description}</p>
-                    </div>
-                `).join('');
-                
-                $linksContainer.html(html);
-            })
-            .fail(function() {
-                $linksContainer.html('<p>Failed to load useful links.</p>');
-            });
-
-        // Load documentation
-        $.get('/api/employee-portal/resources/docs')
-            .done(function(docs) {
-                const html = docs.map(doc => `
-                    <div class="resource-doc">
-                        <h4>${doc.title}</h4>
-                        <p>${doc.description}</p>
-                        <a href="${doc.url}" class="button small">View Document</a>
-                    </div>
-                `).join('');
-                
-                $docsContainer.html(html);
-            })
-            .fail(function() {
-                $docsContainer.html('<p>Failed to load documentation.</p>');
-            });
-    }
-
-    // Training Guides
-    function loadTrainingGuides() {
-        const $container = $('.guides-container');
-        
-        $.get('/api/employee-portal/training-guides')
-            .done(function(guides) {
-                const html = guides.map(guide => `
-                    <div class="training-guide">
-                        <h4>${guide.title}</h4>
-                        <p>${guide.description}</p>
-                        <div class="guide-meta">
-                            <span>Level: ${guide.level}</span>
-                            <span>Duration: ${guide.duration}</span>
-                        </div>
-                        <a href="${guide.url}" class="button small">Start Training</a>
-                    </div>
-                `).join('');
-                
-                $container.html(html);
-            })
-            .fail(function() {
-                $container.html('<p>Failed to load training guides.</p>');
-            });
-    }
-
-    // Certifications
-    function loadCertifications() {
-        const $container = $('.certs-container');
-        
-        $.get('/api/employee-portal/certifications')
-            .done(function(certs) {
-                const html = certs.map(cert => `
-                    <div class="certification-card">
-                        <div class="certification-icon">
-                            <img src="${cert.icon}" alt="${cert.title}">
-                        </div>
-                        <h5>${cert.title}</h5>
-                        <p>${cert.description}</p>
-                        <div class="cert-meta">
-                            <span>Level: ${cert.level}</span>
-                            <span>Requirements: ${cert.requirements}</span>
-                        </div>
-                    </div>
-                `).join('');
-                
-                $container.html(html);
-            })
-            .fail(function() {
-                $container.html('<p>Failed to load certifications.</p>');
-            });
-    }
-
-    // Employee Database
-    function initEmployeeDatabase() {
-        const $search = $('#employee-search');
-        const $list = $('.employee-list-container');
-        let searchTimeout;
-
-        // Search functionality
-        $search.on('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const query = $(this).val();
-                searchEmployees(query);
-            }, 300);
-        });
-
-        // Load initial employee list
-        loadEmployees();
-    }
-
-    function loadEmployees() {
-        const $list = $('.employee-list-container');
-        
-        $.get('/api/employee-portal/employees')
-            .done(function(employees) {
-                const html = employees.map(employee => `
-                    <div class="employee-card">
-                        <div class="employee-photo">
-                            <img src="${employee.photo || 'images/default-avatar.png'}" alt="${employee.fullName}">
-                        </div>
-                        <div class="employee-info">
-                            <h4>${employee.fullName}</h4>
-                            <p class="employee-rank">${employee.rank}</p>
-                            <p class="employee-department">${employee.department}</p>
-                            <button class="view-profile" data-id="${employee._id}">View Profile</button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                $list.html(html);
-
-                // Add click handlers for view profile buttons
-                $('.view-profile').on('click', function() {
-                    const employeeId = $(this).data('id');
-                    loadEmployeeProfile(employeeId);
-                });
-            })
-            .fail(function() {
-                $list.html('<p>Failed to load employees.</p>');
-            });
-    }
-
-    function searchEmployees(query) {
-        const $list = $('.employee-list-container');
-        
-        $.get(`/api/employee-portal/employees/search?q=${encodeURIComponent(query)}`)
-            .done(function(employees) {
-                const html = employees.map(employee => `
-                    <div class="employee-card">
-                        <div class="employee-photo">
-                            <img src="${employee.photo || 'images/default-avatar.png'}" alt="${employee.fullName}">
-                        </div>
-                        <div class="employee-info">
-                            <h4>${employee.fullName}</h4>
-                            <p class="employee-rank">${employee.rank}</p>
-                            <p class="employee-department">${employee.department}</p>
-                            <button class="view-profile" data-id="${employee._id}">View Profile</button>
-                        </div>
-                    </div>
-                `).join('');
-                
-                $list.html(html);
-
-                // Add click handlers for view profile buttons
-                $('.view-profile').on('click', function() {
-                    const employeeId = $(this).data('id');
-                    loadEmployeeProfile(employeeId);
-                });
-            })
-            .fail(function() {
-                $list.html('<p>Failed to search employees.</p>');
-            });
-    }
-
-    function loadEmployeeProfile(employeeId) {
-        const $profile = $('.employee-profile-container');
-        const $list = $('.employee-list-container');
-        
-        $.get(`/api/employee-portal/employees/${employeeId}`)
-            .done(function(employee) {
-                const html = `
-                    <div class="profile-header">
-                        <div class="profile-photo">
-                            <img src="${employee.photo || 'images/default-avatar.png'}" alt="${employee.fullName}">
-                        </div>
-                        <div class="profile-info">
-                            <h3>${employee.fullName}</h3>
-                            <p class="profile-rank">${employee.rank}</p>
-                            <p class="profile-department">${employee.department}</p>
-                        </div>
-                    </div>
-                    <div class="profile-details">
-                        <div class="profile-section">
-                            <h4>Background</h4>
-                            <p>${employee.backgroundStory || 'No background information available.'}</p>
-                        </div>
-                        <div class="profile-section">
-                            <h4>Specializations</h4>
-                            <ul>
-                                ${employee.specializations.map(spec => `<li>${spec}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="profile-section">
-                            <h4>Certifications</h4>
-                            <ul>
-                                ${employee.certifications.map(cert => `<li>${cert}</li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="profile-section">
-                            <h4>Contact Information</h4>
-                            <p>Discord: ${employee.contactInfo.discord || 'Not provided'}</p>
-                            <p>RSI Handle: ${employee.contactInfo.rsiHandle || 'Not provided'}</p>
-                        </div>
-                    </div>
-                    <button class="back-to-list">Back to Employee List</button>
-                `;
-                
-                $profile.html(html).show();
-                $list.hide();
-
-                // Add click handler for back button
-                $('.back-to-list').on('click', function() {
-                    $profile.hide();
-                    $list.show();
-                });
-            })
-            .fail(function() {
-                $profile.html('<p>Failed to load employee profile.</p>');
-            });
-    }
-
-    // Initialize all components
-    function init() {
-        initPortalNavigation();
-        initCarousel();
-        initCalendar();
-        loadAnnouncements();
-        loadEmployeeOfTheMonth();
-        loadCorporateHistory();
-        loadLeadershipTree();
-        initSubsidiaryTabs();
-        loadResources();
-        loadTrainingGuides();
-        loadCertifications();
-        initEmployeeDatabase();
-    }
-
-    // Initialize when document is ready
-    $(document).ready(init);
-
-})(jQuery); 
+// Initialize login verification
+verifyLogin();
+checkLoginState(); 
