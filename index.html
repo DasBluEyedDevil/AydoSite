@@ -112,42 +112,88 @@
       <!-- Employee Portal -->
 <article id="employee-portal">
     <h2 class="major">Employee Portal</h2>
-    <p>Access to the AydoCorp Employee Portal is restricted to registered members. Please log in to access our internal resources and employee information.</p>
-    <p class="note"><strong>Note:</strong> For security purposes, we verify all users through their RSI accounts. During registration, you may be asked to add a verification code to your RSI profile.</p>
-
+    
+    <!-- Login Required Message -->
     <div id="employee-portal-login-required">
-        <p>You are not currently logged in. <a href="#login" class="button special">Member Login</a> or <a href="#contact">contact us</a> for membership information.</p>
+        <div class="login-message">
+            <h3>Access Restricted</h3>
+            <p>Welcome to the AydoCorp Employee Portal. This area is restricted to verified employees only.</p>
+            <div class="login-options">
+                <a href="#login" class="button special">Member Login</a>
+                <a href="#contact" class="button">Request Access</a>
+            </div>
+            <div class="verification-info">
+                <h4>Verification Process</h4>
+                <p>To become a verified employee:</p>
+                <ol>
+                    <li>Create an account using your RSI handle</li>
+                    <li>Add the verification code to your RSI profile</li>
+                    <li>Submit your verification request</li>
+                    <li>Wait for admin approval</li>
+                </ol>
+            </div>
+        </div>
     </div>
 
+    <!-- Portal Content (Hidden until logged in) -->
     <div id="employee-portal-content" style="display: none;">
-        <!-- Portal Header with Welcome Message -->
+        <!-- Welcome Header -->
         <div class="portal-header">
-            <h3 class="welcome-message">Welcome Back, <span class="username-display">Employee</span>!</h3>
+            <h3 class="welcome-message">Welcome, <span class="username-display">Employee</span>!</h3>
+            <p class="last-login">Last login: <span class="login-time"></span></p>
         </div>
 
-        <!-- Picture Carousel -->
+        <!-- Organization Gallery Carousel -->
         <div class="org-gallery-carousel">
             <div class="carousel-container">
                 <div class="carousel-track">
-                    <!-- Images will be loaded dynamically -->
+                    <!-- Images loaded dynamically -->
                 </div>
+                <button class="carousel-prev" aria-label="Previous image">❮</button>
+                <button class="carousel-next" aria-label="Next image">❯</button>
             </div>
-            <button class="carousel-prev">❮</button>
-            <button class="carousel-next">❯</button>
         </div>
 
-        <!-- Main Content Area -->
+        <!-- Main Portal Layout -->
         <div class="portal-main-content">
-            <!-- Left Sidebar Navigation -->
+            <!-- Navigation Sidebar -->
             <div class="portal-sidebar">
                 <nav class="portal-nav">
                     <ul>
-                        <li><a href="#portal-home" class="active" data-section="portal-home">Portal Home</a></li>
-                        <li><a href="#corporate-archives" data-section="corporate-archives">Corporate Archives</a></li>
-                        <li><a href="#subsidiaries" data-section="subsidiaries">Subsidiaries</a></li>
-                        <li><a href="#resources" data-section="resources">Resources</a></li>
-                        <li><a href="#promotional-pathway" data-section="promotional-pathway">Promotional Pathway</a></li>
-                        <li><a href="#employee-database" data-section="employee-database">Employee Database</a></li>
+                        <li>
+                            <a href="#portal-home" class="active" data-section="portal-home">
+                                <i class="fas fa-home"></i> Portal Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#corporate-archives" data-section="corporate-archives">
+                                <i class="fas fa-archive"></i> Corporate Archives
+                            </a>
+                            <ul class="portal-subnav">
+                                <li><a href="#history" data-subsection="history">Company History</a></li>
+                                <li><a href="#hierarchy" data-subsection="hierarchy">Organization Chart</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#subsidiaries" data-section="subsidiaries">
+                                <i class="fas fa-building"></i> Subsidiaries
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#resources" data-section="resources">
+                                <i class="fas fa-book"></i> Resources
+                            </a>
+                            <ul class="portal-subnav">
+                                <li><a href="#documents" data-subsection="documents">Documents</a></li>
+                                <li><a href="#training" data-subsection="training">Training Materials</a></li>
+                                <li><a href="#certifications" data-subsection="certifications">Certifications</a></li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#employee-database" data-section="employee-database">
+                                <i class="fas fa-users"></i> Employee Database
+                            </a>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -157,24 +203,27 @@
                 <!-- Portal Home Section -->
                 <section id="portal-home" class="portal-section active">
                     <div class="portal-grid">
-                        <!-- Upcoming Events Section -->
+                        <!-- Upcoming Events -->
                         <div class="events-section">
                             <h3>Upcoming Events</h3>
                             <div class="calendar-container">
                                 <div id="events-calendar"></div>
+                                <button class="expand-calendar-button">View Full Calendar</button>
                             </div>
                         </div>
 
-                        <!-- Announcements Section -->
+                        <!-- Announcements -->
                         <div class="announcements-section">
                             <h3>Announcements</h3>
                             <div class="announcements-container">
-                                <!-- Announcements will be loaded dynamically -->
+                                <!-- Loaded dynamically -->
                             </div>
+                            
+                            <!-- Employee of the Month -->
                             <div class="employee-of-month">
                                 <h4>Employee of the Month</h4>
                                 <div class="eotm-container">
-                                    <!-- Employee of the month will be loaded dynamically -->
+                                    <!-- Loaded dynamically -->
                                 </div>
                             </div>
                         </div>
@@ -184,61 +233,19 @@
                 <!-- Corporate Archives Section -->
                 <section id="corporate-archives" class="portal-section">
                     <div class="archives-content">
-                        <div class="corporate-history">
+                        <!-- Company History -->
+                        <div id="history" class="archive-subsection">
                             <h3>Corporate History</h3>
-                            <div class="history-content">
-                                <!-- History content will be loaded dynamically -->
+                            <div class="history-timeline">
+                                <!-- Loaded dynamically -->
                             </div>
                         </div>
-                        <div class="hierarchy-chart">
+
+                        <!-- Organization Chart -->
+                        <div id="hierarchy" class="archive-subsection">
                             <h3>Organization Hierarchy</h3>
                             <div class="org-structure">
-                                <div class="main-ranks">
-                                    <h4>Main Organization Ranks</h4>
-                                    <ul class="rank-list">
-                                        <li>Board of Executives</li>
-                                        <li>Director</li>
-                                        <li>Manager</li>
-                                        <li>Supervisor</li>
-                                        <li>Senior Employee</li>
-                                        <li>Employee</li>
-                                        <li>Intern/Freelancer</li>
-                                    </ul>
-                                </div>
-                                <div class="subsidiary-ranks">
-                                    <div class="ae-ranks">
-                                        <h4>AydoExpress Ranks</h4>
-                                        <ul class="rank-list">
-                                            <li>Director</li>
-                                            <li>Sub-Director</li>
-                                            <li>Overseer</li>
-                                            <li>Loadmaster</li>
-                                            <li>Senior Service Agent</li>
-                                            <li>Service Agent</li>
-                                            <li>Associate</li>
-                                            <li>Trainee</li>
-                                        </ul>
-                                    </div>
-                                    <div class="ei-ranks">
-                                        <h4>Empyrion Industries Ranks</h4>
-                                        <ul class="rank-list">
-                                            <li>Director</li>
-                                            <li>Sub-Director</li>
-                                            <li>Overseer</li>
-                                            <li>Specialist</li>
-                                            <li>Senior Technician</li>
-                                            <li>Technician</li>
-                                            <li>Journeyman</li>
-                                            <li>Apprentice</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="leadership-tree">
-                            <h3>Current Leadership</h3>
-                            <div class="org-tree">
-                                <!-- Leadership tree will be loaded dynamically -->
+                                <!-- Loaded dynamically -->
                             </div>
                         </div>
                     </div>
@@ -252,7 +259,7 @@
                             <button class="subsidiary-tab" data-subsidiary="empyrion">Empyrion Industries</button>
                         </div>
                         <div class="subsidiary-info">
-                            <!-- Subsidiary information will be loaded dynamically -->
+                            <!-- Loaded dynamically -->
                         </div>
                     </div>
                 </section>
@@ -260,34 +267,27 @@
                 <!-- Resources Section -->
                 <section id="resources" class="portal-section">
                     <div class="resources-content">
-                        <div class="useful-links">
-                            <h3>Useful Links</h3>
-                            <div class="links-container">
-                                <!-- Links will be loaded dynamically -->
+                        <!-- Documents -->
+                        <div id="documents" class="resource-subsection">
+                            <h3>Corporate Documents</h3>
+                            <div class="documents-grid">
+                                <!-- Loaded dynamically -->
                             </div>
                         </div>
-                        <div class="documentation">
-                            <h3>Documentation</h3>
-                            <div class="docs-container">
-                                <!-- Documentation will be loaded dynamically -->
-                            </div>
-                        </div>
-                    </div>
-                </section>
 
-                <!-- Promotional Pathway Section -->
-                <section id="promotional-pathway" class="portal-section">
-                    <div class="pathway-content">
-                        <div class="training-guides">
-                            <h3>Training Guides</h3>
-                            <div class="guides-container">
-                                <!-- Training guides will be loaded dynamically -->
+                        <!-- Training Materials -->
+                        <div id="training" class="resource-subsection">
+                            <h3>Training Materials</h3>
+                            <div class="training-grid">
+                                <!-- Loaded dynamically -->
                             </div>
                         </div>
-                        <div class="certifications">
-                            <h3>Certifications</h3>
-                            <div class="certs-container">
-                                <!-- Certifications will be loaded dynamically -->
+
+                        <!-- Certifications -->
+                        <div id="certifications" class="resource-subsection">
+                            <h3>Available Certifications</h3>
+                            <div class="certifications-grid">
+                                <!-- Loaded dynamically -->
                             </div>
                         </div>
                     </div>
@@ -297,20 +297,24 @@
                 <section id="employee-database" class="portal-section">
                     <div class="database-content">
                         <div class="employee-controls">
-                            <button id="edit-profile-button" class="button">Edit My Profile</button>
                             <div class="search-container">
-                                <label for="employee-search">Search employees:</label>
-                                <input type="text" id="employee-search" placeholder="Search employees..." />
+                                <input type="text" id="employee-search" placeholder="Search employees...">
+                                <button class="search-button">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="filter-container">
+                                <select id="department-filter">
+                                    <option value="">All Departments</option>
+                                    <!-- Loaded dynamically -->
+                                </select>
                             </div>
                         </div>
                         <div class="employee-list-container">
-                            <!-- Employee list will be loaded dynamically -->
+                            <!-- Loaded dynamically -->
                         </div>
                         <div class="employee-profile-container" style="display: none;">
-                            <!-- Employee profile will be loaded dynamically -->
-                        </div>
-                        <div class="employee-edit-form-container" style="display: none;">
-                            <!-- Employee edit form will be loaded dynamically -->
+                            <!-- Loaded dynamically -->
                         </div>
                     </div>
                 </section>
