@@ -2106,6 +2106,284 @@
         return null;
     }
 
+    // User Management Functions
+    // ==================================
+
+    /**
+     * Load all users from the API
+     */
+    async function loadUsers() {
+        try {
+            const $userList = $('#user-list');
+            $userList.html('<tr><td colspan="5">Loading users...</td></tr>');
+
+            const url = getApiUrl('auth/users');
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
+
+            if (!response.ok) {
+                console.error('Failed to load users');
+                $userList.html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
+                return;
+            }
+
+            const users = await response.json();
+
+            if (users.length === 0) {
+                $userList.html('<tr><td colspan="5">No users found.</td></tr>');
+                return;
+            }
+
+            // Render users
+            let html = '';
+            users.forEach(user => {
+                const createdDate = new Date(user.createdAt).toLocaleDateString();
+                html += `
+                    <tr data-user-id="${user._id}">
+                        <td>${AuthUtils.sanitizeHtml(user.username)}</td>
+                        <td>${AuthUtils.sanitizeHtml(user.email)}</td>
+                        <td>
+                            <span class="user-role ${user.role}">${user.role}</span>
+                        </td>
+                        <td>${createdDate}</td>
+                        <td>
+                            <div class="user-actions">
+                                ${user.role !== 'admin' ? 
+                                    `<button class="make-admin button small" data-user-id="${user._id}">Make Admin</button>` :
+                                    `<button class="remove-admin button small" data-user-id="${user._id}">Remove Admin</button>`
+                                }
+                                <button class="reset-password button small" data-user-id="${user._id}">Reset Password</button>
+                                <button class="edit-user button small" data-user-id="${user._id}">Edit</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $userList.html(html);
+
+            // Add event listeners
+            $('.make-admin').on('click', function() {
+                const userId = $(this).data('user-id');
+                makeUserAdmin(userId);
+            });
+
+            $('.remove-admin').on('click', function() {
+                const userId = $(this).data('user-id');
+                removeUserAdmin(userId);
+            });
+
+            $('.reset-password').on('click', function() {
+                const userId = $(this).data('user-id');
+                resetUserPassword(userId);
+            });
+
+            $('.edit-user').on('click', function() {
+                const userId = $(this).data('user-id');
+                editUser(userId);
+            });
+
+        } catch (error) {
+            console.error('Error loading users:', error);
+            $('#user-list').html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
+        }
+    }
+
+    /**
+     * Make a user an admin
+     */
+    async function makeUserAdmin(userId) {
+        try {
+            const url = getApiUrl(`auth/users/${userId}/make-admin`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                AuthUtils.showNotification('Failed to make user admin: ' + (errorData.message || 'Unknown error'), 'error');
+                return;
+            }
+
+            AuthUtils.showNotification('User has been made an admin successfully!', 'success');
+            loadUsers(); // Reload the user list
+        } catch (error) {
+            console.error('Error making user admin:', error);
+            AuthUtils.showNotification('Error making user admin: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Remove admin rights from a user
+     */
+    async function removeUserAdmin(userId) {
+        try {
+            const url = getApiUrl(`auth/users/${userId}/remove-admin`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                AuthUtils.showNotification('Failed to remove admin rights: ' + (errorData.message || 'Unknown error'), 'error');
+                return;
+            }
+
+            AuthUtils.showNotification('Admin rights have been removed successfully!', 'success');
+            loadUsers(); // Reload the user list
+        } catch (error) {
+            console.error('Error removing admin rights:', error);
+            AuthUtils.showNotification('Error removing admin rights: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Reset a user's password
+     */
+    async function resetUserPassword(userId) {
+        if (!confirm('Are you sure you want to reset this user\'s password to "noob1"?')) {
+            return;
+        }
+
+        try {
+            const url = getApiUrl(`auth/users/${userId}/reset-password`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                AuthUtils.showNotification('Failed to reset password: ' + (errorData.message || 'Unknown error'), 'error');
+                return;
+            }
+
+            AuthUtils.showNotification('Password has been reset successfully!', 'success');
+        } catch (error) {
+            console.error('Error resetting password:', error);
+            AuthUtils.showNotification('Error resetting password: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Edit a user's details
+     */
+    async function editUser(userId) {
+        try {
+            const url = getApiUrl(`auth/users/${userId}`);
+            if (!url) {
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
+
+            const response = await AuthUtils.secureRequest(url);
+            if (!response.ok) {
+                const errorData = await response.json();
+                AuthUtils.showNotification('Failed to load user details: ' + (errorData.message || 'Unknown error'), 'error');
+                return;
+            }
+
+            const user = await response.json();
+
+            // Create and show edit modal
+            const modalHtml = `
+                <div class="modal" id="edit-user-modal">
+                    <div class="modal-content">
+                        <h3>Edit User</h3>
+                        <form id="edit-user-form">
+                            <div class="field">
+                                <label for="edit-username">Username</label>
+                                <input type="text" id="edit-username" value="${AuthUtils.sanitizeHtml(user.username)}" required />
+                            </div>
+                            <div class="field">
+                                <label for="edit-email">Email</label>
+                                <input type="email" id="edit-email" value="${AuthUtils.sanitizeHtml(user.email)}" required />
+                            </div>
+                            <div class="actions">
+                                <button type="submit" class="button primary">Save Changes</button>
+                                <button type="button" class="button" onclick="closeEditUserModal()">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            $('#edit-user-modal').remove();
+            
+            // Add new modal to body
+            $('body').append(modalHtml);
+
+            // Show modal
+            $('#edit-user-modal').fadeIn(300);
+
+            // Handle form submission
+            $('#edit-user-form').on('submit', async function(e) {
+                e.preventDefault();
+
+                const newUsername = $('#edit-username').val();
+                const newEmail = $('#edit-email').val();
+
+                try {
+                    const updateUrl = getApiUrl(`auth/users/${userId}`);
+                    const updateResponse = await AuthUtils.secureRequest(updateUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: newUsername,
+                            email: newEmail
+                        })
+                    });
+
+                    if (!updateResponse.ok) {
+                        const errorData = await updateResponse.json();
+                        AuthUtils.showNotification('Failed to update user: ' + (errorData.message || 'Unknown error'), 'error');
+                        return;
+                    }
+
+                    AuthUtils.showNotification('User updated successfully!', 'success');
+                    closeEditUserModal();
+                    loadUsers(); // Reload the user list
+                } catch (error) {
+                    console.error('Error updating user:', error);
+                    AuthUtils.showNotification('Error updating user: ' + error.message, 'error');
+                }
+            });
+        } catch (error) {
+            console.error('Error loading user details:', error);
+            AuthUtils.showNotification('Error loading user details: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Close the edit user modal
+     */
+    function closeEditUserModal() {
+        $('#edit-user-modal').fadeOut(300, function() {
+            $(this).remove();
+        });
+    }
+
     // Initialize on document ready
     // ==================================
     $(document).ready(function () {

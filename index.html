@@ -279,6 +279,34 @@
             </div>
         </div>
 
+        <!-- User Management Section -->
+        <div class="admin-section">
+            <h3>User Management</h3>
+            <p>Manage website users and their permissions.</p>
+
+            <div class="user-management-controls">
+                <div class="field">
+                    <input type="text" id="user-search" placeholder="Search users..." />
+                </div>
+            </div>
+
+            <div id="user-list-container">
+                <table class="user-list-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list">
+                        <!-- User list will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </article>
 

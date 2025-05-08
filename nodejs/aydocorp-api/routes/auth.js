@@ -193,4 +193,178 @@ router.get('/users', auth, async (req, res) => {
     }
 });
 
+// @route   GET api/auth/users/:id
+// @desc    Get user by ID
+// @access  Private (admin only)
+router.get('/users/:id', auth, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error('Error fetching user:', err.message);
+        res.status(500).json({
+            message: 'Server error while fetching user',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
+// @route   PUT api/auth/users/:id
+// @desc    Update user
+// @access  Private (admin only)
+router.put('/users/:id', auth, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        const { username, email } = req.body;
+
+        // Validate input
+        if (!username || !email) {
+            return res.status(400).json({ message: 'Username and email are required' });
+        }
+
+        // Check if username or email is already taken by another user
+        const existingUser = await User.findOne({
+            $or: [
+                { username, _id: { $ne: req.params.id } },
+                { email, _id: { $ne: req.params.id } }
+            ]
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ message: 'Username or email is already taken' });
+        }
+
+        // Update user
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { username, email },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error('Error updating user:', err.message);
+        res.status(500).json({
+            message: 'Server error while updating user',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
+// @route   POST api/auth/users/:id/make-admin
+// @desc    Make user an admin
+// @access  Private (admin only)
+router.post('/users/:id/make-admin', auth, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { role: 'admin' },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error('Error making user admin:', err.message);
+        res.status(500).json({
+            message: 'Server error while making user admin',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
+// @route   POST api/auth/users/:id/remove-admin
+// @desc    Remove admin rights from user
+// @access  Private (admin only)
+router.post('/users/:id/remove-admin', auth, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        // Prevent removing admin rights from the last admin
+        const adminCount = await User.countDocuments({ role: 'admin' });
+        if (adminCount <= 1) {
+            return res.status(400).json({ message: 'Cannot remove admin rights from the last admin user' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { role: 'employee' },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(user);
+    } catch (err) {
+        console.error('Error removing admin rights:', err.message);
+        res.status(500).json({
+            message: 'Server error while removing admin rights',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
+// @route   POST api/auth/users/:id/reset-password
+// @desc    Reset user's password to "noob1"
+// @access  Private (admin only)
+router.post('/users/:id/reset-password', auth, async (req, res) => {
+    try {
+        // Check if user is admin
+        if (req.user.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Hash the default password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('noob1', salt);
+
+        // Update user's password
+        user.password = hashedPassword;
+        await user.save();
+
+        res.json({ message: 'Password has been reset successfully' });
+    } catch (err) {
+        console.error('Error resetting password:', err.message);
+        res.status(500).json({
+            message: 'Server error while resetting password',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
 module.exports = router;
