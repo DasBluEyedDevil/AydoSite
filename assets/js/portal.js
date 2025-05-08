@@ -6,63 +6,94 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePortal();
 });
 
-// Check if user is logged in
+// Unified API Utilities (from aydocorp.js)
+function getApiBaseUrl() {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8080';
+    }
+    return window.location.origin;
+}
+
+function getApiUrl(endpoint) {
+    if (!endpoint) {
+        console.error('Invalid endpoint provided to getApiUrl');
+        return null;
+    }
+    const baseUrl = getApiBaseUrl();
+    const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+    let cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+    if (!cleanEndpoint.startsWith('api/')) cleanEndpoint = 'api/' + cleanEndpoint;
+    if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
+        console.error('Invalid characters in API endpoint');
+        return null;
+    }
+    return baseWithSlash + cleanEndpoint;
+}
+
+// Unified token validation logic
+async function validateToken() {
+    try {
+        const token = sessionStorage.getItem('aydocorpToken');
+        if (!token) return false;
+        try {
+            const response = await fetch(getApiUrl('auth/validate'), {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'x-auth-token': token,
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            });
+            console.log('Token validation response:', response.status);
+            if (response.ok) return true;
+            if (response.status !== 404) console.warn(`Standard validate endpoint failed: ${response.status}`);
+        } catch (err) { console.warn('Error in /auth/validate:', err); }
+        for (const endpoint of ['auth/check', 'auth/status']) {
+            try {
+                const altResponse = await fetch(getApiUrl(endpoint), {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'x-auth-token': token,
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                console.log(`Token validation response (${endpoint}):`, altResponse.status);
+                if (altResponse.ok) return true;
+            } catch (err) { console.warn(`Error in /${endpoint}:`, err); }
+        }
+        return false;
+    } catch (err) {
+        console.error('validateToken error:', err);
+        return false;
+    }
+}
+
+// Unified checkLoginStatus
 function checkLoginStatus() {
     const token = sessionStorage.getItem('aydocorpToken');
-    const user = JSON.parse(sessionStorage.getItem('aydocorpUser'));
-    
+    const userJson = sessionStorage.getItem('aydocorpUser');
+    let user = null;
+    try { user = JSON.parse(userJson); } catch {}
     if (!token || !user) {
-        window.location.href = 'index.html#login';
+        hideLoginOverlay();
+        showLoginRequiredMessage();
         return;
     }
-
-    // Verify token with server
-    verifyLoginToken(token, user);
-}
-
-// Verify login token
-async function verifyLoginToken(token, user) {
-    try {
-        const apiUrl = getApiUrl('auth/verify');
-        console.log('Verifying token at:', apiUrl);
-        
-        const response = await fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'x-auth-token': token,
-                'Content-Type': 'application/json'
-            },
-            credentials: 'include'
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.valid) {
-                hideLoginOverlay();
-                loadUserData(user);
-                return true;
-            }
+    validateToken().then(isValid => {
+        if (isValid) {
+            hideLoginOverlay();
+            loadUserData(user);
+        } else {
+            console.error('Token invalid, clearing session and showing login required message.');
+            sessionStorage.removeItem('aydocorpToken');
+            sessionStorage.removeItem('aydocorpUser');
+            hideLoginOverlay();
+            showLoginRequiredMessage();
         }
-        
-        // If we get here, the token is invalid
-        console.error('Invalid token or server error');
-        sessionStorage.removeItem('aydocorpToken');
-        sessionStorage.removeItem('aydocorpUser');
-        window.location.href = 'index.html#login';
-        return false;
-    } catch (error) {
-        console.error('Error verifying token:', error);
-        hideLoginOverlay();
-        showError('Error verifying login status. Some features may be limited.');
-        return false;
-    }
-}
-
-// Get API URL helper
-function getApiUrl(endpoint) {
-    const baseUrl = sessionStorage.getItem('aydocorpApiUrl') || 'https://aydocorp.space/api';
-    return `${baseUrl}/${endpoint}`;
+    });
 }
 
 // Hide login overlay
@@ -355,7 +386,7 @@ function initializeEventHandlers() {
     }
 }
 
-// Handle logout
+// Unified handleLogout
 function handleLogout() {
     sessionStorage.removeItem('aydocorpToken');
     sessionStorage.removeItem('aydocorpUser');
@@ -447,4 +478,24 @@ function loadProfileSection(container) {
             </div>
         </div>
     `;
+}
+
+// Show a clear login required message with a button
+function showLoginRequiredMessage() {
+    let msg = document.getElementById('login-required-message');
+    if (!msg) {
+        msg = document.createElement('div');
+        msg.id = 'login-required-message';
+        msg.className = 'login-message';
+        msg.innerHTML = `
+            <h3>Login Required</h3>
+            <p>You must be logged in to access the Employee Portal.</p>
+            <div class="login-options">
+                <a href="index.html#login" class="button">Go to Login Page</a>
+            </div>
+        `;
+        document.body.appendChild(msg);
+    } else {
+        msg.style.display = '';
+    }
 } 
