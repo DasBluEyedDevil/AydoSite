@@ -4,9 +4,6 @@
      * Get the base URL for API requests.
      */
     function getApiBaseUrl() {
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            return 'http://localhost:8080';
-        }
         return window.location.origin;
     }
 
@@ -194,12 +191,18 @@
      */
     async function checkLoginStatus() {
         try {
+            console.log('checkLoginStatus called');
             let token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
+            console.log('Token exists:', !!token);
             let userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
+            console.log('User JSON exists:', !!userJson);
             let isLoggedIn = (localStorage.getItem('aydocorpLoggedIn') === 'true') || (sessionStorage.getItem('aydocorpLoggedIn') === 'true') || !!token;
+            console.log('isLoggedIn:', isLoggedIn);
             const user = AuthUtils.safeJsonParse(userJson, null);
+            console.log('Parsed user:', user);
             if (isLoggedIn && user) {
                 const isAdmin = user.role === 'admin' || user.username === 'Devil';
+                console.log('isAdmin:', isAdmin);
                 let tokenValidationRetries = parseInt(sessionStorage.getItem('tokenValidationRetries') || '0');
                 const maxRetries = 5;
                 validateToken().then(isValid => {
@@ -269,10 +272,8 @@
                 }
                 $('.user-status').remove();
             }
-        } catch {
-            $('#employee-portal-content').hide();
-            $('#employee-portal-login-required').show();
-            AuthUtils.showNotification('An error occurred while checking login status.', 'error');
+        } catch (error) {
+            console.error('Error in checkLoginStatus:', error);
         }
     }
 
@@ -2135,6 +2136,15 @@
                 AuthUtils.showNotification('Invalid API configuration', 'error');
                 return;
             }
+
+            // Get current user info
+            const userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
+            const user = AuthUtils.safeJsonParse(userJson, null);
+            console.log('Current user:', user);
+
+            // Get token
+            const token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
+            console.log('Token exists:', !!token);
 
             console.log('Making API request to load users...');
             const response = await AuthUtils.secureRequest(url);

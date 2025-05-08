@@ -14,9 +14,10 @@ const app = express();
 
 // Middleware setup
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*',
+    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['https://aydocorp.space', 'http://localhost:8080', 'http://127.0.0.1:8080'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-auth-token']
 }));
 app.use(helmet({
     contentSecurityPolicy: false // Disable CSP for simplicity, enable in production with proper config

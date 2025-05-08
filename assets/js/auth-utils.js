@@ -95,28 +95,13 @@
         });
 
         try {
-            let retries = 2;
-            let response;
-
-            while (retries >= 0) {
-                try {
-                    console.log(`Making request (${retries} retries left)...`);
-                    response = await fetch(url, mergedOptions);
-                    console.log('Response status:', response.status);
-                    break;
-                } catch (fetchError) {
-                    if (retries === 0) {
-                        throw fetchError;
-                    }
-                    console.warn(`Request failed, retrying... (${retries} retries left)`, fetchError);
-                    retries--;
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            }
-
+            console.log('Making fetch request...');
+            const response = await fetch(url, mergedOptions);
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
             return response;
         } catch (error) {
-            console.error('Secure request failed after retries:', error);
+            console.error('Fetch error:', error);
             throw error;
         }
     }

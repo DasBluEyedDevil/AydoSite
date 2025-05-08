@@ -8,6 +8,8 @@ define('DEBUG', true);
 function debug_log($message) {
     if (DEBUG) {
         error_log("[API Proxy] " . $message);
+        // Also log to a file in the same directory
+        file_put_contents('api_proxy.log', date('[Y-m-d H:i:s] ') . $message . "\n", FILE_APPEND);
     }
 }
 
@@ -37,10 +39,10 @@ if (strpos($path, "/api/") === 0) {
     // Forward to Node.js server
     // Try multiple possible Node.js server addresses
     $node_servers = [
-        "http://localhost:8080/api/",  // Default local development
-        "http://127.0.0.1:8080/api/",  // Alternative local IP
-        "http://aydocorp.space:8080/api/", // Same domain, explicit port
-        "https://aydocorp.space/api/"  // Same domain, HTTPS
+        "https://aydocorp.space/api/",  // Primary production URL
+        "http://aydocorp.space:8080/api/", // Fallback production URL
+        "http://localhost:8080/api/",  // Local development fallback
+        "http://127.0.0.1:8080/api/"   // Alternative local fallback
     ];
 
     $node_url = null;
