@@ -1827,70 +1827,142 @@
 
     // Function to initialize the rich text editor
     function initRichTextEditor() {
+        // Set a timeout to detect if TinyMCE initialization takes too long
+        let initTimeout;
+
+        // Function to handle TinyMCE loading failure
+        function handleTinyMCEFailure(reason) {
+            console.warn('TinyMCE initialization issue: ' + reason + '. Falling back to basic textarea.');
+            // Show notification to user
+            if (typeof AuthUtils !== 'undefined' && AuthUtils.showNotification) {
+                AuthUtils.showNotification('Rich text editor could not be loaded. Using basic editor instead.', 'warning', 5000);
+            }
+            // Make the basic textarea visible and usable
+            $('#element-content').css('height', '400px');
+
+            // Clear timeout if it exists
+            if (initTimeout) {
+                clearTimeout(initTimeout);
+                initTimeout = null;
+            }
+        }
+
         // Add TinyMCE script dynamically if it's not already loaded
         if (!window.tinymce) {
+            // Set a timeout to detect if script loading takes too long
+            initTimeout = setTimeout(function() {
+                if (!window.tinymce) {
+                    handleTinyMCEFailure('loading timeout');
+                }
+            }, 10000); // 10 second timeout
+
             const script = document.createElement('script');
             script.src = 'https://cdn.tiny.cloud/1/dfjp0m1prdsyswkg18dqr12k27zcz32ncqx9ep9e2q70lob1/tinymce/5/tinymce.min.js';
             script.referrerPolicy = 'origin';
-            document.head.appendChild(script);
+            script.async = true; // Load asynchronously
+
+            // Add error handling
+            script.onerror = function() {
+                handleTinyMCEFailure('script load error');
+            };
 
             script.onload = function() {
+                // Clear the timeout since script loaded successfully
+                if (initTimeout) {
+                    clearTimeout(initTimeout);
+                    initTimeout = null;
+                }
                 initTinyMCE();
             };
+
+            document.head.appendChild(script);
         } else {
             initTinyMCE();
         }
 
         // Initialize TinyMCE editor
         function initTinyMCE() {
-            tinymce.init({
-                selector: '#element-content',
-                height: 400,
-                menubar: false,
-                plugins: [
-                    'advlist autolink lists link image charmap print preview anchor',
-                    'searchreplace visualblocks code fullscreen',
-                    'insertdatetime media table paste code help wordcount'
-                ],
-                toolbar: 'undo redo | formatselect | ' +
-                    'bold italic backcolor | alignleft aligncenter ' +
-                    'alignright alignjustify | bullist numlist outdent indent | ' +
-                    'removeformat | link image | help',
-                toolbar_mode: 'floating',
-                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }',
-                convert_urls: false,
-                relative_urls: false,
-                remove_script_host: false,
-                image_advtab: true,
-                image_uploadtab: true,
-                images_upload_handler: function (blobInfo, success, failure) {
-                    // Convert the blob to a base64 data URL
-                    const reader = new FileReader();
-                    reader.onload = function() {
-                        success(reader.result);
-                    };
-                    reader.readAsDataURL(blobInfo.blob());
-                },
-                setup: function(editor) {
-                    // Handle content change
-                    editor.on('change', function() {
-                        // Update the original textarea
-                        editor.save();
-                    });
+            // Set a timeout for TinyMCE initialization
+            const initTinyMCETimeout = setTimeout(function() {
+                handleTinyMCEFailure('initialization timeout');
+            }, 15000); // 15 second timeout for initialization
 
-                    // Add custom button for markdown headings
-                    editor.ui.registry.addButton('markdownheading', {
-                        text: 'Add Section',
-                        tooltip: 'Add a new section with heading',
-                        onAction: function() {
-                            const headingText = prompt('Enter section heading:');
-                            if (headingText) {
-                                editor.insertContent('<h3>' + headingText + '</h3><p>Section content goes here.</p>');
+            try {
+                tinymce.init({
+                    selector: '#element-content',
+                    height: 400,
+                    menubar: false,
+                    plugins: [
+                        'advlist autolink lists link image charmap print preview anchor',
+                        'searchreplace visualblocks code fullscreen',
+                        'insertdatetime media table paste code help wordcount'
+                    ],
+                    toolbar: 'undo redo | formatselect | ' +
+                        'bold italic backcolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | link image | help',
+                    toolbar_mode: 'floating',
+                    content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif; font-size: 14px; }',
+                    convert_urls: false,
+                    relative_urls: false,
+                    remove_script_host: false,
+                    image_advtab: true,
+                    image_uploadtab: true,
+                    // Fix console warnings
+                    touch_passive: true, // Make touch event listeners passive
+                    document_write: false, // Prevent document.write() usage
+                    promotion: false, // Disable promotional popups
+                    referrer_policy: 'origin', // Set proper referrer policy
+                    suffix: '.min', // Ensure minified versions are used
+                    content_security_policy: "script-src 'self'", // Improve security
+                    // Disable telemetry to prevent ERR_BLOCKED_BY_CLIENT errors
+                    disable_telemetry: true,
+                    // Disable analytics
+                    send_analytics: false,
+                    images_upload_handler: function (blobInfo, success, failure) {
+                        // Convert the blob to a base64 data URL
+                        const reader = new FileReader();
+                        reader.onload = function() {
+                            success(reader.result);
+                        };
+                        reader.readAsDataURL(blobInfo.blob());
+                    },
+                    setup: function(editor) {
+                        // Handle content change
+                        editor.on('change', function() {
+                            // Update the original textarea
+                            editor.save();
+                        });
+
+                        // Add custom button for markdown headings
+                        editor.ui.registry.addButton('markdownheading', {
+                            text: 'Add Section',
+                            tooltip: 'Add a new section with heading',
+                            onAction: function() {
+                                const headingText = prompt('Enter section heading:');
+                                if (headingText) {
+                                    editor.insertContent('<h3>' + headingText + '</h3><p>Section content goes here.</p>');
+                                }
                             }
-                        }
-                    });
-                }
-            });
+                        });
+
+                        // Clear the timeout when editor is initialized
+                        editor.on('init', function() {
+                            clearTimeout(initTinyMCETimeout);
+                        });
+                    }
+                }).then(function(editors) {
+                    // Success callback - editor initialized
+                    clearTimeout(initTinyMCETimeout);
+                    console.log('TinyMCE initialized successfully');
+                }).catch(function(error) {
+                    // Error callback
+                    handleTinyMCEFailure('initialization error: ' + error);
+                });
+            } catch (error) {
+                // Catch any synchronous errors during initialization
+                handleTinyMCEFailure('initialization exception: ' + error);
+            }
 
             // Handle the image upload container (for backward compatibility)
             const $imageUploadContainer = $('.image-upload-container');
@@ -1928,11 +2000,8 @@
                 // Get all content HTML
                 let aboutContent = '';
 
-                // Get the image if it exists
-                const $aboutImage = $article.find('span.image.main');
-                if ($aboutImage.length) {
-                    aboutContent += $aboutImage.prop('outerHTML') + '<br><br>';
-                }
+                // Don't include the image in the editor content
+                // The image is preserved separately in updatePageContent
 
                 // Get all h3 headings and their following paragraphs
                 $article.find('h3').each(function() {
