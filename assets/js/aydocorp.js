@@ -2680,5 +2680,11 @@
                 $submitButton.text(originalButtonText).prop('disabled', false);
             }
         });
+
+        // Handle logout buttons
+        $(document).on('click', '.logout, #logout-btn', function(e) {
+            e.preventDefault();
+            handleLogout();
+        });
     });
 })(jQuery);
