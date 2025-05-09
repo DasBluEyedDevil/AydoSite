@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const transporter = require('../utils/emailConfig');
+const { Op } = require('sequelize');
 
 // Basic route to confirm auth routes are working
 router.get('/', (req, res) => {
@@ -21,29 +22,26 @@ router.post('/register', async (req, res) => {
         const { username, email, password } = req.body;
 
         // Check if user already exists
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ where: { email } });
         if (user) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        user = await User.findOne({ username });
+        user = await User.findOne({ where: { username } });
         if (user) {
             return res.status(400).json({ message: 'Username already taken' });
         }
 
-        // Create new user
-        user = new User({
-            username,
-            email,
-            password
-        });
-
         // Hash password
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Save user
-        await user.save();
+        // Create new user
+        user = await User.create({
+            username,
+            email,
+            password: hashedPassword
+        });
 
         // Create and return JWT token
         const payload = {
@@ -93,7 +91,7 @@ router.post('/login', async (req, res) => {
         const { username, password } = req.body;
 
         // Check if user exists
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ where: { username } });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -149,7 +147,7 @@ router.post('/login', async (req, res) => {
 // @access  Private
 router.get('/validate', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user.user.id).select('-password');
+        const user = await User.findByPk(req.user.user.id, { attributes: { exclude: ['password'] } });
         res.json({
             id: user.id,
             username: user.username,
@@ -185,7 +183,7 @@ router.get('/users', auth, async (req, res) => {
         }
 
         // Get all users from database, excluding passwords
-        const users = await User.find().select('-password');
+        const users = await User.findAll({ attributes: { exclude: ['password'] } });
         console.log(`Found ${users.length} users`);
         res.json(users);
     } catch (err) {
@@ -207,7 +205,7 @@ router.get('/users/:id', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findById(req.params.id).select('-password');
+        const user = await User.findByPk(req.params.id, { attributes: { exclude: ['password'] } });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -241,10 +239,13 @@ router.put('/users/:id', auth, async (req, res) => {
 
         // Check if username or email is already taken by another user
         const existingUser = await User.findOne({
-            $or: [
-                { username, _id: { $ne: req.params.id } },
-                { email, _id: { $ne: req.params.id } }
-            ]
+            where: {
+                [Op.or]: [
+                    { username },
+                    { email }
+                ],
+                id: { [Op.ne]: req.params.id }
+            }
         });
 
         if (existingUser) {
@@ -252,11 +253,11 @@ router.put('/users/:id', auth, async (req, res) => {
         }
 
         // Update user
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
+        const [updatedRows, updatedUsers] = await User.update(
             { username, email },
-            { new: true }
-        ).select('-password');
+            { where: { id: req.params.id }, returning: true, individualHooks: true }
+        );
+        const user = updatedUsers && updatedUsers.length > 0 ? updatedUsers[0] : null;
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -282,15 +283,12 @@ router.post('/users/:id/make-admin', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { role: 'admin' },
-            { new: true }
-        ).select('-password');
-
+        const user = await User.findByPk(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        await user.update({ role: 'admin' });
 
         res.json(user);
     } catch (err) {
@@ -313,20 +311,17 @@ router.post('/users/:id/remove-admin', auth, async (req, res) => {
         }
 
         // Prevent removing admin rights from the last admin
-        const adminCount = await User.countDocuments({ role: 'admin' });
+        const adminCount = await User.count({ where: { role: 'admin' } });
         if (adminCount <= 1) {
             return res.status(400).json({ message: 'Cannot remove admin rights from the last admin user' });
         }
 
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { role: 'employee' },
-            { new: true }
-        ).select('-password');
-
+        const user = await User.findByPk(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        await user.update({ role: 'employee' });
 
         res.json(user);
     } catch (err) {
@@ -348,7 +343,7 @@ router.post('/users/:id/reset-password', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findById(req.params.id);
+        const user = await User.findByPk(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -358,8 +353,7 @@ router.post('/users/:id/reset-password', auth, async (req, res) => {
         const hashedPassword = await bcrypt.hash('noob1', salt);
 
         // Update user's password
-        user.password = hashedPassword;
-        await user.save();
+        await user.update({ password: hashedPassword });
 
         res.json({ message: 'Password has been reset successfully' });
     } catch (err) {
@@ -379,7 +373,7 @@ router.post('/request-password-reset', async (req, res) => {
         const { email } = req.body;
 
         // Find user by email
-        const user = await User.findOne({ email });
+        const user = await User.findOne({ where: { email } });
         if (!user) {
             // Don't reveal if email exists or not
             return res.json({ message: 'If your email is registered, you will receive a password reset link' });
@@ -390,9 +384,10 @@ router.post('/request-password-reset', async (req, res) => {
         const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
 
         // Save reset token to user
-        user.resetPasswordToken = resetToken;
-        user.resetPasswordExpires = resetTokenExpiry;
-        await user.save();
+        await user.update({
+            resetPasswordToken: resetToken,
+            resetPasswordExpires: resetTokenExpiry
+        });
 
         // Create reset URL
         const resetUrl = `${process.env.FRONTEND_URL || 'https://aydocorp.space'}/reset-password/${resetToken}`;
@@ -436,8 +431,10 @@ router.post('/reset-password/:token', async (req, res) => {
 
         // Find user with valid reset token
         const user = await User.findOne({
-            resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }
+            where: {
+                resetPasswordToken: token,
+                resetPasswordExpires: { [Op.gt]: Date.now() }
+            }
         });
 
         if (!user) {
@@ -446,14 +443,15 @@ router.post('/reset-password/:token', async (req, res) => {
 
         // Hash new password
         const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(password, salt);
         
         // Clear reset token fields
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
+        await user.update({
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+            password: hashedPassword
+        });
         
-        await user.save();
-
         res.json({ message: 'Password has been reset successfully' });
     } catch (err) {
         console.error('Password reset error:', err.message);

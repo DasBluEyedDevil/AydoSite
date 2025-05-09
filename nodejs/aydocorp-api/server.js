@@ -9,6 +9,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
+const sequelize = require('./db');
+const User = require('./models/User');
 
 // Initialize the Express app
 const app = express();
@@ -247,75 +249,14 @@ app.all('/api/*', (req, res) => {
     });
 });
 
-// MongoDB connection with proper error handling AND keep-alive options
-async function connectToMongoDB() {
-    try {
-        if (!process.env.MONGODB_URI) {
-            // Diagnostic log: Indicate if URI is missing
-            console.error('MONGODB_URI environment variable is NOT defined! Check hosting panel settings or .env file.');
-            throw new Error('MONGODB_URI environment variable is not defined');
-        }
-
-        // Diagnostic log: Show that the connection process is starting and part of the URI
-        console.log('Attempting to connect to MongoDB with URI (first 20 chars):', process.env.MONGODB_URI.substring(0, 20) + '...');
-
-
-        // Recommended options for a persistent connection
-        const connectionOptions = {
-            serverSelectionTimeoutMS: 5000, // Keep trying to connect for 5 seconds
-            connectTimeoutMS: 10000,       // Give the initial connection attempt 10 seconds
-            socketTimeoutMS: 45000,        // Close sockets after 45 seconds of inactivity
-            family: 4,                     // Use IPv4, skip trying IPv6
-            maxPoolSize: 10,               // Maximum number of connections in the pool
-            minPoolSize: 5,                // Minimum number of connections in the pool
-            maxIdleTimeMS: 60000,          // Close idle connections after 60 seconds
-            heartbeatFrequencyMS: 10000    // Check server status every 10 seconds
-        };
-
-        await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
-
-        // Success log message (updated for clarity)
-        console.log('MongoDB connected successfully');
-
-        // Add listeners for connection events for better monitoring
-        mongoose.connection.on('disconnected', () => {
-            console.warn('MongoDB disconnected! Attempting to reconnect...');
-            // Implement reconnection logic
-            setTimeout(async () => {
-                try {
-                    await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
-                    console.log('MongoDB reconnected successfully');
-                } catch (error) {
-                    console.error('Failed to reconnect to MongoDB:', error.message);
-                }
-            }, 5000); // Try to reconnect after 5 seconds
-        });
-
-        mongoose.connection.on('error', (err) => {
-            console.error('MongoDB connection error:', err);
-            // Log additional diagnostic information
-            console.error('Connection state:', mongoose.connection.readyState);
-            console.error('Connection options:', connectionOptions);
-        });
-
-        // Add listener for successful reconnection
-        mongoose.connection.on('reconnected', () => {
-            console.log('MongoDB reconnected successfully');
-        });
-
-        // Add listener for connection close
-        mongoose.connection.on('close', () => {
-            console.log('MongoDB connection closed');
-        });
-
-    } catch (error) {
-        // Log specific error details for initial connection failure
-        console.error('MongoDB initial connection error:', error.message);
-        console.error('Detailed error:', error);
-        // Exit with failure if initial connection fails - crucial for dependent apps
-        process.exit(1);
-    }
-}
+// Sync Sequelize models and start the server
+sequelize.sync().then(() => {
+    console.log('Database & tables created!');
+    startServer();
+}).catch((err) => {
+    console.error('Failed to sync database:', err);
+    process.exit(1);
+});
 
 // Generic error handler (catch-all for unhandled errors)
 app.use((err, req, res, next) => {
@@ -416,17 +357,17 @@ async function gracefulShutdown() {
 const scheduler = require('./utils/scheduler');
 
 // Connect to MongoDB then start server
-connectToMongoDB()
-    .then(() => {
-        // Only start the HTTP server if the database connection is successful
-        startServer();
-
-        // Initialize the scheduler for periodic data synchronization
-        scheduler.initialize();
-        console.log('Automatic data synchronization scheduler started');
-    })
-    .catch(error => {
-        // This catch handles errors from connectToMongoDB's initial connection
-        console.error('Failed to start application due to MongoDB connection error:', error);
-        process.exit(1); // Exit if DB connection failed at startup
-    });
+// connectToMongoDB()
+//     .then(() => {
+//         // Only start the HTTP server if the database connection is successful
+//         startServer();
+//
+//         // Initialize the scheduler for periodic data synchronization
+//         scheduler.initialize();
+//         console.log('Automatic data synchronization scheduler started');
+//     })
+//     .catch(error => {
+//         // This catch handles errors from connectToMongoDB's initial connection
+//         console.error('Failed to start application due to MongoDB connection error:', error);
+//         process.exit(1); // Exit if DB connection failed at startup
+//     });
