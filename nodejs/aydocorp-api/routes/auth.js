@@ -3,8 +3,10 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
+const transporter = require('../utils/emailConfig');
 
 // Basic route to confirm auth routes are working
 router.get('/', (req, res) => {
@@ -364,6 +366,99 @@ router.post('/users/:id/reset-password', auth, async (req, res) => {
         console.error('Error resetting password:', err.message);
         res.status(500).json({
             message: 'Server error while resetting password',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
+// @route   POST api/auth/request-password-reset
+// @desc    Request password reset
+// @access  Public
+router.post('/request-password-reset', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Find user by email
+        const user = await User.findOne({ email });
+        if (!user) {
+            // Don't reveal if email exists or not
+            return res.json({ message: 'If your email is registered, you will receive a password reset link' });
+        }
+
+        // Generate reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
+
+        // Save reset token to user
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = resetTokenExpiry;
+        await user.save();
+
+        // Create reset URL
+        const resetUrl = `${process.env.FRONTEND_URL || 'https://aydocorp.space'}/reset-password/${resetToken}`;
+
+        // Send email
+        await transporter.sendMail({
+            from: process.env.SMTP_FROM || 'noreply@aydocorp.space',
+            to: user.email,
+            subject: 'Password Reset Request',
+            html: `
+                <h1>Password Reset Request</h1>
+                <p>You requested a password reset. Click the link below to reset your password:</p>
+                <a href="${resetUrl}">Reset Password</a>
+                <p>This link will expire in 1 hour.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+            `
+        });
+
+        res.json({ message: 'If your email is registered, you will receive a password reset link' });
+    } catch (err) {
+        console.error('Password reset request error:', err.message);
+        res.status(500).json({
+            message: 'Server error during password reset request',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
+});
+
+// @route   POST api/auth/reset-password/:token
+// @desc    Reset password with token
+// @access  Public
+router.post('/reset-password/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        // Validate password
+        if (!password || password.length < 6) {
+            return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+        }
+
+        // Find user with valid reset token
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
+        }
+
+        // Hash new password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        
+        // Clear reset token fields
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        
+        await user.save();
+
+        res.json({ message: 'Password has been reset successfully' });
+    } catch (err) {
+        console.error('Password reset error:', err.message);
+        res.status(500).json({
+            message: 'Server error during password reset',
             error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
         });
     }
