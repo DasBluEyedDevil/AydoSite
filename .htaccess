@@ -5,6 +5,9 @@ RewriteEngine On
 # Redirect API requests to our PHP proxy
 RewriteRule ^api/(.*)$ api.php [L]
 
+# Handle proxy requests
+RewriteRule ^proxy\.php$ proxy.php [L]
+
 # Error pages
 ErrorDocument 500 /503.html
 ErrorDocument 502 /503.html
