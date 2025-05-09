@@ -9,11 +9,14 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
-const sequelize = require('./db');
+const connectDB = require('./db');
 const User = require('./models/User');
 
 // Initialize the Express app
 const app = express();
+
+// Connect to MongoDB
+connectDB();
 
 // Middleware setup
 app.use(cors({
@@ -249,25 +252,17 @@ app.all('/api/*', (req, res) => {
     });
 });
 
-// Sync Sequelize models and start the server
-sequelize.sync().then(() => {
-    console.log('Database & tables created!');
-    startServer();
-}).catch((err) => {
-    console.error('Failed to sync database:', err);
-    process.exit(1);
-});
+// Remove Sequelize sync and update server startup
+startServer();
 
 // Generic error handler (catch-all for unhandled errors)
 app.use((err, req, res, next) => {
-    console.error('Unhandled application error:', err); // Log the error details
+    console.error('Unhandled application error:', err);
     res.status(500).json({
         message: 'Server error',
-        // Only expose detailed error message in non-production environments
         error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
     });
 });
-
 
 // Start server function
 function startServer() {
@@ -277,21 +272,6 @@ function startServer() {
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     }).on('error', handleServerError(PORT, 'HTTP'));
-
-    // Note: Your code also had logic for an HTTPS server that was failing due to missing certs.
-    // I've kept the HTTP server startup as the primary listen for simplicity based on your working case.
-    // If you intend to use HTTPS, you'll need to resolve the certificate file paths.
-    // Example (commented out):
-    /*
-    const HTTPS_PORT = process.env.HTTPS_PORT || 8443;
-    const httpsOptions = {
-        key: fs.readFileSync('/path/to/your/privkey.pem'), // !! Update this path !!
-        cert: fs.readFileSync('/path/to/your/cert.pem')   // !! Update this path !!
-    };
-    https.createServer(httpsOptions, app).listen(HTTPS_PORT, () => {
-        console.log(`HTTPS Server running on port ${HTTPS_PORT}`);
-    }).on('error', handleServerError(HTTPS_PORT, 'HTTPS'));
-    */
 }
 
 // Error handler for server startup (e.g., port already in use)

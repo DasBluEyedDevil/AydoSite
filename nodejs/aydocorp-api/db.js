@@ -1,10 +1,14 @@
-const { Sequelize } = require('sequelize');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-const sequelize = new Sequelize('aydocorp_db', 'aydocorp', 'IHateGeico1!', {
-  host: 'localhost',
-  port: 5432,
-  dialect: 'postgres',
-  logging: false, // set to true for SQL query logs
-});
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://dasblueeyeddevil:x8R4iMKUzcbGfBBb@aydo.famnahg.mongodb.net/?retryWrites=true&w=majority&appName=Aydo');
+        console.log('MongoDB connected successfully');
+    } catch (err) {
+        console.error('MongoDB connection error:', err.message);
+        process.exit(1);
+    }
+};
 
-module.exports = sequelize; 
+module.exports = connectDB; 

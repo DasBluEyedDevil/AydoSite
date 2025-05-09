@@ -22,12 +22,12 @@ router.post('/register', async (req, res) => {
         const { username, email, password } = req.body;
 
         // Check if user already exists
-        let user = await User.findOne({ where: { email } });
+        let user = await User.findOne({ email });
         if (user) {
             return res.status(400).json({ message: 'User already exists' });
         }
 
-        user = await User.findOne({ where: { username } });
+        user = await User.findOne({ username });
         if (user) {
             return res.status(400).json({ message: 'Username already taken' });
         }
@@ -37,16 +37,17 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create new user
-        user = await User.create({
+        user = new User({
             username,
             email,
             password: hashedPassword
         });
+        await user.save();
 
         // Create and return JWT token
         const payload = {
             user: {
-                id: user.id,
+                id: user._id,
                 role: user.role
             }
         };
@@ -66,7 +67,7 @@ router.post('/register', async (req, res) => {
                 res.json({ 
                     token,
                     user: {
-                        id: user.id,
+                        id: user._id,
                         username: user.username,
                         email: user.email,
                         role: user.role
@@ -91,7 +92,7 @@ router.post('/login', async (req, res) => {
         const { username, password } = req.body;
 
         // Check if user exists
-        const user = await User.findOne({ where: { username } });
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
@@ -105,7 +106,7 @@ router.post('/login', async (req, res) => {
         // Create and return JWT token
         const payload = {
             user: {
-                id: user.id,
+                id: user._id,
                 role: user.role
             }
         };
@@ -125,7 +126,7 @@ router.post('/login', async (req, res) => {
                 res.json({ 
                     token,
                     user: {
-                        id: user.id,
+                        id: user._id,
                         username: user.username,
                         email: user.email,
                         role: user.role
@@ -147,9 +148,9 @@ router.post('/login', async (req, res) => {
 // @access  Private
 router.get('/validate', auth, async (req, res) => {
     try {
-        const user = await User.findByPk(req.user.user.id, { attributes: { exclude: ['password'] } });
+        const user = await User.findById(req.user.user.id).select('-password');
         res.json({
-            id: user.id,
+            id: user._id,
             username: user.username,
             email: user.email,
             role: user.role,
@@ -183,7 +184,7 @@ router.get('/users', auth, async (req, res) => {
         }
 
         // Get all users from database, excluding passwords
-        const users = await User.findAll({ attributes: { exclude: ['password'] } });
+        const users = await User.find().select('-password');
         console.log(`Found ${users.length} users`);
         res.json(users);
     } catch (err) {
@@ -205,7 +206,7 @@ router.get('/users/:id', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findByPk(req.params.id, { attributes: { exclude: ['password'] } });
+        const user = await User.findById(req.params.id).select('-password');
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -283,7 +284,7 @@ router.post('/users/:id/make-admin', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findByPk(req.params.id);
+        const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -316,7 +317,7 @@ router.post('/users/:id/remove-admin', auth, async (req, res) => {
             return res.status(400).json({ message: 'Cannot remove admin rights from the last admin user' });
         }
 
-        const user = await User.findByPk(req.params.id);
+        const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -343,7 +344,7 @@ router.post('/users/:id/reset-password', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findByPk(req.params.id);
+        const user = await User.findById(req.params.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
