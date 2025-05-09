@@ -240,13 +240,11 @@ router.put('/users/:id', auth, async (req, res) => {
 
         // Check if username or email is already taken by another user
         const existingUser = await User.findOne({
-            where: {
-                [Op.or]: [
-                    { username },
-                    { email }
-                ],
-                id: { [Op.ne]: req.params.id }
-            }
+            $or: [
+                { username },
+                { email }
+            ],
+            _id: { $ne: req.params.id }
         });
 
         if (existingUser) {
@@ -254,11 +252,11 @@ router.put('/users/:id', auth, async (req, res) => {
         }
 
         // Update user
-        const [updatedRows, updatedUsers] = await User.update(
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
             { username, email },
-            { where: { id: req.params.id }, returning: true, individualHooks: true }
+            { new: true }
         );
-        const user = updatedUsers && updatedUsers.length > 0 ? updatedUsers[0] : null;
 
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
@@ -284,12 +282,15 @@ router.post('/users/:id/make-admin', auth, async (req, res) => {
             return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
 
-        const user = await User.findById(req.params.id);
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { role: 'admin' },
+            { new: true }
+        );
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        await user.update({ role: 'admin' });
 
         res.json(user);
     } catch (err) {
@@ -312,17 +313,20 @@ router.post('/users/:id/remove-admin', auth, async (req, res) => {
         }
 
         // Prevent removing admin rights from the last admin
-        const adminCount = await User.count({ where: { role: 'admin' } });
+        const adminCount = await User.countDocuments({ role: 'admin' });
         if (adminCount <= 1) {
             return res.status(400).json({ message: 'Cannot remove admin rights from the last admin user' });
         }
 
-        const user = await User.findById(req.params.id);
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { role: 'employee' },
+            { new: true }
+        );
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        await user.update({ role: 'employee' });
 
         res.json(user);
     } catch (err) {
@@ -354,7 +358,8 @@ router.post('/users/:id/reset-password', auth, async (req, res) => {
         const hashedPassword = await bcrypt.hash('noob1', salt);
 
         // Update user's password
-        await user.update({ password: hashedPassword });
+        user.password = hashedPassword;
+        await user.save();
 
         res.json({ message: 'Password has been reset successfully' });
     } catch (err) {
@@ -374,7 +379,7 @@ router.post('/request-password-reset', async (req, res) => {
         const { email } = req.body;
 
         // Find user by email
-        const user = await User.findOne({ where: { email } });
+        const user = await User.findOne({ email });
         if (!user) {
             // Don't reveal if email exists or not
             return res.json({ message: 'If your email is registered, you will receive a password reset link' });
@@ -385,10 +390,9 @@ router.post('/request-password-reset', async (req, res) => {
         const resetTokenExpiry = Date.now() + 3600000; // Token valid for 1 hour
 
         // Save reset token to user
-        await user.update({
-            resetPasswordToken: resetToken,
-            resetPasswordExpires: resetTokenExpiry
-        });
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = resetTokenExpiry;
+        await user.save();
 
         // Create reset URL
         const resetUrl = `${process.env.FRONTEND_URL || 'https://aydocorp.space'}/reset-password/${resetToken}`;
@@ -432,10 +436,8 @@ router.post('/reset-password/:token', async (req, res) => {
 
         // Find user with valid reset token
         const user = await User.findOne({
-            where: {
-                resetPasswordToken: token,
-                resetPasswordExpires: { [Op.gt]: Date.now() }
-            }
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
         });
 
         if (!user) {
@@ -446,12 +448,11 @@ router.post('/reset-password/:token', async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
         
-        // Clear reset token fields
-        await user.update({
-            resetPasswordToken: null,
-            resetPasswordExpires: null,
-            password: hashedPassword
-        });
+        // Clear reset token fields and update password
+        user.resetPasswordToken = null;
+        user.resetPasswordExpires = null;
+        user.password = hashedPassword;
+        await user.save();
         
         res.json({ message: 'Password has been reset successfully' });
     } catch (err) {
