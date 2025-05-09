@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 
 // Initialize the Express app
 const app = express();
@@ -117,48 +118,23 @@ app.get('/api/employee-portal-events', (req, res) => {
     res.redirect('/api/employee-portal/events');
 });
 
-// Add a specific route for /api/auth/users to ensure it's accessible
-// Import the auth middleware directly here to ensure it's applied
-const auth = require('./middleware/auth');
-app.get('/api/auth/users', auth, async (req, res) => {
-    console.log('Direct /api/auth/users route hit, handling directly');
-
-    try {
-        // Check if user is admin
-        const isAdmin = req.user.user.role === 'admin';
-        console.log('Is admin:', isAdmin);
-
-        if (!isAdmin) {
-            console.log(`Access denied for user ${req.user.user.id} (role: ${req.user.user.role})`);
-            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-        }
-
-        // Get all users from database, excluding passwords
-        const User = require('./models/User');
-        const users = await User.find().select('-password');
-        console.log(`Found ${users.length} users`);
-        res.json(users);
-    } catch (err) {
-        console.error('Error fetching users:', err.message);
-        res.status(500).json({
-            message: 'Server error while fetching users',
-            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
-        });
-    }
+// Add debug middleware to log all requests
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    console.log('Headers:', req.headers);
+    next();
 });
 
-// Catch-all route for undefined API routes (added based on 500-ERROR-FIX-UPDATE.md)
-// Moved to the end of route definitions to ensure it doesn't catch valid routes
+// Catch-all route for undefined API routes (moved to the end)
 app.all('/api/*', (req, res) => {
     console.log('Catch-all route hit for:', req.originalUrl, req.method);
+    console.log('Request headers:', req.headers);
     res.status(404).json({
         message: 'API endpoint not found',
         path: req.originalUrl,
         method: req.method
     });
 });
-
-
 
 // MongoDB connection with proper error handling AND keep-alive options
 async function connectToMongoDB() {
@@ -175,13 +151,14 @@ async function connectToMongoDB() {
 
         // Recommended options for a persistent connection
         const connectionOptions = {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
             serverSelectionTimeoutMS: 5000, // Keep trying to connect for 5 seconds
             connectTimeoutMS: 10000,       // Give the initial connection attempt 10 seconds
-            keepAlive: true,                 // Enable TCP keep-alives
-            keepAliveInitialDelay: 300000    // Send the first keep-alive probe after 5 minutes of inactivity (300000 ms)
-            // poolSize: 10 // Optional: Adjust based on expected concurrency, default is 10
+            socketTimeoutMS: 45000,        // Close sockets after 45 seconds of inactivity
+            family: 4,                     // Use IPv4, skip trying IPv6
+            maxPoolSize: 10,               // Maximum number of connections in the pool
+            minPoolSize: 5,                // Minimum number of connections in the pool
+            maxIdleTimeMS: 60000,          // Close idle connections after 60 seconds
+            heartbeatFrequencyMS: 10000    // Check server status every 10 seconds
         };
 
         await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
@@ -191,13 +168,33 @@ async function connectToMongoDB() {
 
         // Add listeners for connection events for better monitoring
         mongoose.connection.on('disconnected', () => {
-            console.warn('MongoDB disconnected!');
-            // You might want to implement more sophisticated reconnection logic here
+            console.warn('MongoDB disconnected! Attempting to reconnect...');
+            // Implement reconnection logic
+            setTimeout(async () => {
+                try {
+                    await mongoose.connect(process.env.MONGODB_URI, connectionOptions);
+                    console.log('MongoDB reconnected successfully');
+                } catch (error) {
+                    console.error('Failed to reconnect to MongoDB:', error.message);
+                }
+            }, 5000); // Try to reconnect after 5 seconds
         });
 
         mongoose.connection.on('error', (err) => {
-            console.error('MongoDB connection error after initial connect:', err);
-            // Handle errors that occur after the initial successful connection
+            console.error('MongoDB connection error:', err);
+            // Log additional diagnostic information
+            console.error('Connection state:', mongoose.connection.readyState);
+            console.error('Connection options:', connectionOptions);
+        });
+
+        // Add listener for successful reconnection
+        mongoose.connection.on('reconnected', () => {
+            console.log('MongoDB reconnected successfully');
+        });
+
+        // Add listener for connection close
+        mongoose.connection.on('close', () => {
+            console.log('MongoDB connection closed');
         });
 
     } catch (error) {
@@ -247,17 +244,62 @@ function startServer() {
 
 // Error handler for server startup (e.g., port already in use)
 function handleServerError(port, serverType) {
-    return (error) => {
+    return async (error) => {
         console.error(`${serverType} Server startup error:`, error);
+        
         if (error.code === 'EADDRINUSE') {
             console.error(`Port ${port} is already in use. Is another instance running?`);
             console.error(`Try using a different port by setting ${serverType === 'HTTPS' ? 'HTTPS_PORT' : 'PORT'} in .env file or as an environment variable.`);
+            
+            // Try to find the process using the port
+            const isWindows = process.platform === 'win32';
+            const command = isWindows 
+                ? `netstat -ano | findstr :${port}`
+                : `lsof -i :${port}`;
+            
+            exec(command, (err, stdout, stderr) => {
+                if (err) {
+                    console.error('Error finding process:', err);
+                    return;
+                }
+                console.log('Process using port:', stdout);
+            });
         }
-        // Exit only if a critical port (like the main HTTP/HTTPS port) fails to bind
+
+        // Graceful shutdown
+        console.log('Initiating graceful shutdown...');
+        
+        // Close MongoDB connection
+        if (mongoose.connection.readyState !== 0) {
+            try {
+                await mongoose.connection.close();
+                console.log('MongoDB connection closed during shutdown');
+            } catch (err) {
+                console.error('Error closing MongoDB connection:', err);
+            }
+        }
         process.exit(1);
     };
 }
 
+// Add graceful shutdown handlers
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+async function gracefulShutdown() {
+    console.log('Received shutdown signal. Starting graceful shutdown...');
+    
+    // Close MongoDB connection
+    if (mongoose.connection.readyState !== 0) {
+        try {
+            await mongoose.connection.close();
+            console.log('MongoDB connection closed during shutdown');
+        } catch (err) {
+            console.error('Error closing MongoDB connection:', err);
+        }
+    }
+    process.exit(0);
+}
 
 // Import the scheduler for periodic data synchronization
 const scheduler = require('./utils/scheduler');
