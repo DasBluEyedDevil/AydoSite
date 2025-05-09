@@ -58,4 +58,69 @@
 
 .reset-password-container .login-link a:hover {
     text-decoration: underline;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.login-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.login-container .form-group {
+    margin-bottom: 15px;
+}
+
+.login-container label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.login-container input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.login-container button {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.login-container button:hover {
+    background-color: #0056b3;
+}
+
+.login-container .forgot-password,
+.login-container .register-link {
+    text-align: center;
+    margin-top: 15px;
+}
+
+.login-container .forgot-password a,
+.login-container .register-link a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.login-container .forgot-password a:hover,
+.login-container .register-link a:hover {
+    text-decoration: underline;
 } 
