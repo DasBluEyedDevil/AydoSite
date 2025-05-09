@@ -179,6 +179,61 @@
 })(jQuery);
 
 /**
+ * Get the base URL for API requests.
+ */
+function getApiBaseUrl() {
+    // For local development, use localhost:8080
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:8080';
+    }
+    // For production, use the current origin
+    return window.location.origin;
+}
+
+/**
+ * Test if the API server is reachable.
+ */
+async function testApiConnection() {
+    try {
+        const url = getApiBaseUrl() + '/api/test';
+        const response = await fetch(url);
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Validate the authentication token with the server.
+ */
+async function validateToken() {
+    try {
+        const token = sessionStorage.getItem('aydocorpToken');
+        if (!token) return false;
+        try {
+            const response = await AuthUtils.secureRequest(getApiBaseUrl() + '/api/auth/validate');
+            if (response.ok) return true;
+            if (response.status !== 404) console.warn(`Standard validate endpoint failed: ${response.status}`);
+        } catch {}
+        for (const endpoint of ['auth/check', 'auth/status']) {
+            try {
+                const altResponse = await AuthUtils.secureRequest(getApiBaseUrl() + '/api/' + endpoint);
+                if (altResponse.ok) return true;
+            } catch {}
+        }
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || await testApiConnection()) {
+            sessionStorage.setItem('aydocorpValidationFallback', 'true');
+            return true;
+        }
+        sessionStorage.removeItem('aydocorpValidationFallback');
+        return false;
+    } catch {
+        sessionStorage.removeItem('aydocorpValidationFallback');
+        return false;
+    }
+}
+
+/**
  * Debug helper for authentication issues.
  * @returns {Promise<Object>} A summary of auth state
  */
@@ -253,61 +308,6 @@ async function debugAuth() {
         isLoggedIn: isLoggedIn,
         message: token ? 'Authentication data exists but may not be valid with server' : 'No authentication data found'
     };
-}
-
-/**
- * Get the base URL for API requests.
- */
-function getApiBaseUrl() {
-    // For local development, use localhost:8080
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:8080';
-    }
-    // For production, use the current origin
-    return window.location.origin;
-}
-
-/**
- * Test if the API server is reachable.
- */
-async function testApiConnection() {
-    try {
-        const url = getApiBaseUrl() + '/api/test';
-        const response = await fetch(url);
-        return response.ok;
-    } catch {
-        return false;
-    }
-}
-
-/**
- * Validate the authentication token with the server.
- */
-async function validateToken() {
-    try {
-        const token = sessionStorage.getItem('aydocorpToken');
-        if (!token) return false;
-        try {
-            const response = await AuthUtils.secureRequest(getApiBaseUrl() + '/api/auth/validate');
-            if (response.ok) return true;
-            if (response.status !== 404) console.warn(`Standard validate endpoint failed: ${response.status}`);
-        } catch {}
-        for (const endpoint of ['auth/check', 'auth/status']) {
-            try {
-                const altResponse = await AuthUtils.secureRequest(getApiBaseUrl() + '/api/' + endpoint);
-                if (altResponse.ok) return true;
-            } catch {}
-        }
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || await testApiConnection()) {
-            sessionStorage.setItem('aydocorpValidationFallback', 'true');
-            return true;
-        }
-        sessionStorage.removeItem('aydocorpValidationFallback');
-        return false;
-    } catch {
-        sessionStorage.removeItem('aydocorpValidationFallback');
-        return false;
-    }
 }
 
 if (typeof module !== 'undefined' && module.exports) {
