@@ -40,8 +40,9 @@ if (strpos($path, "/api/") === 0) {
     // Try multiple possible Node.js server addresses
     $node_servers = [
         "http://aydocorp.space:8080/api/", // Primary production URL with correct port
-        "http://localhost:8080/api/",  // Local development fallback
-        "http://127.0.0.1:8080/api/"   // Alternative local fallback
+        "http://aydocorp.space/api/",      // Try without port in case of proxy
+        "http://localhost:8080/api/",      // Local development fallback
+        "http://127.0.0.1:8080/api/"       // Alternative local fallback
     ];
 
     $node_url = null;

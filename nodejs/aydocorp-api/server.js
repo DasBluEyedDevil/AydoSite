@@ -50,6 +50,13 @@ try {
     app.use(morgan('combined')); // Fallback to console logging
 }
 
+// Add debug middleware to log all requests
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    console.log('Headers:', req.headers);
+    next();
+});
+
 // Define routes
 const authRoutes = require('./routes/auth');
 const forumRoutes = require('./routes/forum');
@@ -118,17 +125,121 @@ app.get('/api/employee-portal-events', (req, res) => {
     res.redirect('/api/employee-portal/events');
 });
 
-// Add debug middleware to log all requests
-app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-    console.log('Headers:', req.headers);
-    next();
+// Direct fallback route for /api/auth/users in case the router isn't matching it
+app.get('/api/auth/users', async (req, res) => {
+    console.log('Direct fallback route for /api/auth/users hit');
+
+    try {
+        // Check authentication
+        const token = req.header('x-auth-token') || 
+                     (req.header('Authorization') ? 
+                      req.header('Authorization').replace('Bearer ', '') : null);
+
+        if (!token) {
+            console.log('No token provided to direct fallback route');
+            return res.status(401).json({ message: 'No token, authorization denied' });
+        }
+
+        const jwt = require('jsonwebtoken');
+
+        if (!process.env.JWT_SECRET) {
+            console.error('JWT_SECRET is not defined');
+            return res.status(500).json({ message: 'Server configuration error' });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (!decoded.user || !decoded.user.id) {
+            console.log('Invalid token structure:', decoded);
+            return res.status(401).json({ message: 'Invalid token structure' });
+        }
+
+        // Check if user is admin
+        const isAdmin = decoded.user.role === 'admin';
+        console.log('Is admin:', isAdmin);
+
+        if (!isAdmin) {
+            console.log(`Access denied for user ${decoded.user.id} (role: ${decoded.user.role})`);
+            return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+        }
+
+        // Get all users from database, excluding passwords
+        const User = require('./models/User');
+        const users = await User.find().select('-password');
+        console.log(`Found ${users.length} users in direct fallback route`);
+        res.json(users);
+    } catch (err) {
+        console.error('Error in direct fallback route for /api/auth/users:', err.message);
+        res.status(500).json({
+            message: 'Server error while fetching users',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+        });
+    }
 });
 
 // Catch-all route for undefined API routes (moved to the end)
 app.all('/api/*', (req, res) => {
     console.log('Catch-all route hit for:', req.originalUrl, req.method);
     console.log('Request headers:', req.headers);
+
+    // Log all registered routes for debugging
+    console.log('Registered routes:');
+    console.log('- /api/auth routes');
+    console.log('- /api/forum routes');
+    console.log('- /api/employee-portal routes');
+    console.log('- /api/page-content routes');
+
+    // Check if this is the problematic /api/auth/users route
+    if (req.originalUrl === '/api/auth/users' || req.originalUrl === '/api/auth/users/') {
+        console.log('IMPORTANT: The /api/auth/users route was requested but not found!');
+        console.log('This route should be handled by the auth routes.');
+
+        // Try to manually handle the request if it's the users endpoint
+        if (req.method === 'GET') {
+            try {
+                const User = require('./models/User');
+
+                // Check if user is admin (similar to the auth middleware)
+                const token = req.header('x-auth-token') || 
+                             (req.header('Authorization') ? 
+                              req.header('Authorization').replace('Bearer ', '') : null);
+
+                if (!token) {
+                    return res.status(401).json({ message: 'No token, authorization denied' });
+                }
+
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+                if (!decoded.user || !decoded.user.id) {
+                    return res.status(401).json({ message: 'Invalid token structure' });
+                }
+
+                // Check if user is admin
+                if (decoded.user.role !== 'admin') {
+                    return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+                }
+
+                // Get all users from database, excluding passwords
+                User.find().select('-password')
+                    .then(users => {
+                        console.log(`Found ${users.length} users, sending response`);
+                        res.json(users);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching users in catch-all handler:', err.message);
+                        res.status(500).json({
+                            message: 'Server error while fetching users',
+                            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+                        });
+                    });
+                return;
+            } catch (err) {
+                console.error('Error in catch-all handler for /api/auth/users:', err);
+            }
+        }
+    }
+
     res.status(404).json({
         message: 'API endpoint not found',
         path: req.originalUrl,
@@ -246,17 +357,17 @@ function startServer() {
 function handleServerError(port, serverType) {
     return async (error) => {
         console.error(`${serverType} Server startup error:`, error);
-        
+
         if (error.code === 'EADDRINUSE') {
             console.error(`Port ${port} is already in use. Is another instance running?`);
             console.error(`Try using a different port by setting ${serverType === 'HTTPS' ? 'HTTPS_PORT' : 'PORT'} in .env file or as an environment variable.`);
-            
+
             // Try to find the process using the port
             const isWindows = process.platform === 'win32';
             const command = isWindows 
                 ? `netstat -ano | findstr :${port}`
                 : `lsof -i :${port}`;
-            
+
             exec(command, (err, stdout, stderr) => {
                 if (err) {
                     console.error('Error finding process:', err);
@@ -268,7 +379,7 @@ function handleServerError(port, serverType) {
 
         // Graceful shutdown
         console.log('Initiating graceful shutdown...');
-        
+
         // Close MongoDB connection
         if (mongoose.connection.readyState !== 0) {
             try {
@@ -288,7 +399,7 @@ process.on('SIGINT', gracefulShutdown);
 
 async function gracefulShutdown() {
     console.log('Received shutdown signal. Starting graceful shutdown...');
-    
+
     // Close MongoDB connection
     if (mongoose.connection.readyState !== 0) {
         try {
