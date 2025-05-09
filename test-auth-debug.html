@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Debug Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Auth Debug Test</h1>
+    <button id="test-button">Run Auth Debug</button>
+    <div id="result"></div>
+
+    <script src="assets/js/auth-utils.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#test-button').on('click', async function() {
+                try {
+                    console.log('Running debugAuth...');
+                    const result = await debugAuth();
+                    console.log('Debug result:', result);
+                    $('#result').html('<pre>' + JSON.stringify(result, null, 2) + '</pre>');
+                } catch (error) {
+                    console.error('Error running debugAuth:', error);
+                    $('#result').html('<p>Error: ' + error.message + '</p>');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
