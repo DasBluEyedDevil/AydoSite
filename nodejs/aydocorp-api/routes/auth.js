@@ -396,21 +396,34 @@ router.post('/request-password-reset', async (req, res) => {
         // Create reset URL
         const resetUrl = `${process.env.FRONTEND_URL || 'https://aydocorp.space'}/reset-password/${resetToken}`;
 
-        // Send email
-        await transporter.sendMail({
-            from: process.env.SMTP_FROM || 'noreply@aydocorp.space',
-            to: user.email,
-            subject: 'Password Reset Request',
-            html: `
-                <h1>Password Reset Request</h1>
-                <p>You requested a password reset. Click the link below to reset your password:</p>
-                <a href="${resetUrl}">Reset Password</a>
-                <p>This link will expire in 1 hour.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            `
-        });
+        try {
+            // Send email
+            await transporter.sendMail({
+                from: process.env.SMTP_FROM || 'noreply@aydocorp.space',
+                to: user.email,
+                subject: 'Password Reset Request',
+                html: `
+                    <h1>Password Reset Request</h1>
+                    <p>You requested a password reset. Click the link below to reset your password:</p>
+                    <a href="${resetUrl}">Reset Password</a>
+                    <p>This link will expire in 1 hour.</p>
+                    <p>If you didn't request this, please ignore this email.</p>
+                `
+            });
+            console.log(`Password reset email sent to ${user.email}`);
+            res.json({ message: 'If your email is registered, you will receive a password reset link' });
+        } catch (emailError) {
+            console.error('Error sending password reset email:', emailError);
 
-        res.json({ message: 'If your email is registered, you will receive a password reset link' });
+            // Still save the token in the database so it can be used
+            // This allows the reset functionality to work even if email sending fails
+
+            // Return a more user-friendly message
+            res.json({ 
+                message: 'Password reset request processed. If your email is registered, you can use the following link to reset your password:',
+                resetUrl: resetUrl
+            });
+        }
     } catch (err) {
         console.error('Password reset request error:', err.message);
         res.status(500).json({
@@ -446,13 +459,13 @@ router.post('/reset-password/:token', async (req, res) => {
         // Hash new password
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-        
+
         // Clear reset token fields and update password
         user.resetPasswordToken = null;
         user.resetPasswordExpires = null;
         user.password = hashedPassword;
         await user.save();
-        
+
         res.json({ message: 'Password has been reset successfully' });
     } catch (err) {
         console.error('Password reset error:', err.message);
