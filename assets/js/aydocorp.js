@@ -2218,7 +2218,7 @@
                 return;
             }
 
-            const apiUrl = getApiUrl('auth/users');
+            const apiUrl = getApiUrl('employee-portal/users');
             console.log('loadUsers: Attempting to fetch users from URL:', apiUrl);
 
             console.log('loadUsers: Making API request...');
