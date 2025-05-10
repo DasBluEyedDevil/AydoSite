@@ -24,7 +24,7 @@ if (!$url) {
 // Build the full URL to the Node.js backend
 // Remove any leading slashes from the URL to prevent double slashes
 $url = ltrim($url, '/');
-$targetUrl = 'http://localhost:8080/' . $url;
+$targetUrl = 'http://localhost:3000/' . $url;
 
 // Get the HTTP method
 $method = $_SERVER['REQUEST_METHOD'];
