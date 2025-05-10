@@ -2,7 +2,13 @@
 // AydoCorp Employee Portal - Core Functionality
 
 document.addEventListener('DOMContentLoaded', function() {
-    checkLoginStatus();
+    // If Auth0 integration is available, use it instead of the legacy authentication
+    if (window.auth0Integration) {
+        window.auth0Integration.updateAuthUI();
+    } else {
+        // Fall back to legacy authentication if Auth0 is not available
+        checkLoginStatus();
+    }
     initializePortal();
 });
 
@@ -81,7 +87,8 @@ async function validateToken(token) {
     }
 }
 
-// Unified checkLoginStatus
+// Unified checkLoginStatus - Legacy authentication method
+// This function is only used when Auth0 integration is not available
 function checkLoginStatus() {
     const token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
     let userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
@@ -500,6 +507,13 @@ function clearAllAuthData() {
 
 // Unified handleLogout
 function handleLogout() {
+    // If Auth0 integration is available, use it for logout
+    if (window.auth0Integration) {
+        window.auth0Integration.logout();
+        return;
+    }
+
+    // Legacy logout if Auth0 is not available
     // Clear all authentication data
     clearAllAuthData();
 

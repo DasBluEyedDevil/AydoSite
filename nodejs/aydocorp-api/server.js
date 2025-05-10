@@ -11,6 +11,7 @@ const fs = require('fs');
 const { exec } = require('child_process');
 const connectDB = require('./db');
 const User = require('./models/User');
+const { configureAuth0 } = require('./middleware/auth0');
 
 // Initialize the Express app
 const app = express();
@@ -35,6 +36,10 @@ app.use(helmet({
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Auth0 middleware setup
+app.use(configureAuth0());
+console.log('Auth0 middleware configured');
 
 // Serve static files from the public directory
 app.use(express.static(path.join(__dirname, 'public')));
@@ -68,13 +73,15 @@ app.use((req, res, next) => {
 });
 
 // Define routes
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/auth'); // Legacy auth routes
+const auth0Routes = require('./routes/auth0Routes'); // New Auth0 routes
 const forumRoutes = require('./routes/forum');
 const employeePortalRoutes = require('./routes/employeePortal');
 const pageContentRoutes = require('./routes/pageContent');
 
 // Mount routes
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', auth0Routes); // Use Auth0 routes for /api/auth
+app.use('/api/auth/legacy', authRoutes); // Keep legacy routes accessible at /api/auth/legacy
 app.use('/api/forum', forumRoutes);
 app.use('/api/employee-portal', employeePortalRoutes);
 app.use('/api/page-content', pageContentRoutes);
