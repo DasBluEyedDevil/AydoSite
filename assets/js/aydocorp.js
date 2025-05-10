@@ -163,6 +163,14 @@
      */
     async function handleLogout() {
         try {
+            // Check if Auth0 integration is available and use it if it is
+            if (window.auth0Integration) {
+                console.log('Auth0 integration available, using Auth0 for logout');
+                window.auth0Integration.logout();
+                return;
+            }
+
+            console.log('Auth0 integration not available, using legacy logout');
             localStorage.removeItem('aydocorpUser');
             localStorage.removeItem('aydocorpLoggedIn');
             localStorage.removeItem('aydocorpToken');
@@ -176,6 +184,7 @@
             window.location.href = '#';
             checkLoginStatus();
         } catch (error) {
+            console.error('Logout error:', error);
             localStorage.removeItem('aydocorpUser');
             localStorage.removeItem('aydocorpLoggedIn');
             localStorage.removeItem('aydocorpToken');
@@ -196,6 +205,14 @@
      */
     async function checkLoginStatus() {
         try {
+            // Check if Auth0 integration is available and use it if it is
+            if (window.auth0Integration) {
+                console.log('Auth0 integration available, using Auth0 for authentication');
+                window.auth0Integration.updateAuthUI();
+                return;
+            }
+
+            console.log('Auth0 integration not available, using legacy authentication');
             console.log('checkLoginStatus called');
             let token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
             console.log('Token exists:', !!token);
@@ -2130,14 +2147,14 @@
     function renderUserList(users) {
         console.log('renderUserList: Starting to render user list');
         const userListContainer = document.getElementById('userList');
-        
+
         if (!userListContainer) {
             console.error('renderUserList: User list container not found');
             return;
         }
 
         console.log('renderUserList: Found user list container, rendering', users.length, 'users');
-        
+
         if (!users || users.length === 0) {
             userListContainer.innerHTML = '<tr><td colspan="5" class="text-center">No users found</td></tr>';
             console.log('renderUserList: No users to display');
@@ -2150,7 +2167,7 @@
             const adminButton = isAdmin 
                 ? `<button class="button small remove-admin" data-user-id="${user.id}">Remove Admin</button>`
                 : `<button class="button small make-admin" data-user-id="${user.id}">Make Admin</button>`;
-            
+
             return `
                 <tr>
                     <td>${user.username || 'N/A'}</td>
@@ -2211,18 +2228,18 @@
         try {
             const token = sessionStorage.getItem('aydocorpToken');
             console.log('loadUsers: Token exists:', !!token);
-            
+
             if (!token) {
                 console.log('loadUsers: No token found');
                 AuthUtils.showNotification('Please log in to view users', 'error');
                 return;
             }
-    
+
             // Try to use our existing endpoint first (direct approach)
             // Update the API endpoint from 'employee-portal/users' to 'api/auth/users'
             let apiUrl = getApiUrl('api/auth/users');
             console.log('loadUsers: Attempting to fetch users from URL:', apiUrl);
-    
+
             console.log('loadUsers: Making API request...');
             let response = await fetch(apiUrl, {
                 method: 'GET',
@@ -2232,7 +2249,7 @@
                     'x-auth-token': token
                 }
             });
-    
+
             // If we get a 404, try a fallback approach
             if (response.status === 404) {
                 console.log('loadUsers: Primary endpoint not found, trying fallback');
@@ -2247,10 +2264,10 @@
                     }
                 });
             }
-    
+
             console.log('loadUsers: API Response Status:', response.status);
             console.log('loadUsers: API Response Headers:', Object.fromEntries(response.headers.entries()));
-    
+
             if (response.status === 401) {
                 console.log('loadUsers: Session expired');
                 AuthUtils.showNotification('Session expired. Please log in again.', 'error');
@@ -2258,27 +2275,27 @@
                 window.location.href = '#login';
                 return;
             }
-    
+
             if (response.status === 403) {
                 console.log('loadUsers: Access denied');
                 AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
                 return;
             }
-    
+
             if (!response.ok) {
                 console.error('loadUsers: HTTP error:', response.status);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-    
+
             const users = await response.json();
             console.log('loadUsers: API Raw Response Data:', users);
             console.log('loadUsers: Number of users received:', users.length);
-    
+
             if (!Array.isArray(users)) {
                 console.error('loadUsers: Invalid response format');
                 throw new Error('Invalid response format: expected array of users');
             }
-    
+
             renderUserList(users);
         } catch (error) {
             console.error('loadUsers: Error loading users:', error);
@@ -2565,7 +2582,7 @@
 
         // Admin Dashboard Initialization
         console.log('Initializing admin dashboard...');
-        
+
         // Initialize the rich text editor when the page loads
         initRichTextEditor();
 
@@ -2574,12 +2591,12 @@
             console.log('initializeAdminDashboard: Starting initialization');
             const userJson = sessionStorage.getItem('aydocorpUser');
             console.log('initializeAdminDashboard: User data from sessionStorage:', userJson);
-            
+
             if (userJson) {
                 try {
                     const user = JSON.parse(userJson);
                     console.log('initializeAdminDashboard: Parsed user data:', user);
-                    
+
                     if (user && (user.role === 'admin' || user.username === 'Devil')) {
                         console.log('initializeAdminDashboard: User is admin, loading users...');
                         loadUsers(); // Load users when admin dashboard is shown
@@ -2608,12 +2625,12 @@
                 // Check if user is admin before showing dashboard
                 const userJson = sessionStorage.getItem('aydocorpUser');
                 console.log('User data from sessionStorage on hash change:', userJson);
-                
+
                 if (userJson) {
                     try {
                         const user = JSON.parse(userJson);
                         console.log('Parsed user data on hash change:', user);
-                        
+
                         if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
                             console.log('User is not admin, redirecting...');
                             showNotification('You do not have permission to access the Admin Dashboard.', 'error');
@@ -2710,7 +2727,20 @@
             checkLoginStatus();
         });
 
-        // Handle login form submission
+        // Handle login button click for Auth0
+        $('#login-btn').on('click', function(e) {
+            e.preventDefault();
+            if (window.auth0Integration) {
+                console.log('Using Auth0 for login');
+                window.auth0Integration.login();
+            } else {
+                console.log('Auth0 not available, showing legacy login form');
+                $('#auth0-login-container').hide();
+                $('#login-container').show();
+            }
+        });
+
+        // Handle legacy login form submission
         $('#login-form').on('submit', async function(e) {
             e.preventDefault();
             const username = $('#username').val();

@@ -149,9 +149,19 @@
 							<article id="login">
     <h2 class="major">Member Access</h2>
 
-    <!-- Login Container -->
-    <div id="login-container">
-        <h3>Login</h3>
+    <!-- Auth0 Login Container -->
+    <div id="auth0-login-container">
+        <h3>Login with Auth0</h3>
+        <p>Secure authentication powered by Auth0</p>
+        <ul class="actions">
+            <li><button type="button" id="login-btn" class="primary">Login</button></li>
+        </ul>
+        <p>By logging in, you agree to our <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>.</p>
+    </div>
+
+    <!-- Legacy Login Container (Hidden) -->
+    <div id="login-container" style="display: none;">
+        <h3>Legacy Login</h3>
         <form id="login-form">
             <div class="fields">
                 <div class="field">
@@ -171,7 +181,7 @@
         <p>Not a member yet? <a href="#" class="show-register">Create an account</a> or <a href="#contact">contact us</a> for more information.</p>
     </div>
 
-    <!-- Registration Container -->
+    <!-- Registration Container (Hidden) -->
     <div id="register-container" style="display: none;">
         <h3>Create Account</h3>
         <form id="register-form">
@@ -314,6 +324,7 @@
 			<script src="assets/js/util.js"></script>
 			<script src="assets/js/main.js"></script>
 			<script src="assets/js/auth-utils.js?v=2024.03.15"></script>
+			<script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
 			<script src="assets/js/aydocorp.js?v=2024.03.15"></script>
 			<script src="assets/js/portal-functions.js?v=2024.03.15"></script>
 			<script src="assets/js/auth0-integration.js?v=2024.03.15"></script>

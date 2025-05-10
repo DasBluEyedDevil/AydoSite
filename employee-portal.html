@@ -12,6 +12,7 @@
    	<link rel="stylesheet" href="assets/css/portal-styles.css" />
    	<link rel="stylesheet" href="assets/css/calendar-styles.css" />
    	<link rel="stylesheet" href="assets/css/fontawesome-all.min.css" />
+   	<link rel="stylesheet" href="assets/css/auth0-styles.css" />
    	<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
 </head>
 <body class="portal-page">
@@ -148,6 +149,29 @@
 
         <!-- Main Content Area -->
         <main id="portal-main">
+            <!-- Auth0 Gated Content -->
+            <div class="hidden" id="gated-content">
+                <p>
+                    You're seeing this content because you're currently
+                    <strong>logged in</strong>.
+                </p>
+                <label>
+                    Access token:
+                    <pre id="ipt-access-token"></pre>
+                </label>
+                <label>
+                    User profile:
+                    <pre id="ipt-user-profile"></pre>
+                </label>
+                <div class="api-test-container">
+                    <button id="btn-call-api" class="button primary">Call API</button>
+                    <div class="api-result-container">
+                        <h4>API Result:</h4>
+                        <pre id="api-call-result">Click the button above to call the API</pre>
+                    </div>
+                </div>
+            </div>
+
             <!-- Dashboard Section -->
             <section id="dashboard" class="portal-section active">
                 <div class="dashboard-grid">
@@ -266,6 +290,7 @@
     <script src="assets/js/breakpoints.min.js"></script>
     <script src="assets/js/util.js"></script>
     <script src="assets/js/auth-utils.js?v=2024.03.15"></script>
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
     <script src="assets/js/auth0-integration.js?v=2024.03.15"></script>
     <script src="assets/js/portal.js?v=2024.03.15"></script>
 </body>

@@ -91,8 +91,22 @@ app.get('/', (req, res) => {
     res.json({ message: 'AydoCorp API is running' });
 });
 
+// Endpoint to serve the Auth0 configuration file
+app.get('/auth_config.json', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'auth_config.json'));
+});
+
 app.get('/api/test', (req, res) => {
     res.json({ message: 'API is working correctly' });
+});
+
+// Protected API endpoint that requires a valid access token
+const { validateApiToken } = require('./middleware/auth0');
+app.get('/api/external', validateApiToken, (req, res) => {
+    res.json({
+        msg: "Your access token was successfully validated!",
+        user: req.auth
+    });
 });
 
 app.get('/api/health-check', (req, res) => {
@@ -152,8 +166,13 @@ app.post('/api/test-post', (req, res) => {
 // Remove Sequelize sync and update server startup
 startServer();
 
-// Generic error handler (catch-all for unhandled errors)
+// Error handler for JWT authentication errors
 app.use((err, req, res, next) => {
+    if (err.name === "UnauthorizedError") {
+        return res.status(401).json({ msg: "Invalid token" });
+    }
+
+    // Generic error handler (catch-all for unhandled errors)
     console.error('Unhandled application error:', err);
     res.status(500).json({
         message: 'Server error',

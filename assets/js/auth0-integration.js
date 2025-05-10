@@ -2,62 +2,115 @@
 // This file handles Auth0 authentication for the frontend
 
 // Auth0 configuration
-let auth0 = null;
-const configureAuth0 = async () => {
-  // Create Auth0 client
-  auth0 = await createAuth0Client({
-    domain: 'dev-ton75slvnl1y0ooy.us.auth0.com',
-    client_id: '0TwGb8sq5DooSqDHDgOQX4IpAO2CQnta',
-    redirect_uri: window.location.origin,
-    audience: 'https://dev-ton75slvnl1y0ooy.us.auth0.com/api/v2/',
-    cacheLocation: 'localstorage'
-  });
+let auth0Client = null;
 
-  // Handle callback from Auth0
-  if (window.location.search.includes('code=')) {
-    await auth0.handleRedirectCallback();
-    window.history.replaceState({}, document.title, window.location.pathname);
-    updateAuthUI();
+// Function to fetch Auth0 configuration from the server
+const fetchAuthConfig = () => fetch("/auth_config.json");
+
+// Function to configure the Auth0 client
+const configureClient = async () => {
+  try {
+    const response = await fetchAuthConfig();
+    const config = await response.json();
+
+    auth0Client = await auth0.createAuth0Client({
+      domain: config.domain,
+      clientId: config.clientId,
+      authorizationParams: {
+        redirect_uri: window.location.origin,
+        audience: config.audience
+      },
+      cacheLocation: 'localstorage'
+    });
+
+    console.log("Auth0 client configured successfully");
+    return true;
+  } catch (error) {
+    console.error("Error configuring Auth0 client:", error);
+    return false;
   }
+};
+
+// Function to handle the Auth0 callback
+const handleAuth0Callback = async () => {
+  // Check for the code and state parameters
+  const query = window.location.search;
+  if (query.includes("code=") && query.includes("state=")) {
+    try {
+      // Process the login state
+      await auth0Client.handleRedirectCallback();
+
+      // Update UI
+      updateAuthUI();
+
+      // Use replaceState to redirect the user away and remove the querystring parameters
+      window.history.replaceState({}, document.title, "/");
+
+      return true;
+    } catch (error) {
+      console.error("Error handling Auth0 callback:", error);
+      return false;
+    }
+  }
+  return false;
 };
 
 // Check if user is authenticated
 const isAuthenticated = async () => {
-  if (!auth0) await configureAuth0();
-  return await auth0.isAuthenticated();
+  try {
+    if (!auth0Client) await configureClient();
+    return await auth0Client.isAuthenticated();
+  } catch (error) {
+    console.error("Error checking authentication status:", error);
+    return false;
+  }
 };
 
 // Login with Auth0
 const login = async () => {
-  if (!auth0) await configureAuth0();
-  await auth0.loginWithRedirect({
-    redirect_uri: window.location.origin
-  });
+  try {
+    if (!auth0Client) await configureClient();
+    await auth0Client.loginWithRedirect({
+      authorizationParams: {
+        redirect_uri: window.location.origin
+      }
+    });
+  } catch (error) {
+    console.error("Error during login:", error);
+  }
 };
 
 // Logout from Auth0
 const logout = async () => {
-  if (!auth0) await configureAuth0();
-  await auth0.logout({
-    returnTo: window.location.origin
-  });
+  try {
+    if (!auth0Client) await configureClient();
+    await auth0Client.logout({
+      logoutParams: {
+        returnTo: window.location.origin
+      }
+    });
 
-  // Clear any local storage or cookies
-  clearAllAuthData();
+    // Clear any local storage or cookies
+    clearAllAuthData();
+  } catch (error) {
+    console.error("Error during logout:", error);
+  }
 };
 
 // Get user profile from Auth0
 const getUserProfile = async () => {
-  if (!auth0) await configureAuth0();
-  const isAuth = await auth0.isAuthenticated();
-  if (!isAuth) return null;
-
   try {
+    if (!auth0Client) await configureClient();
+    const isAuth = await auth0Client.isAuthenticated();
+    if (!isAuth) return null;
+
     // Get user info from Auth0
-    await auth0.getUser(); // We get the user info but don't need to store it
+    const user = await auth0Client.getUser();
+
+    // Get access token
+    const token = await auth0Client.getTokenSilently();
 
     // Get user profile from our API
-    const token = await auth0.getTokenSilently();
     const response = await fetch(getApiUrl('auth/profile'), {
       headers: {
         Authorization: `Bearer ${token}`
@@ -66,7 +119,7 @@ const getUserProfile = async () => {
 
     if (!response.ok) {
       console.error('Failed to get user profile from API:', response.status);
-      return null;
+      return user; // Return Auth0 user info as fallback
     }
 
     const userProfile = await response.json();
@@ -81,49 +134,119 @@ const getUserProfile = async () => {
   }
 };
 
+// Get the access token
+const getAccessToken = async () => {
+  try {
+    if (!auth0Client) await configureClient();
+    return await auth0Client.getTokenSilently();
+  } catch (error) {
+    console.error("Error getting access token:", error);
+    return null;
+  }
+};
+
+// Call the protected API endpoint
+const callApi = async () => {
+  try {
+    // Get the access token
+    const token = await getAccessToken();
+    if (!token) {
+      console.error("No access token available");
+      return { error: "No access token available" };
+    }
+
+    // Call the API
+    const response = await fetch("/api/external", {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("API call failed:", errorData);
+      return { error: errorData.msg || "API call failed" };
+    }
+
+    const data = await response.json();
+    console.log("API call successful:", data);
+    return data;
+  } catch (error) {
+    console.error("Error calling API:", error);
+    return { error: error.message || "Error calling API" };
+  }
+};
+
 // Update UI based on authentication status
 const updateAuthUI = async () => {
-  const isAuth = await isAuthenticated();
+  try {
+    const isAuth = await isAuthenticated();
 
-  // Get elements
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const profileSection = document.getElementById('profile-section');
-  const loginMessage = document.getElementById('login-required-message');
+    // Get elements
+    const loginBtn = document.getElementById('login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const profileSection = document.getElementById('profile-section');
+    const loginMessage = document.getElementById('login-required-message');
+    const accessTokenElement = document.getElementById('ipt-access-token');
+    const userProfileElement = document.getElementById('ipt-user-profile');
+    const gatedContent = document.getElementById('gated-content');
+    const callApiBtn = document.getElementById('btn-call-api');
 
-  if (isAuth) {
-    // User is authenticated
-    const userProfile = await getUserProfile();
+    if (isAuth) {
+      // User is authenticated
+      const userProfile = await getUserProfile();
+      const accessToken = await getAccessToken();
 
-    // Update UI for authenticated user
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (logoutBtn) logoutBtn.style.display = 'block';
-    if (profileSection) profileSection.style.display = 'block';
-    if (loginMessage) loginMessage.style.display = 'none';
+      // Update UI for authenticated user
+      if (loginBtn) loginBtn.style.display = 'none';
+      if (logoutBtn) logoutBtn.style.display = 'block';
+      if (profileSection) profileSection.style.display = 'block';
+      if (loginMessage) loginMessage.style.display = 'none';
+      if (gatedContent) gatedContent.classList.remove('hidden');
 
-    // Update user info in UI
-    if (userProfile) {
-      const userNameElement = document.getElementById('user-name');
-      if (userNameElement) userNameElement.textContent = userProfile.username || 'Employee';
+      // Display access token and user profile if elements exist
+      if (accessTokenElement) accessTokenElement.innerHTML = accessToken || 'No access token available';
+      if (userProfileElement) userProfileElement.textContent = JSON.stringify(userProfile, null, 2);
+
+      // Enable the API call button
+      if (callApiBtn) callApiBtn.disabled = false;
+
+      // Update user info in UI
+      if (userProfile) {
+        const userNameElement = document.getElementById('user-name');
+        if (userNameElement) userNameElement.textContent = userProfile.username || userProfile.name || 'Employee';
+      }
+    } else {
+      // User is not authenticated
+      if (loginBtn) loginBtn.style.display = 'block';
+      if (logoutBtn) logoutBtn.style.display = 'none';
+      if (profileSection) profileSection.style.display = 'none';
+      if (loginMessage) loginMessage.style.display = 'block';
+      if (gatedContent) gatedContent.classList.add('hidden');
+
+      // Disable the API call button
+      if (callApiBtn) callApiBtn.disabled = true;
     }
-  } else {
-    // User is not authenticated
-    if (loginBtn) loginBtn.style.display = 'block';
-    if (logoutBtn) logoutBtn.style.display = 'none';
-    if (profileSection) profileSection.style.display = 'none';
-    if (loginMessage) loginMessage.style.display = 'block';
+  } catch (error) {
+    console.error("Error updating UI:", error);
   }
 };
 
 // Initialize Auth0 when the page loads
-document.addEventListener('DOMContentLoaded', async () => {
-  // Load Auth0 SDK
-  const script = document.createElement('script');
-  script.src = 'https://cdn.auth0.com/js/auth0-spa-js/1.13/auth0-spa-js.production.js';
-  script.async = true;
-  script.onload = async () => {
-    await configureAuth0();
-    updateAuthUI();
+window.onload = async () => {
+  try {
+    // Configure the Auth0 client
+    await configureClient();
+
+    // Handle the Auth0 callback if present
+    const query = window.location.search;
+    if (query.includes("code=") && query.includes("state=")) {
+      // Process the login state
+      await handleAuth0Callback();
+    } else {
+      // Update the UI based on the current authentication state
+      await updateAuthUI();
+    }
 
     // Set up event listeners for login/logout buttons
     const loginBtn = document.getElementById('login-btn');
@@ -135,9 +258,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (logoutBtn) {
       logoutBtn.addEventListener('click', logout);
     }
-  };
-  document.head.appendChild(script);
-});
+
+    // Set up event listener for API call button
+    const callApiBtn = document.getElementById('btn-call-api');
+    if (callApiBtn) {
+      callApiBtn.addEventListener('click', async () => {
+        const resultElement = document.getElementById('api-call-result');
+        if (resultElement) {
+          resultElement.textContent = 'Calling API...';
+          try {
+            const result = await callApi();
+            resultElement.textContent = JSON.stringify(result, null, 2);
+          } catch (error) {
+            resultElement.textContent = `Error: ${error.message || 'Unknown error'}`;
+          }
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Error initializing Auth0:", error);
+  }
+};
 
 // Function to clear all authentication data (from portal.js)
 function clearAllAuthData() {
@@ -197,5 +338,7 @@ window.auth0Integration = {
   logout,
   isAuthenticated,
   getUserProfile,
-  updateAuthUI
+  updateAuthUI,
+  getAccessToken,
+  callApi
 };
