@@ -74,6 +74,7 @@ const pageContentRoutes = require('./routes/pageContent');
 // Mount routes
 // Temporarily commenting out auth routes for troubleshooting
 // app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/employee-portal', employeePortalRoutes);
 app.use('/api/page-content', pageContentRoutes);

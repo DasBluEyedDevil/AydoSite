@@ -1,9 +1,5 @@
 # Enable rewrite engine
 RewriteEngine On
 
-# Only proxy API requests
-RewriteCond %{REQUEST_URI} ^/api/ [NC]
-RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
-
-# Add ProxyPassReverse directive
-ProxyPassReverse /api/ http://localhost:3001/api/
+# Redirect API requests to our PHP proxy
+RewriteRule ^api/(.*)$ api-proxy.php [L]
