@@ -2172,7 +2172,7 @@
         try {
             const token = sessionStorage.getItem('token');
             if (!token) {
-                showNotification('Please log in to view users', 'error');
+                AuthUtils.showNotification('Please log in to view users', 'error');
                 return;
             }
 
@@ -2191,14 +2191,14 @@
             console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
             if (response.status === 401) {
-                showNotification('Session expired. Please log in again.', 'error');
+                AuthUtils.showNotification('Session expired. Please log in again.', 'error');
                 sessionStorage.removeItem('token');
                 window.location.href = '/login.html';
                 return;
             }
 
             if (response.status === 403) {
-                showNotification('Access denied. Admin privileges required.', 'error');
+                AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
                 return;
             }
 
@@ -2271,7 +2271,7 @@
 
         } catch (error) {
             console.error('Error loading users:', error);
-            showNotification('Failed to load users. Please try again.', 'error');
+            AuthUtils.showNotification('Failed to load users. Please try again.', 'error');
         }
     }
 
