@@ -2175,25 +2175,8 @@
             console.log('User list element exists:', $userList.length > 0);
             $userList.html('<tr><td colspan="5">Loading users...</td></tr>');
 
-            // Run auth debug to check token status
-            console.log('Running auth debug before loading users...');
-            await debugAuth();
-
-            const url = getApiUrl('auth/users');
-            console.log('API URL:', url);
-            if (!url) {
-                console.error('Invalid API URL');
-                AuthUtils.showNotification('Invalid API configuration', 'error');
-                return;
-            }
-
-            // Get current user info
-            const userJson = localStorage.getItem('aydocorpUser') || sessionStorage.getItem('aydocorpUser');
-            const user = AuthUtils.safeJsonParse(userJson, null);
-            console.log('Current user:', user);
-
-            // Get token
-            const token = getCookie('aydocorpToken') || localStorage.getItem('aydocorpToken') || sessionStorage.getItem('aydocorpToken');
+            // Get token from sessionStorage only
+            const token = sessionStorage.getItem('aydocorpToken');
             console.log('Token exists:', !!token);
 
             if (!token) {
@@ -2203,11 +2186,23 @@
                 return;
             }
 
-            // Ensure token is in sessionStorage for AuthUtils.secureRequest
-            sessionStorage.setItem('aydocorpToken', token);
+            const url = getApiUrl('auth/users');
+            console.log('API URL:', url);
+            if (!url) {
+                console.error('Invalid API URL');
+                AuthUtils.showNotification('Invalid API configuration', 'error');
+                return;
+            }
 
             console.log('Making API request to load users...');
-            const response = await AuthUtils.secureRequest(url);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
             console.log('API response status:', response.status);
             console.log('API response headers:', Object.fromEntries(response.headers.entries()));
 
@@ -2216,26 +2211,17 @@
                 const errorText = await response.text();
                 console.error('Error response body:', errorText);
 
-                if (response.status === 404) {
-                    // Try direct fetch with explicit headers as a fallback
-                    console.log('Trying direct fetch as fallback...');
-                    const fallbackResponse = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                            'x-auth-token': token
-                        }
-                    });
+                if (response.status === 401) {
+                    AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                    // Redirect to login page
+                    window.location.href = '#login';
+                    return;
+                }
 
-                    if (fallbackResponse.ok) {
-                        console.log('Fallback request succeeded');
-                        const users = await fallbackResponse.json();
-                        renderUserList(users, $userList);
-                        return;
-                    } else {
-                        console.error('Fallback request failed:', fallbackResponse.status);
-                    }
+                if (response.status === 403) {
+                    AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
+                    $userList.html('<tr><td colspan="5">Access denied. Admin privileges required.</td></tr>');
+                    return;
                 }
 
                 $userList.html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
@@ -2289,12 +2275,32 @@
                 return;
             }
 
-            const response = await AuthUtils.secureRequest(url, {
-                method: 'POST'
+            const token = sessionStorage.getItem('aydocorpToken');
+            if (!token) {
+                AuthUtils.showNotification('Authentication required. Please log in again.', 'error');
+                window.location.href = '#login';
+                return;
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                if (response.status === 401) {
+                    AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                    window.location.href = '#login';
+                    return;
+                }
+                if (response.status === 403) {
+                    AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
+                    return;
+                }
                 AuthUtils.showNotification('Failed to make user admin: ' + (errorData.message || 'Unknown error'), 'error');
                 return;
             }
@@ -2318,12 +2324,32 @@
                 return;
             }
 
-            const response = await AuthUtils.secureRequest(url, {
-                method: 'POST'
+            const token = sessionStorage.getItem('aydocorpToken');
+            if (!token) {
+                AuthUtils.showNotification('Authentication required. Please log in again.', 'error');
+                window.location.href = '#login';
+                return;
+            }
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
+                if (response.status === 401) {
+                    AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                    window.location.href = '#login';
+                    return;
+                }
+                if (response.status === 403) {
+                    AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
+                    return;
+                }
                 AuthUtils.showNotification('Failed to remove admin rights: ' + (errorData.message || 'Unknown error'), 'error');
                 return;
             }
@@ -2379,9 +2405,32 @@
                 return;
             }
 
-            const response = await AuthUtils.secureRequest(url);
+            const token = sessionStorage.getItem('aydocorpToken');
+            if (!token) {
+                AuthUtils.showNotification('Authentication required. Please log in again.', 'error');
+                window.location.href = '#login';
+                return;
+            }
+
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
             if (!response.ok) {
                 const errorData = await response.json();
+                if (response.status === 401) {
+                    AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                    window.location.href = '#login';
+                    return;
+                }
+                if (response.status === 403) {
+                    AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
+                    return;
+                }
                 AuthUtils.showNotification('Failed to load user details: ' + (errorData.message || 'Unknown error'), 'error');
                 return;
             }
@@ -2429,10 +2478,11 @@
 
                 try {
                     const updateUrl = getApiUrl(`auth/users/${userId}`);
-                    const updateResponse = await AuthUtils.secureRequest(updateUrl, {
+                    const updateResponse = await fetch(updateUrl, {
                         method: 'PUT',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({
                             username: newUsername,
@@ -2442,6 +2492,15 @@
 
                     if (!updateResponse.ok) {
                         const errorData = await updateResponse.json();
+                        if (updateResponse.status === 401) {
+                            AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                            window.location.href = '#login';
+                            return;
+                        }
+                        if (updateResponse.status === 403) {
+                            AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
+                            return;
+                        }
                         AuthUtils.showNotification('Failed to update user: ' + (errorData.message || 'Unknown error'), 'error');
                         return;
                     }
