@@ -2217,22 +2217,25 @@
                 AuthUtils.showNotification('Please log in to view users', 'error');
                 return;
             }
-
-            const apiUrl = getApiUrl('employee-portal/users');
+    
+            // Update the API endpoint from 'employee-portal/users' to 'api/auth/users'
+            const apiUrl = getApiUrl('api/auth/users');
             console.log('loadUsers: Attempting to fetch users from URL:', apiUrl);
-
+    
             console.log('loadUsers: Making API request...');
             const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    // Adding x-auth-token header which is also used in test-api-users.js
+                    'x-auth-token': token
                 }
             });
-
+    
             console.log('loadUsers: API Response Status:', response.status);
             console.log('loadUsers: API Response Headers:', Object.fromEntries(response.headers.entries()));
-
+    
             if (response.status === 401) {
                 console.log('loadUsers: Session expired');
                 AuthUtils.showNotification('Session expired. Please log in again.', 'error');
@@ -2240,27 +2243,27 @@
                 window.location.href = '#login';
                 return;
             }
-
+    
             if (response.status === 403) {
                 console.log('loadUsers: Access denied');
                 AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
                 return;
             }
-
+    
             if (!response.ok) {
                 console.error('loadUsers: HTTP error:', response.status);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-
+    
             const users = await response.json();
             console.log('loadUsers: API Raw Response Data:', users);
             console.log('loadUsers: Number of users received:', users.length);
-
+    
             if (!Array.isArray(users)) {
                 console.error('loadUsers: Invalid response format');
                 throw new Error('Invalid response format: expected array of users');
             }
-
+    
             renderUserList(users);
         } catch (error) {
             console.error('loadUsers: Error loading users:', error);
