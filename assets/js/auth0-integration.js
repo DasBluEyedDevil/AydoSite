@@ -17,7 +17,7 @@ const configureClient = async () => {
       domain: config.domain,
       clientId: config.clientId,
       authorizationParams: {
-        redirect_uri: window.location.origin,
+        redirect_uri: window.location.origin + "/#",
         audience: config.audience
       },
       cacheLocation: 'localstorage'
@@ -72,7 +72,7 @@ const login = async () => {
     if (!auth0Client) await configureClient();
     await auth0Client.loginWithRedirect({
       authorizationParams: {
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin + "/#"
       }
     });
   } catch (error) {
