@@ -15,16 +15,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Get the target URL from the query string
 $url = isset($_GET['url']) ? $_GET['url'] : null;
 
+// If no URL is provided, try to extract it from the request URI
 if (!$url) {
-    header('HTTP/1.1 400 Bad Request');
-    echo json_encode(['error' => 'Missing URL parameter']);
-    exit;
+    $requestUri = $_SERVER['REQUEST_URI'];
+    // If the request starts with /api/, use that as our URL
+    if (strpos($requestUri, '/api/') === 0) {
+        $url = substr($requestUri, 1); // Remove the leading slash
+    } else {
+        header('HTTP/1.1 400 Bad Request');
+        echo json_encode(['error' => 'Missing URL parameter and no API route detected']);
+        exit;
+    }
 }
 
 // Build the full URL to the Node.js backend
 // Remove any leading slashes from the URL to prevent double slashes
 $url = ltrim($url, '/');
-$targetUrl = 'http://localhost:3000/' . $url;
+// Change port from 3000 to 8080 to match test-api-users.js
+$targetUrl = 'http://localhost:8080/' . $url;
+
+// Log the target URL for debugging
+error_log("Proxying request to: " . $targetUrl);
 
 // Get the HTTP method
 $method = $_SERVER['REQUEST_METHOD'];

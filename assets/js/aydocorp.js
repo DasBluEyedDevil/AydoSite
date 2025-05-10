@@ -2218,20 +2218,35 @@
                 return;
             }
     
+            // Try to use our existing endpoint first (direct approach)
             // Update the API endpoint from 'employee-portal/users' to 'api/auth/users'
-            const apiUrl = getApiUrl('api/auth/users');
+            let apiUrl = getApiUrl('api/auth/users');
             console.log('loadUsers: Attempting to fetch users from URL:', apiUrl);
     
             console.log('loadUsers: Making API request...');
-            const response = await fetch(apiUrl, {
+            let response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
-                    // Adding x-auth-token header which is also used in test-api-users.js
                     'x-auth-token': token
                 }
             });
+    
+            // If we get a 404, try a fallback approach
+            if (response.status === 404) {
+                console.log('loadUsers: Primary endpoint not found, trying fallback');
+                apiUrl = getApiUrl('auth/users'); // Try without 'api/' prefix
+                response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    // Adding x-auth-token header which is also used in test-api-users.js
+                        'x-auth-token': token
+                    }
+                });
+            }
     
             console.log('loadUsers: API Response Status:', response.status);
             console.log('loadUsers: API Response Headers:', Object.fromEntries(response.headers.entries()));

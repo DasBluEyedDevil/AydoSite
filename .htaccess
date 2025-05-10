@@ -1,21 +1,17 @@
-# Basic rewrite setup - absolute minimum
-# Enable RewriteEngine
+# Enable rewrite engine
 RewriteEngine On
 
-# Redirect API requests to our PHP proxy
-RewriteRule ^api/(.*)$ api.php [L]
+# Proxy all API requests to the Node.js backend
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
 
-# Handle proxy requests
-RewriteRule ^proxy\.php$ proxy.php [L]
+# Fallback: Use the PHP proxy for API requests if Apache proxy fails
+RewriteCond %{REQUEST_URI} ^/api/ [NC]
+RewriteRule ^api/(.*)$ /proxy.php?url=api/$1 [L,QSA]
 
-# Error pages
-ErrorDocument 500 /503.html
-ErrorDocument 502 /503.html
-ErrorDocument 503 /503.html
-ErrorDocument 504 /503.html
-
-# Basic file protection
-<Files ".htaccess">
-    Order deny,allow
-    Deny from all
-</Files>
+# Add headers for CORS and security
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, x-auth-token"
+</IfModule>
