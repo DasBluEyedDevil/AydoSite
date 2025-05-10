@@ -503,7 +503,7 @@ function handleLogout() {
     // Clear all authentication data
     clearAllAuthData();
 
-    // Redirect to login page
+    // Redirect to login page with proper URL
     window.location.href = 'index.html#login';
 }
 
@@ -613,3 +613,11 @@ function showLoginRequiredMessage() {
         msg.style.display = '';
     }
 } 
+
+// Make sure the event listener is properly set up
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+});
