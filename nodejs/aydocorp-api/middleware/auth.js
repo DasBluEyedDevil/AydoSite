@@ -1,37 +1,50 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-module.exports = function(req, res, next) {
-    // Get token from header
-    const token = req.header('Authorization') ? 
-                 req.header('Authorization').replace('Bearer ', '') : null;
-
-    // Check if no token
-    if (!token) {
-        console.log('No token provided in request');
-        return res.status(401).json({ message: 'No token, authorization denied' });
-    }
-
+const auth = async (req, res, next) => {
     try {
-        // Verify token
-        if (!process.env.JWT_SECRET) {
-            console.error('JWT_SECRET is not defined');
-            return res.status(500).json({ message: 'Server configuration error' });
+        const authHeader = req.header('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'No authentication token, access denied' });
+        }
+
+        const token = authHeader.replace('Bearer ', '');
+        if (!token) {
+            return res.status(401).json({ message: 'No authentication token, access denied' });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Check token structure
-        if (!decoded.user || !decoded.user.id) {
-            console.log('Invalid token structure:', decoded);
+        if (!decoded || !decoded.userId) {
             return res.status(401).json({ message: 'Invalid token structure' });
         }
 
-        // Add user from payload to request
-        req.user = decoded;
+        const user = await User.findById(decoded.userId).select('-password');
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+        }
+
+        req.user = user;
+        req.token = token;
         next();
-    } catch (err) {
-        console.error('Token verification error:', err.message);
-        res.status(401).json({ message: 'Token is not valid' });
+    } catch (error) {
+        console.error('Auth middleware error:', error.message);
+        res.status(401).json({ message: 'Token is invalid or expired' });
     }
 };
+
+const adminAuth = async (req, res, next) => {
+    try {
+        await auth(req, res, () => {
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+            }
+            next();
+        });
+    } catch (error) {
+        console.error('Admin auth middleware error:', error.message);
+        res.status(401).json({ message: 'Authentication failed' });
+    }
+};
+
+module.exports = { auth, adminAuth };

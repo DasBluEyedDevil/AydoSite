@@ -2170,97 +2170,108 @@
      */
     async function loadUsers() {
         try {
-            console.log('loadUsers() called');
-            const $userList = $('#user-list');
-            console.log('User list element exists:', $userList.length > 0);
-            $userList.html('<tr><td colspan="5">Loading users...</td></tr>');
-
-            // Get token from sessionStorage only
-            const token = sessionStorage.getItem('aydocorpToken');
-            console.log('Token exists:', !!token);
-
+            const token = sessionStorage.getItem('token');
             if (!token) {
-                console.error('No authentication token found');
-                AuthUtils.showNotification('Authentication required. Please log in again.', 'error');
-                $userList.html('<tr><td colspan="5">Authentication required. Please log in again.</td></tr>');
+                showNotification('Please log in to view users', 'error');
                 return;
             }
 
-            const url = getApiUrl('auth/users');
-            console.log('API URL:', url);
-            if (!url) {
-                console.error('Invalid API URL');
-                AuthUtils.showNotification('Invalid API configuration', 'error');
-                return;
-            }
+            const apiUrl = `${baseApiUrl}/api/auth/users`;
+            console.log('Loading users from:', apiUrl);
 
-            console.log('Making API request to load users...');
-            const response = await fetch(url, {
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
             });
 
-            console.log('API response status:', response.status);
-            console.log('API response headers:', Object.fromEntries(response.headers.entries()));
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            if (response.status === 401) {
+                showNotification('Session expired. Please log in again.', 'error');
+                sessionStorage.removeItem('token');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            if (response.status === 403) {
+                showNotification('Access denied. Admin privileges required.', 'error');
+                return;
+            }
 
             if (!response.ok) {
-                console.error('Failed to load users:', response.status, response.statusText);
-                const errorText = await response.text();
-                console.error('Error response body:', errorText);
-
-                if (response.status === 401) {
-                    AuthUtils.showNotification('Session expired. Please log in again.', 'error');
-                    // Redirect to login page
-                    window.location.href = '#login';
-                    return;
-                }
-
-                if (response.status === 403) {
-                    AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
-                    $userList.html('<tr><td colspan="5">Access denied. Admin privileges required.</td></tr>');
-                    return;
-                }
-
-                $userList.html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
-                return;
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const users = await response.json();
             console.log('Users loaded:', users);
 
-            // Use the renderUserList helper function
-            renderUserList(users, $userList);
+            if (!Array.isArray(users)) {
+                throw new Error('Invalid response format: expected array of users');
+            }
 
-            // Add event listeners
-            console.log('Adding event listeners to user action buttons');
-            $('.make-admin').on('click', function() {
-                const userId = $(this).data('user-id');
-                makeUserAdmin(userId);
+            const userListContainer = document.getElementById('userList');
+            if (!userListContainer) {
+                console.error('User list container not found');
+                return;
+            }
+
+            if (users.length === 0) {
+                userListContainer.innerHTML = '<tr><td colspan="4" class="text-center">No users found</td></tr>';
+                return;
+            }
+
+            const userRows = users.map(user => `
+                <tr>
+                    <td>${user.username}</td>
+                    <td>${user.email}</td>
+                    <td>${user.role || 'User'}</td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            ${user.role !== 'admin' ? 
+                                `<button class="btn btn-sm btn-primary make-admin" data-user-id="${user._id}">
+                                    Make Admin
+                                </button>` :
+                                `<button class="btn btn-sm btn-warning remove-admin" data-user-id="${user._id}">
+                                    Remove Admin
+                                </button>`
+                            }
+                            <button class="btn btn-sm btn-info reset-password" data-user-id="${user._id}">
+                                Reset Password
+                            </button>
+                            <button class="btn btn-sm btn-secondary edit-user" data-user-id="${user._id}">
+                                Edit
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+
+            userListContainer.innerHTML = userRows;
+
+            // Add event listeners for user action buttons
+            document.querySelectorAll('.make-admin').forEach(button => {
+                button.addEventListener('click', () => makeUserAdmin(button.dataset.userId));
             });
 
-            $('.remove-admin').on('click', function() {
-                const userId = $(this).data('user-id');
-                removeUserAdmin(userId);
+            document.querySelectorAll('.remove-admin').forEach(button => {
+                button.addEventListener('click', () => removeUserAdmin(button.dataset.userId));
             });
 
-            $('.reset-password').on('click', function() {
-                const userId = $(this).data('user-id');
-                resetUserPassword(userId);
+            document.querySelectorAll('.reset-password').forEach(button => {
+                button.addEventListener('click', () => resetUserPassword(button.dataset.userId));
             });
 
-            $('.edit-user').on('click', function() {
-                const userId = $(this).data('user-id');
-                editUser(userId);
+            document.querySelectorAll('.edit-user').forEach(button => {
+                button.addEventListener('click', () => editUser(button.dataset.userId));
             });
-            console.log('Event listeners added');
 
         } catch (error) {
             console.error('Error loading users:', error);
-            console.error('Error stack:', error.stack);
-            $('#user-list').html('<tr><td colspan="5">Error loading users. Please try again.</td></tr>');
+            showNotification('Failed to load users. Please try again.', 'error');
         }
     }
 

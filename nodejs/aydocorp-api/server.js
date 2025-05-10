@@ -83,7 +83,6 @@ app.get('/api/test', (req, res) => {
     res.json({ message: 'API is working correctly' });
 });
 
-// Add this alongside your other basic routes
 app.get('/api/health-check', (req, res) => {
     res.json({
         status: 'ok',
@@ -93,27 +92,17 @@ app.get('/api/health-check', (req, res) => {
 
 // Debug route to check auth headers
 app.get('/api/auth-debug', (req, res) => {
-    const token = req.header('x-auth-token') || (req.header('Authorization') ? req.header('Authorization').replace('Bearer ', '') : null);
+    const token = req.header('Authorization') ? req.header('Authorization').replace('Bearer ', '') : null;
     res.json({
         hasToken: !!token,
         tokenPreview: token ? `${token.substring(0, 10)}...` : null,
         headers: {
-            authorization: req.header('Authorization'),
-            xAuthToken: req.header('x-auth-token')
+            authorization: req.header('Authorization')
         }
     });
 });
 
-// Add this alongside your other basic routes
-app.post('/api/test-post', (req, res) => {
-    res.json({
-        message: 'POST request received successfully',
-        receivedData: req.body
-    });
-});
-
 // Special routes to handle requests without the slash between portal and the resource
-// Redirect to the correct endpoints with a slash
 app.get('/api/employee-portal-operations', (req, res) => {
     res.redirect('/api/employee-portal/operations');
 });
@@ -128,6 +117,24 @@ app.get('/api/employee-portal-career-paths', (req, res) => {
 
 app.get('/api/employee-portal-events', (req, res) => {
     res.redirect('/api/employee-portal/events');
+});
+
+// Catch-all route for undefined API routes
+app.use('/api/*', (req, res) => {
+    console.log(`[${new Date().toISOString()}] Undefined API route: ${req.method} ${req.originalUrl}`);
+    res.status(404).json({
+        message: 'API endpoint not found',
+        path: req.originalUrl,
+        method: req.method
+    });
+});
+
+// Add this alongside your other basic routes
+app.post('/api/test-post', (req, res) => {
+    res.json({
+        message: 'POST request received successfully',
+        receivedData: req.body
+    });
 });
 
 // Remove Sequelize sync and update server startup
