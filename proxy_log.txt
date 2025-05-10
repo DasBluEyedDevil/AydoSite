@@ -1,4 +1,0 @@
-2025-05-03 11:42:51 Request: GET api/health-check
-2025-05-03 11:42:51 Full URL: http://localhost:8080/api/health-check
-2025-05-03 11:42:51 Request: POST /api/test-post
-2025-05-03 11:42:51 Full URL: http://localhost:8080/api/test-post

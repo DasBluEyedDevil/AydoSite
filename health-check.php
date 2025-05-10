@@ -6,22 +6,17 @@ $result = [
     'api' => false
 ];
 
-// Check if proxy.php exists
-if (file_exists('proxy.php')) {
-    $result['proxy'] = true;
-    
-    // Try to connect to the Node.js API server
-    $ch = curl_init('http://localhost:8080/api/test');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    $response = curl_exec($ch);
-    $error = curl_error($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if (!$error && $httpCode === 200) {
-        $result['api'] = true;
-    }
+// Try to connect to the Node.js API server
+$ch = curl_init('http://localhost:8080/api/test');
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+$response = curl_exec($ch);
+$error = curl_error($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if (!$error && $httpCode === 200) {
+    $result['api'] = true;
 }
 
 // Set status based on results
