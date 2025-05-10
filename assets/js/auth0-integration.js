@@ -1,6 +1,30 @@
 // Auth0 Integration for AydoCorp
 // This file handles Auth0 authentication for the frontend
 
+// API Utilities
+function getApiBaseUrl() {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3001';
+  }
+  return window.location.origin;
+}
+
+function getApiUrl(endpoint) {
+  if (!endpoint) {
+    console.error('Invalid endpoint provided to getApiUrl');
+    return null;
+  }
+  const baseUrl = getApiBaseUrl();
+  const baseWithSlash = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+  if (!cleanEndpoint.startsWith('api/')) cleanEndpoint = 'api/' + cleanEndpoint;
+  if (!/^[a-zA-Z0-9\-_\/\.]+$/.test(cleanEndpoint)) {
+    console.error('Invalid characters in API endpoint');
+    return null;
+  }
+  return baseWithSlash + cleanEndpoint;
+}
+
 // Auth0 configuration
 let auth0Client = null;
 
