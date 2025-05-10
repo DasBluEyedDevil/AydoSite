@@ -54,7 +54,7 @@ const getUserProfile = async () => {
 
   try {
     // Get user info from Auth0
-    const auth0User = await auth0.getUser();
+    await auth0.getUser(); // We get the user info but don't need to store it
 
     // Get user profile from our API
     const token = await auth0.getTokenSilently();
@@ -65,7 +65,8 @@ const getUserProfile = async () => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to get user profile from API');
+      console.error('Failed to get user profile from API:', response.status);
+      return null;
     }
 
     const userProfile = await response.json();
