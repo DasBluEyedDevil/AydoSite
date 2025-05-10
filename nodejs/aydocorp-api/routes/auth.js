@@ -1,5 +1,4 @@
 // routes/auth.js
-// Troubleshooting: Fixed route object/callback issues for Node.js 22+
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
@@ -8,7 +7,6 @@ const crypto = require('crypto');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
 const transporter = require('../utils/emailConfig');
-// Removed Sequelize import as it's not needed with MongoDB
 
 // Basic route to confirm auth routes are working
 router.get('/', (req, res) => {

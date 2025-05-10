@@ -18,13 +18,16 @@ const app = express();
 // Connect to MongoDB
 connectDB();
 
-// Middleware setup
+// Make sure your server.js has these settings
+const PORT = process.env.PORT || 3001;
+
+// Proper CORS configuration
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['https://aydocorp.space', 'http://localhost:8080', 'http://127.0.0.1:8080'],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-auth-token']
+  origin: ['https://aydocorp.space', 'http://localhost:3000'],
+  credentials: true
 }));
+
+// Middleware setup
 app.use(helmet({
     contentSecurityPolicy: false // Disable CSP for simplicity, enable in production with proper config
 }));
@@ -152,12 +155,12 @@ app.use((err, req, res, next) => {
 
 // Start server function
 function startServer() {
-    const PORT = process.env.PORT || 3001;
+    
 
     // Listen for HTTP connections
     app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    }).on('error', handleServerError(PORT, 'HTTP'));
+  console.log(`Server running on port ${PORT}`);
+});
 }
 
 // Error handler for server startup (e.g., port already in use)
