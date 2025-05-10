@@ -3,11 +3,20 @@ RewriteEngine On
 
 # Proxy all API requests to the Node.js backend
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
+# If connection to Node.js fails, return a 503 Service Unavailable
 RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
+
+# Add custom error document for 503 errors (Service Unavailable)
+ErrorDocument 503 '{"error": "API service temporarily unavailable. Please try again later or contact support."}'
 
 # Add headers for CORS and security
 <IfModule mod_headers.c>
     Header set Access-Control-Allow-Origin "*"
     Header set Access-Control-Allow-Methods "GET, POST, OPTIONS, PUT, DELETE"
     Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With, x-auth-token"
+    # Set content type for 503 error responses to JSON
+    <IfModule mod_rewrite.c>
+        RewriteRule .* - [E=CONTENT_TYPE:application/json]
+        Header set Content-Type "%{CONTENT_TYPE}e" env=CONTENT_TYPE
+    </IfModule>
 </IfModule>
