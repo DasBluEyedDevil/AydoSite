@@ -208,104 +208,25 @@
 </article>
 
 						<!-- Admin Dashboard -->
-						<article id="admin-dashboard">
-    <h2 class="major">Admin Dashboard</h2>
-    <p>Welcome to the Admin Dashboard. Here you can manage website content and settings.</p>
-
-    <div id="admin-dashboard-content">
-        <!-- Page Content Editor -->
-        <div class="admin-section">
-            <h3>Page Content Editor</h3>
-            <p>Edit website content using the tools below.</p>
-
-            <div class="editor-controls">
-                <div class="field">
-                    <label for="page-element-selector">Select Page Element to Edit:</label>
-                    <select id="page-element-selector" class="dropdown">
-                        <option value="">-- Select an element --</option>
-                        <option value="about">About Us</option>
-                        <option value="services">Services</option>
-                        <option value="subsidiaries">Subsidiaries</option>
-                        <option value="contact">Contact</option>
-                    </select>
-                </div>
-            </div>
-
-            <div id="content-editor-container" style="display: none;">
-                <div class="field">
-                    <label for="element-title">Element Title:</label>
-                    <input type="text" id="element-title" name="element-title" />
-                </div>
-
-                <div class="field">
-                    <label for="element-content">Content:</label>
-                    <textarea id="element-content" name="element-content" rows="10"></textarea>
-                </div>
-
-                <!-- Old editor toolbar and image upload container hidden - now using TinyMCE -->
-                <div class="editor-toolbar" style="display: none;">
-                    <button class="editor-button" data-command="bold" title="Bold"><strong>B</strong></button>
-                    <button class="editor-button" data-command="italic" title="Italic"><em>I</em></button>
-                    <button class="editor-button" data-command="underline" title="Underline"><u>U</u></button>
-                    <button class="editor-button" data-command="insertUnorderedList" title="Bullet List">• List</button>
-                    <button class="editor-button" data-command="insertOrderedList" title="Numbered List">1. List</button>
-                    <button class="editor-button" data-command="createLink" title="Insert Link">Link</button>
-                    <button class="editor-button" data-command="insertImage" title="Insert Image">Image</button>
-                </div>
-
-                <div class="image-upload-container" style="display: none;">
-                    <div class="field">
-                        <label for="image-url">Image URL:</label>
-                        <input type="text" id="image-url" name="image-url" placeholder="Enter image URL or upload an image" />
-                    </div>
-                    <div class="field">
-                        <label for="image-upload">Or Upload Image:</label>
-                        <input type="file" id="image-upload" name="image-upload" accept="image/*" />
-                    </div>
-                    <div class="field">
-                        <label for="image-alt">Alt Text:</label>
-                        <input type="text" id="image-alt" name="image-alt" placeholder="Describe the image" />
-                    </div>
-                    <ul class="actions">
-                        <li><button type="button" id="insert-image-button" class="button primary">Insert Image</button></li>
-                        <li><button type="button" id="cancel-image-button" class="button">Cancel</button></li>
-                    </ul>
-                </div>
-
-                <ul class="actions">
-                    <li><button type="button" id="save-content-button" class="button primary">Save Changes</button></li>
-                    <li><button type="button" id="cancel-edit-button" class="button">Cancel</button></li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- User Management Section -->
-        <div class="admin-section">
-            <h3>User Management</h3>
-            <p>Manage website users and their permissions.</p>
-
-            <div class="user-management-controls">
-                <div class="field">
-                    <input type="text" id="user-search" placeholder="Search users..." />
-                </div>
-            </div>
-
-            <div id="user-list-container">
-                <table class="user-list-table">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="user-list">
-                        <!-- User list will be populated here -->
-                    </tbody>
-                </table>
-            </div>
+						<article id="admin-dashboard" class="panel">
+    <h2>Admin Dashboard</h2>
+    <div class="admin-section">
+        <h3>User Management</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userList">
+                    <!-- User list will be populated here -->
+                </tbody>
+            </table>
         </div>
     </div>
 </article>

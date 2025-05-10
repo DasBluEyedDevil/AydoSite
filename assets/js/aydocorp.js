@@ -2127,58 +2127,101 @@
     /**
      * Helper function to render the user list
      */
-    function renderUserList(users, $userList) {
-        if (!users || users.length === 0) {
-            console.log('No users found in response');
-            $userList.html('<tr><td colspan="5">No users found.</td></tr>');
+    function renderUserList(users) {
+        console.log('renderUserList: Starting to render user list');
+        const userListContainer = document.getElementById('userList');
+        
+        if (!userListContainer) {
+            console.error('renderUserList: User list container not found');
             return;
         }
 
-        // Render users
-        let html = '';
-        users.forEach(user => {
-            const createdDate = new Date(user.createdAt).toLocaleDateString();
-            html += `
-                <tr data-user-id="${user._id}">
-                    <td>${AuthUtils.sanitizeHtml(user.username)}</td>
-                    <td>${AuthUtils.sanitizeHtml(user.email)}</td>
+        console.log('renderUserList: Found user list container, rendering', users.length, 'users');
+        
+        if (!users || users.length === 0) {
+            userListContainer.innerHTML = '<tr><td colspan="5" class="text-center">No users found</td></tr>';
+            console.log('renderUserList: No users to display');
+            return;
+        }
+
+        const userRows = users.map(user => {
+            console.log('renderUserList: Processing user:', user);
+            const isAdmin = user.role === 'admin';
+            const adminButton = isAdmin 
+                ? `<button class="button small remove-admin" data-user-id="${user.id}">Remove Admin</button>`
+                : `<button class="button small make-admin" data-user-id="${user.id}">Make Admin</button>`;
+            
+            return `
+                <tr>
+                    <td>${user.username || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${user.role || 'user'}</td>
+                    <td>${new Date(user.createdAt).toLocaleDateString()}</td>
                     <td>
-                        <span class="user-role ${user.role}">${user.role}</span>
-                    </td>
-                    <td>${createdDate}</td>
-                    <td>
-                        <div class="user-actions">
-                            ${user.role !== 'admin' ? 
-                                `<button class="make-admin button small" data-user-id="${user._id}">Make Admin</button>` :
-                                `<button class="remove-admin button small" data-user-id="${user._id}">Remove Admin</button>`
-                            }
-                            <button class="reset-password button small" data-user-id="${user._id}">Reset Password</button>
-                            <button class="edit-user button small" data-user-id="${user._id}">Edit</button>
-                        </div>
+                        ${adminButton}
+                        <button class="button small reset-password" data-user-id="${user.id}">Reset Password</button>
+                        <button class="button small edit-user" data-user-id="${user.id}">Edit</button>
                     </td>
                 </tr>
             `;
+        }).join('');
+
+        userListContainer.innerHTML = userRows;
+        console.log('renderUserList: User list rendered successfully');
+
+        // Add event listeners for user actions
+        document.querySelectorAll('.make-admin').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userId = e.target.dataset.userId;
+                console.log('Make admin clicked for user:', userId);
+                makeUserAdmin(userId);
+            });
         });
 
-        console.log('Rendering user list HTML');
-        $userList.html(html);
-        console.log('User list HTML rendered');
+        document.querySelectorAll('.remove-admin').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userId = e.target.dataset.userId;
+                console.log('Remove admin clicked for user:', userId);
+                removeUserAdmin(userId);
+            });
+        });
+
+        document.querySelectorAll('.reset-password').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userId = e.target.dataset.userId;
+                console.log('Reset password clicked for user:', userId);
+                resetUserPassword(userId);
+            });
+        });
+
+        document.querySelectorAll('.edit-user').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userId = e.target.dataset.userId;
+                console.log('Edit user clicked for user:', userId);
+                editUser(userId);
+            });
+        });
     }
 
     /**
      * Load all users from the API
      */
     async function loadUsers() {
+        console.log('loadUsers: Function started');
         try {
             const token = sessionStorage.getItem('token');
+            console.log('loadUsers: Token exists:', !!token);
+            
             if (!token) {
-                AuthUtils.showNotification('Please log in to view users', 'error');
+                console.log('loadUsers: No token found');
+                showNotification('Please log in to view users', 'error');
                 return;
             }
 
             const apiUrl = `${baseApiUrl}/api/auth/users`;
-            console.log('Loading users from:', apiUrl);
+            console.log('loadUsers: Attempting to fetch users from URL:', apiUrl);
 
+            console.log('loadUsers: Making API request...');
             const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
@@ -2187,40 +2230,49 @@
                 }
             });
 
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+            console.log('loadUsers: API Response Status:', response.status);
+            console.log('loadUsers: API Response Headers:', Object.fromEntries(response.headers.entries()));
 
             if (response.status === 401) {
-                AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                console.log('loadUsers: Session expired');
+                showNotification('Session expired. Please log in again.', 'error');
                 sessionStorage.removeItem('token');
                 window.location.href = '/login.html';
                 return;
             }
 
             if (response.status === 403) {
-                AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
+                console.log('loadUsers: Access denied');
+                showNotification('Access denied. Admin privileges required.', 'error');
                 return;
             }
 
             if (!response.ok) {
+                console.error('loadUsers: HTTP error:', response.status);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const users = await response.json();
-            console.log('Users loaded:', users);
+            console.log('loadUsers: API Raw Response Data:', users);
+            console.log('loadUsers: Number of users received:', users.length);
 
             if (!Array.isArray(users)) {
+                console.error('loadUsers: Invalid response format');
                 throw new Error('Invalid response format: expected array of users');
             }
 
             const userListContainer = document.getElementById('userList');
+            console.log('loadUsers: Target DOM element for user list:', userListContainer);
+
             if (!userListContainer) {
-                console.error('User list container not found');
+                console.error('loadUsers: User list container not found');
                 return;
             }
 
+            console.log('loadUsers: Attempting to render users into DOM...');
             if (users.length === 0) {
                 userListContainer.innerHTML = '<tr><td colspan="4" class="text-center">No users found</td></tr>';
+                console.log('loadUsers: No users to display');
                 return;
             }
 
@@ -2251,6 +2303,7 @@
             `).join('');
 
             userListContainer.innerHTML = userRows;
+            console.log('loadUsers: DOM rendering process completed');
 
             // Add event listeners for user action buttons
             document.querySelectorAll('.make-admin').forEach(button => {
@@ -2270,8 +2323,8 @@
             });
 
         } catch (error) {
-            console.error('Error loading users:', error);
-            AuthUtils.showNotification('Failed to load users. Please try again.', 'error');
+            console.error('loadUsers: Error loading users:', error);
+            showNotification('Failed to load users. Please try again.', 'error');
         }
     }
 
@@ -2554,30 +2607,39 @@
 
         // Admin Dashboard Initialization
         console.log('Initializing admin dashboard...');
+        
         // Initialize the rich text editor when the page loads
         initRichTextEditor();
+
+        // Function to initialize admin dashboard
+        function initializeAdminDashboard() {
+            console.log('initializeAdminDashboard: Starting initialization');
+            const userJson = sessionStorage.getItem('aydocorpUser');
+            console.log('initializeAdminDashboard: User data from sessionStorage:', userJson);
+            
+            if (userJson) {
+                try {
+                    const user = JSON.parse(userJson);
+                    console.log('initializeAdminDashboard: Parsed user data:', user);
+                    
+                    if (user && (user.role === 'admin' || user.username === 'Devil')) {
+                        console.log('initializeAdminDashboard: User is admin, loading users...');
+                        loadUsers(); // Load users when admin dashboard is shown
+                    } else {
+                        console.log('initializeAdminDashboard: User is not admin:', user);
+                    }
+                } catch (error) {
+                    console.error('initializeAdminDashboard: Error parsing user data:', error);
+                }
+            } else {
+                console.log('initializeAdminDashboard: No user data found in sessionStorage');
+            }
+        }
 
         // Initialize user management when admin dashboard is shown
         if (window.location.hash === '#admin-dashboard') {
             console.log('Admin dashboard hash detected on page load');
-            const userJson = sessionStorage.getItem('aydocorpUser');
-            console.log('User data from sessionStorage:', userJson);
-            if (userJson) {
-                try {
-                    const user = AuthUtils.safeJsonParse(userJson, null);
-                    console.log('Parsed user data:', user);
-                    if (user && (user.role === 'admin' || user.username === 'Devil')) {
-                        console.log('User is admin, loading users...');
-                        loadUsers(); // Load users when admin dashboard is shown
-                    } else {
-                        console.log('User is not admin:', user);
-                    }
-                } catch (error) {
-                    console.error('Error parsing user data:', error);
-                }
-            } else {
-                console.log('No user data found in sessionStorage');
-            }
+            initializeAdminDashboard();
         }
 
         // Handle hash changes for admin dashboard
@@ -2588,18 +2650,17 @@
                 // Check if user is admin before showing dashboard
                 const userJson = sessionStorage.getItem('aydocorpUser');
                 console.log('User data from sessionStorage on hash change:', userJson);
+                
                 if (userJson) {
                     try {
-                        const user = AuthUtils.safeJsonParse(userJson, null);
+                        const user = JSON.parse(userJson);
                         console.log('Parsed user data on hash change:', user);
-                        // Check if user is admin - either by role or by username for specific admin users
+                        
                         if (!user || (user.role !== 'admin' && user.username !== 'Devil')) {
-                            // Redirect non-admin users
                             console.log('User is not admin, redirecting...');
-                            AuthUtils.showNotification('You do not have permission to access the Admin Dashboard.', 'error');
+                            showNotification('You do not have permission to access the Admin Dashboard.', 'error');
                             window.location.href = '#';
                         } else {
-                            // User is admin, explicitly show the admin dashboard
                             console.log('User is admin, showing dashboard...');
                             // This prevents conflicts with the main.js hashchange handler
                             $('#main').children('article').hide();
@@ -2609,17 +2670,16 @@
                             $('#footer').hide();
                             $('#main').show();
                             console.log('Loading users for admin dashboard...');
-                            loadUsers(); // Load users when admin dashboard is shown
+                            initializeAdminDashboard();
                         }
                     } catch (error) {
                         console.error('Error parsing user data:', error);
-                        AuthUtils.showNotification('An error occurred while checking permissions.', 'error');
+                        showNotification('An error occurred while checking permissions.', 'error');
                         window.location.href = '#';
                     }
                 } else {
-                    // Redirect users who are not logged in
                     console.log('No user data found, redirecting to login...');
-                    AuthUtils.showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
+                    showNotification('Please log in with an admin account to access the Admin Dashboard.', 'warning');
                     window.location.href = '#login';
                 }
 
