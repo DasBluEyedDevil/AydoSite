@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIME Type Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>MIME Type Test Page</h1>
+    <p>If you can see this page properly rendered (not as source code), your HTML MIME type configuration is working correctly.</p>
+    <p class="success">Success! The web server is now correctly serving HTML files.</p>
+    
+    <script>
+        // Simple script to test JavaScript MIME type
+        document.addEventListener('DOMContentLoaded', function() {
+            const testElement = document.createElement('p');
+            testElement.textContent = 'JavaScript is also working correctly!';
+            testElement.className = 'success';
+            document.body.appendChild(testElement);
+        });
+    </script>
+</body>
+</html> 

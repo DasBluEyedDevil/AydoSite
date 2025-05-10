@@ -21,20 +21,31 @@ ErrorDocument 503 '{"error": "API service temporarily unavailable. Please try ag
     </IfModule>
 </IfModule>
 
-# Ensure HTML files are served with the correct MIME type
-<FilesMatch "\.(html|htm)$">
-    ForceType text/html
-    Header set Content-Type "text/html; charset=UTF-8"
-</FilesMatch>
+# Set MIME types using AddType (more compatible approach)
+<IfModule mod_mime.c>
+    AddType text/html .html .htm
+    AddType text/css .css
+    AddType application/javascript .js
+    AddType application/json .json
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+    AddType image/gif .gif
+    AddType image/svg+xml .svg
+    AddType application/font-woff .woff
+    AddType application/font-woff2 .woff2
+    AddType application/vnd.ms-fontobject .eot
+    AddType application/x-font-ttf .ttf
+</IfModule>
 
-# Ensure CSS files are served with the correct MIME type
-<FilesMatch "\.css$">
-    ForceType text/css
-    Header set Content-Type "text/css; charset=UTF-8"
-</FilesMatch>
+# Make sure DefaultType is correctly set (if supported by server)
+DefaultType text/html
 
-# Ensure JavaScript files are served with the correct MIME type
-<FilesMatch "\.js$">
-    ForceType application/javascript
-    Header set Content-Type "application/javascript; charset=UTF-8"
-</FilesMatch>
+# Ensure HTML files are processed correctly
+<Files *.html>
+    SetHandler text/html
+</Files>
+
+# Force TXT files to correct MIME type
+<Files *.txt>
+    ForceType text/plain
+</Files> 
