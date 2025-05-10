@@ -67,17 +67,15 @@ app.use((req, res, next) => {
     next();
 });
 
-// Define routes
-const authRoutes = require('./routes/auth');
-const forumRoutes = require('./routes/forum');
-const employeePortalRoutes = require('./routes/employeePortal');
-const pageContentRoutes = require('./routes/pageContent');
+// Import API routes and Swagger documentation
+const apiRoutes = require('./routes/features');
+const { setupSwagger } = require('./docs/swagger');
 
-// Mount routes
-app.use('/api/auth', authRoutes);
-app.use('/api/forum', forumRoutes);
-app.use('/api/employee-portal', employeePortalRoutes);
-app.use('/api/page-content', pageContentRoutes);
+// Set up Swagger documentation
+setupSwagger(app);
+
+// Mount API routes
+app.use('/api', apiRoutes);
 
 // Basic routes
 app.get('/', (req, res) => {
