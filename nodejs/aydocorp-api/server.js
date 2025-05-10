@@ -22,10 +22,12 @@ connectDB();
 const PORT = process.env.PORT || 3001;
 
 // Proper CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['https://aydocorp.space', 'http://localhost:3000'];
 app.use(cors({
-  origin: ['https://aydocorp.space', 'http://localhost:3000'],
+  origin: allowedOrigins,
   credentials: true
 }));
+console.log('CORS configured with allowed origins:', allowedOrigins);
 
 // Middleware setup
 app.use(helmet({
@@ -72,8 +74,6 @@ const employeePortalRoutes = require('./routes/employeePortal');
 const pageContentRoutes = require('./routes/pageContent');
 
 // Mount routes
-// Temporarily commenting out auth routes for troubleshooting
-// app.use('/api/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/employee-portal', employeePortalRoutes);
@@ -156,12 +156,13 @@ app.use((err, req, res, next) => {
 
 // Start server function
 function startServer() {
-    
-
     // Listen for HTTP connections
-    app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+    const server = app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+
+    // Add error handler for the server
+    server.on('error', handleServerError(PORT, 'HTTP'));
 }
 
 // Error handler for server startup (e.g., port already in use)
@@ -226,18 +227,11 @@ async function gracefulShutdown() {
 // Import the scheduler for periodic data synchronization
 const scheduler = require('./utils/scheduler');
 
-// Connect to MongoDB then start server
-// connectToMongoDB()
-//     .then(() => {
-//         // Only start the HTTP server if the database connection is successful
-//         startServer();
-//
-//         // Initialize the scheduler for periodic data synchronization
-//         scheduler.initialize();
-//         console.log('Automatic data synchronization scheduler started');
-//     })
-//     .catch(error => {
-//         // This catch handles errors from connectToMongoDB's initial connection
-//         console.error('Failed to start application due to MongoDB connection error:', error);
-//         process.exit(1); // Exit if DB connection failed at startup
-//     });
+// Initialize the scheduler for periodic data synchronization
+try {
+    scheduler.initialize();
+    console.log('Automatic data synchronization scheduler started');
+} catch (error) {
+    console.error('Failed to initialize scheduler:', error);
+    // Don't exit the process, as this is not a critical failure
+}
