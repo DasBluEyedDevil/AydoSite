@@ -210,6 +210,44 @@
 						<!-- Admin Dashboard -->
 						<article id="admin-dashboard" class="panel">
     <h2>Admin Dashboard</h2>
+    
+    <!-- Page Content Editor -->
+    <div class="admin-section">
+        <h3>Page Content Editor</h3>
+        <p>Edit website content using the tools below.</p>
+
+        <div class="editor-controls">
+            <div class="field">
+                <label for="page-element-selector">Select Page Element to Edit:</label>
+                <select id="page-element-selector" class="dropdown">
+                    <option value="">-- Select an element --</option>
+                    <option value="about">About Us</option>
+                    <option value="services">Services</option>
+                    <option value="subsidiaries">Subsidiaries</option>
+                    <option value="contact">Contact</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="content-editor-container" style="display: none;">
+            <div class="field">
+                <label for="element-title">Element Title:</label>
+                <input type="text" id="element-title" name="element-title" />
+            </div>
+
+            <div class="field">
+                <label for="element-content">Content:</label>
+                <textarea id="element-content" name="element-content" rows="10"></textarea>
+            </div>
+
+            <ul class="actions">
+                <li><button type="button" id="save-content-button" class="button primary">Save Changes</button></li>
+                <li><button type="button" id="cancel-edit-button" class="button">Cancel</button></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- User Management Section -->
     <div class="admin-section">
         <h3>User Management</h3>
         <div class="table-wrapper">

@@ -2209,16 +2209,16 @@
     async function loadUsers() {
         console.log('loadUsers: Function started');
         try {
-            const token = sessionStorage.getItem('token');
+            const token = sessionStorage.getItem('aydocorpToken');
             console.log('loadUsers: Token exists:', !!token);
             
             if (!token) {
                 console.log('loadUsers: No token found');
-                showNotification('Please log in to view users', 'error');
+                AuthUtils.showNotification('Please log in to view users', 'error');
                 return;
             }
 
-            const apiUrl = `${baseApiUrl}/api/auth/users`;
+            const apiUrl = getApiUrl('auth/users');
             console.log('loadUsers: Attempting to fetch users from URL:', apiUrl);
 
             console.log('loadUsers: Making API request...');
@@ -2235,15 +2235,15 @@
 
             if (response.status === 401) {
                 console.log('loadUsers: Session expired');
-                showNotification('Session expired. Please log in again.', 'error');
-                sessionStorage.removeItem('token');
-                window.location.href = '/login.html';
+                AuthUtils.showNotification('Session expired. Please log in again.', 'error');
+                sessionStorage.removeItem('aydocorpToken');
+                window.location.href = '#login';
                 return;
             }
 
             if (response.status === 403) {
                 console.log('loadUsers: Access denied');
-                showNotification('Access denied. Admin privileges required.', 'error');
+                AuthUtils.showNotification('Access denied. Admin privileges required.', 'error');
                 return;
             }
 
@@ -2261,70 +2261,10 @@
                 throw new Error('Invalid response format: expected array of users');
             }
 
-            const userListContainer = document.getElementById('userList');
-            console.log('loadUsers: Target DOM element for user list:', userListContainer);
-
-            if (!userListContainer) {
-                console.error('loadUsers: User list container not found');
-                return;
-            }
-
-            console.log('loadUsers: Attempting to render users into DOM...');
-            if (users.length === 0) {
-                userListContainer.innerHTML = '<tr><td colspan="4" class="text-center">No users found</td></tr>';
-                console.log('loadUsers: No users to display');
-                return;
-            }
-
-            const userRows = users.map(user => `
-                <tr>
-                    <td>${user.username}</td>
-                    <td>${user.email}</td>
-                    <td>${user.role || 'User'}</td>
-                    <td>
-                        <div class="btn-group" role="group">
-                            ${user.role !== 'admin' ? 
-                                `<button class="btn btn-sm btn-primary make-admin" data-user-id="${user._id}">
-                                    Make Admin
-                                </button>` :
-                                `<button class="btn btn-sm btn-warning remove-admin" data-user-id="${user._id}">
-                                    Remove Admin
-                                </button>`
-                            }
-                            <button class="btn btn-sm btn-info reset-password" data-user-id="${user._id}">
-                                Reset Password
-                            </button>
-                            <button class="btn btn-sm btn-secondary edit-user" data-user-id="${user._id}">
-                                Edit
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-
-            userListContainer.innerHTML = userRows;
-            console.log('loadUsers: DOM rendering process completed');
-
-            // Add event listeners for user action buttons
-            document.querySelectorAll('.make-admin').forEach(button => {
-                button.addEventListener('click', () => makeUserAdmin(button.dataset.userId));
-            });
-
-            document.querySelectorAll('.remove-admin').forEach(button => {
-                button.addEventListener('click', () => removeUserAdmin(button.dataset.userId));
-            });
-
-            document.querySelectorAll('.reset-password').forEach(button => {
-                button.addEventListener('click', () => resetUserPassword(button.dataset.userId));
-            });
-
-            document.querySelectorAll('.edit-user').forEach(button => {
-                button.addEventListener('click', () => editUser(button.dataset.userId));
-            });
-
+            renderUserList(users);
         } catch (error) {
             console.error('loadUsers: Error loading users:', error);
-            showNotification('Failed to load users. Please try again.', 'error');
+            AuthUtils.showNotification('Failed to load users. Please try again.', 'error');
         }
     }
 
