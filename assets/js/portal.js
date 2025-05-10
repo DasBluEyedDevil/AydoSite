@@ -518,7 +518,7 @@ function handleLogout() {
     clearAllAuthData();
 
     // Redirect to login page
-    window.location.href = 'index.html#login';
+    window.location.href = '/index.html#login';
 }
 
 // Show settings
@@ -619,7 +619,7 @@ function showLoginRequiredMessage() {
             <h3>Login Required</h3>
             <p>You must be logged in to access the Employee Portal.</p>
             <div class="login-options">
-                <a href="index.html#login" class="button">Go to Login Page</a>
+                <a href="/index.html#login" class="button">Go to Login Page</a>
             </div>
         `;
         document.body.appendChild(msg);

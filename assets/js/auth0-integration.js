@@ -215,6 +215,42 @@ const updateAuthUI = async () => {
       if (userProfile) {
         const userNameElement = document.getElementById('user-name');
         if (userNameElement) userNameElement.textContent = userProfile.username || userProfile.name || 'Employee';
+
+        // Add user status div with hover-over button
+        // First, remove any existing user status div
+        document.querySelectorAll('.user-status').forEach(el => el.remove());
+
+        // Check if user is admin
+        const isAdmin = userProfile.role === 'admin' || 
+                       (userProfile['https://aydocorp.space/roles'] && 
+                        userProfile['https://aydocorp.space/roles'].includes('admin'));
+
+        // Create user status HTML
+        const safeUsername = userProfile.username || userProfile.name || 'Employee';
+        const userStatusHtml = `
+            <div class="user-status">
+                <span class="username">${safeUsername}</span>
+                <div class="dropdown-container">
+                    ${isAdmin ? '<a href="/index.html#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                    <span class="logout-option">
+                        <a href="#" class="logout">Logout</a>
+                    </span>
+                </div>
+            </div>
+        `;
+
+        // Append to body
+        document.body.insertAdjacentHTML('beforeend', userStatusHtml);
+
+        // Update the Member Login link to Logout
+        const loginLink = document.querySelector('header nav ul li a[href="#login"]');
+        if (loginLink) {
+            loginLink.textContent = 'Logout';
+            loginLink.setAttribute('href', '#');
+            loginLink.classList.add('logout');
+            const parentLi = loginLink.closest('li');
+            if (parentLi) parentLi.setAttribute('id', 'logout-nav');
+        }
       }
     } else {
       // User is not authenticated
@@ -226,6 +262,19 @@ const updateAuthUI = async () => {
 
       // Disable the API call button
       if (callApiBtn) callApiBtn.disabled = true;
+
+      // Remove user status div
+      document.querySelectorAll('.user-status').forEach(el => el.remove());
+
+      // Reset Logout link back to Member Login
+      const logoutLink = document.querySelector('header nav ul li a.logout');
+      if (logoutLink) {
+          logoutLink.textContent = 'Member Login';
+          logoutLink.setAttribute('href', '#login');
+          logoutLink.classList.remove('logout');
+          const parentLi = logoutLink.closest('li');
+          if (parentLi) parentLi.removeAttribute('id');
+      }
     }
   } catch (error) {
     console.error("Error updating UI:", error);
