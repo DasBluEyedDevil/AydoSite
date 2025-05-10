@@ -9,7 +9,7 @@ $result = null;
 // Process login attempt
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($username) && !empty($password)) {
     // API endpoint for login
-    $apiUrl = 'http://localhost:8080/api/auth/login';
+    $apiUrl = 'http://localhost:3001/api/auth/login';
     
     // Prepare request data
     $data = json_encode([

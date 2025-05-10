@@ -9,7 +9,7 @@ const credentials = {
 // Get token from login endpoint
 async function getToken() {
   try {
-    const response = await axios.post('http://localhost:8080/api/auth/login', credentials);
+    const response = await axios.post('http://localhost:3001/api/auth/login', credentials);
     return response.data.token;
   } catch (error) {
     console.error('Login failed:', error.response?.data);
@@ -20,7 +20,7 @@ async function getToken() {
 // Test with Authorization: Bearer header
 async function testAuthorizationBearer(token) {
   try {
-    const response = await axios.get('http://localhost:8080/api/auth/users', {
+    const response = await axios.get('http://localhost:3001/api/auth/users', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -38,7 +38,7 @@ async function testAuthorizationBearer(token) {
 // Test with x-auth-token header
 async function testXAuthToken(token) {
   try {
-    const response = await axios.get('http://localhost:8080/api/auth/users', {
+    const response = await axios.get('http://localhost:3001/api/auth/users', {
       headers: {
         'x-auth-token': token
       }

@@ -182,9 +182,9 @@
  * Get the base URL for API requests.
  */
 function getApiBaseUrl() {
-    // For local development, use localhost:8080
+    // For local development, use localhost:3001
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:8080';
+        return 'http://localhost:3001';
     }
     // For production, use the current origin
     return window.location.origin;

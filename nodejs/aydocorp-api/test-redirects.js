@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 // Replace with your actual server URL
-const serverUrl = 'http://localhost:8080';
+const serverUrl = 'http://localhost:3001';
 
 // Test the redirects
 async function testRedirects() {

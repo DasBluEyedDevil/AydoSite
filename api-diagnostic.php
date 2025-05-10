@@ -33,9 +33,9 @@ header('Content-Type: text/html');
         <h2>Testing PHP to Node.js Connection</h2>
         <?php
         $node_urls = [
-            'Default' => 'http://localhost:8080/api/test',
+            'Default' => 'http://localhost:3001/api/test',
             'Alternate Port' => 'http://localhost:3000/api/test',
-            'IP Address' => 'http://127.0.0.1:8080/api/test'
+            'IP Address' => 'http://127.0.0.1:3001/api/test'
         ];
         
         foreach ($node_urls as $label => $url) {

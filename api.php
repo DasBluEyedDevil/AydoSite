@@ -39,10 +39,10 @@ if (strpos($path, "/api/") === 0) {
     // Forward to Node.js server
     // Try multiple possible Node.js server addresses
     $node_servers = [
-        "http://aydocorp.space:8080/api/", // Primary production URL with correct port
+        "http://aydocorp.space:3001/api/", // Primary production URL with correct port
         "http://aydocorp.space/api/",      // Try without port in case of proxy
-        "http://localhost:8080/api/",      // Local development fallback
-        "http://127.0.0.1:8080/api/"       // Alternative local fallback
+        "http://localhost:3001/api/",      // Local development fallback
+        "http://127.0.0.1:3001/api/"       // Alternative local fallback
     ];
 
     $node_url = null;
@@ -75,7 +75,7 @@ if (strpos($path, "/api/") === 0) {
     // If all servers failed, use the default and hope for the best
     if ($node_url === null) {
         debug_log("All Node.js server tests failed. Using default as fallback.");
-        $node_url = "http://localhost:8080/api/" . $api_path;
+        $node_url = "http://localhost:3001/api/" . $api_path;
     }
 
     if ($query) {

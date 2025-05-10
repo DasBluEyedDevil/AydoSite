@@ -44,7 +44,7 @@ async function testApiUsers() {
 
     const loginOptions = {
       hostname: 'localhost',
-      port: 8080,
+      port: 3001,
       path: '/api/auth/login',
       method: 'POST',
       headers: {
@@ -64,12 +64,12 @@ async function testApiUsers() {
     const token = loginResult.token;
     console.log('Got token:', token.substring(0, 10) + '...');
 
-    // Test the /api/auth/users endpoint
+    // Test the /api/auth/users endpoint (localhost:3001)
     console.log('Testing /api/auth/users endpoint...');
 
     const usersOptions = {
       hostname: 'localhost',
-      port: 8080,
+      port: 3001,
       path: '/api/auth/users',
       method: 'GET',
       headers: {

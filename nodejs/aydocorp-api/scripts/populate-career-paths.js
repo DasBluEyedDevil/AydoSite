@@ -5,7 +5,7 @@ const axios = require('axios');
 require('dotenv').config({ path: '../.env' });
 
 // API base URL
-const API_BASE_URL = process.env.API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.API_URL || 'http://localhost:3001';
 
 // Get auth token
 async function getAuthToken() {

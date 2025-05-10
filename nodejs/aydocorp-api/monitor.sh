@@ -63,7 +63,7 @@ if [ "$process_running" = false ]; then
 fi
 
 # Check if the API is responding
-API_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/test 2>/dev/null || echo "Failed")
+API_CHECK=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/test 2>/dev/null || echo "Failed")
 if [ "$API_CHECK" = "200" ]; then
     log_message "API health check: OK (HTTP 200)"
 else

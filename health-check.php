@@ -7,7 +7,7 @@ $result = [
 ];
 
 // Try to connect to the Node.js API server
-$ch = curl_init('http://localhost:8080/api/test');
+$ch = curl_init('http://localhost:3001/api/test');
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, 5);
 $response = curl_exec($ch);

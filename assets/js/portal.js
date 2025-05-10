@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Unified API Utilities (from aydocorp.js)
 function getApiBaseUrl() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:8080';
+        return 'http://localhost:3001';
     }
     return window.location.origin;
 }

@@ -3,7 +3,7 @@ const axios = require('axios');
 async function testLogin() {
   try {
     console.log('Testing login with Devil user...');
-    const response = await axios.post('http://localhost:8080/api/auth/login', {
+    const response = await axios.post('http://localhost:3001/api/auth/login', {
       username: 'Devil',
       password: 'password123'
     }, {
@@ -18,7 +18,7 @@ async function testLogin() {
     // If login successful, test getting users
     if (response.data.token) {
       console.log('\nTesting get users with token...');
-      const usersResponse = await axios.get('http://localhost:8080/api/auth/users', {
+      const usersResponse = await axios.get('http://localhost:3001/api/auth/users', {
         headers: {
           'Authorization': `Bearer ${response.data.token}`
         }

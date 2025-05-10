@@ -3,7 +3,7 @@ const axios = require('axios');
 // Replace these values with your actual credentials and server URL
 const username = 'your-username';
 const password = 'your-password';
-const serverUrl = 'http://aydocorp.space'; // or 'http://localhost:8080' for local testing
+const serverUrl = 'http://aydocorp.space'; // or 'http://localhost:3001' for local testing
 
 // Function to get a JWT token by logging in
 async function getToken() {

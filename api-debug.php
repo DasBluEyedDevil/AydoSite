@@ -74,13 +74,13 @@ header('Content-Type: text/html');
         }
         
         // Test direct connection to Node.js server
-        $node_url = "http://localhost:8080/api/test";
+        $node_url = "http://localhost:3001/api/test";
         $direct_success = testConnection($node_url);
         
         if (!$direct_success) {
             echo "<div class='result error'>";
             echo "<h3>Testing Node.js on another port:</h3>";
-            testConnection("http://localhost:3000/api/test");
+            testConnection("http://localhost:3001/api/test");
             echo "</div>";
         }
         ?>
@@ -94,7 +94,7 @@ header('Content-Type: text/html');
         echo "<div class='result'>";
         echo "<h3>Creating Test Request:</h3>";
         
-        $api_url = "http://localhost:8080/api/test";
+        $api_url = "http://localhost:3001/api/test";
         
         echo "<pre>
         PHP Proxy Test for URL: $api_url
@@ -175,10 +175,10 @@ RewriteEngine On
 
 # Only proxy API requests
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
-RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
 
 # Add ProxyPassReverse directive
-ProxyPassReverse /api/ http://localhost:8080/api/
+ProxyPassReverse /api/ http://localhost:3001/api/
 </pre>";
             echo "</div>";
         } else {
@@ -204,7 +204,7 @@ if (strpos($path, "/api/") === 0) {
     $api_path = substr($path, 5); // Remove "/api/"
     
     // Forward to Node.js server
-    $node_url = "http://localhost:8080/api/" . $api_path;
+    $node_url = "http://localhost:3001/api/" . $api_path;
     
     // Get request method and headers
     $method = $_SERVER["REQUEST_METHOD"];
@@ -294,7 +294,7 @@ RewriteRule ^api/(.*)$ api.php [L]
             <pre>
 function getApiBaseUrl() {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'http://localhost:8080';
+        return 'http://localhost:3001';
     } else {
         // Use the current domain - this is important!
         return window.location.origin;

@@ -3,7 +3,7 @@ RewriteEngine On
 
 # Proxy all API requests to the Node.js backend
 RewriteCond %{REQUEST_URI} ^/api/ [NC]
-RewriteRule ^api/(.*)$ http://localhost:8080/api/$1 [P,L]
+RewriteRule ^api/(.*)$ http://localhost:3001/api/$1 [P,L]
 
 # Add headers for CORS and security
 <IfModule mod_headers.c>

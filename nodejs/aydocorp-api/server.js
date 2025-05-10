@@ -151,7 +151,7 @@ app.use((err, req, res, next) => {
 
 // Start server function
 function startServer() {
-    const PORT = process.env.PORT || 8080;
+    const PORT = process.env.PORT || 3001;
 
     // Listen for HTTP connections
     app.listen(PORT, () => {

@@ -8,7 +8,7 @@ dotenv.config();
 // Base URL for API requests
 // Use API_HOST environment variable if set, otherwise default to localhost
 const apiHost = process.env.API_HOST || 'localhost';
-const baseURL = `http://${apiHost}:${process.env.PORT || 8080}`;
+const baseURL = `http://${apiHost}:${process.env.PORT || 3001}`;
 
 // Function to test API endpoints
 async function testAPI() {
