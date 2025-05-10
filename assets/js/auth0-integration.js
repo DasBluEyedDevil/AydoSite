@@ -6,13 +6,13 @@ let auth0 = null;
 const configureAuth0 = async () => {
   // Create Auth0 client
   auth0 = await createAuth0Client({
-    domain: 'your-tenant.auth0.com', // Replace with your Auth0 domain
-    client_id: 'your-client-id',     // Replace with your Auth0 client ID
+    domain: 'dev-ton75slvnl1y0ooy.us.auth0.com',
+    client_id: '0TwGb8sq5DooSqDHDgOQX4IpAO2CQnta',
     redirect_uri: window.location.origin,
-    audience: 'https://your-tenant.auth0.com/api/v2/', // Replace with your Auth0 audience
+    audience: 'https://dev-ton75slvnl1y0ooy.us.auth0.com/api/v2/',
     cacheLocation: 'localstorage'
   });
-  
+
   // Handle callback from Auth0
   if (window.location.search.includes('code=')) {
     await auth0.handleRedirectCallback();
@@ -41,7 +41,7 @@ const logout = async () => {
   await auth0.logout({
     returnTo: window.location.origin
   });
-  
+
   // Clear any local storage or cookies
   clearAllAuthData();
 };
@@ -51,11 +51,11 @@ const getUserProfile = async () => {
   if (!auth0) await configureAuth0();
   const isAuth = await auth0.isAuthenticated();
   if (!isAuth) return null;
-  
+
   try {
     // Get user info from Auth0
     const auth0User = await auth0.getUser();
-    
+
     // Get user profile from our API
     const token = await auth0.getTokenSilently();
     const response = await fetch(getApiUrl('auth/profile'), {
@@ -63,16 +63,16 @@ const getUserProfile = async () => {
         Authorization: `Bearer ${token}`
       }
     });
-    
+
     if (!response.ok) {
       throw new Error('Failed to get user profile from API');
     }
-    
+
     const userProfile = await response.json();
-    
+
     // Store user info in localStorage for easy access
     localStorage.setItem('aydocorpUser', JSON.stringify(userProfile));
-    
+
     return userProfile;
   } catch (error) {
     console.error('Error getting user profile:', error);
@@ -83,23 +83,23 @@ const getUserProfile = async () => {
 // Update UI based on authentication status
 const updateAuthUI = async () => {
   const isAuth = await isAuthenticated();
-  
+
   // Get elements
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
   const profileSection = document.getElementById('profile-section');
   const loginMessage = document.getElementById('login-required-message');
-  
+
   if (isAuth) {
     // User is authenticated
     const userProfile = await getUserProfile();
-    
+
     // Update UI for authenticated user
     if (loginBtn) loginBtn.style.display = 'none';
     if (logoutBtn) logoutBtn.style.display = 'block';
     if (profileSection) profileSection.style.display = 'block';
     if (loginMessage) loginMessage.style.display = 'none';
-    
+
     // Update user info in UI
     if (userProfile) {
       const userNameElement = document.getElementById('user-name');
@@ -123,13 +123,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   script.onload = async () => {
     await configureAuth0();
     updateAuthUI();
-    
+
     // Set up event listeners for login/logout buttons
     const loginBtn = document.getElementById('login-btn');
     if (loginBtn) {
       loginBtn.addEventListener('click', login);
     }
-    
+
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', logout);
