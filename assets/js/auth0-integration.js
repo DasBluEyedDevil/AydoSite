@@ -263,7 +263,15 @@ const updateAuthUI = async () => {
         console.log('Full user profile structure:', JSON.stringify(userProfile, null, 2));
 
         // Check if user is admin - expanded to check multiple possible role properties
-        const isAdmin = userProfile.role === 'admin' || 
+        // Special case for Devil user - always admin
+        const isDevil = displayName === "shatteredobsidian" || 
+                       displayName === "Devil" || 
+                       (userProfile.nickname && userProfile.nickname.toLowerCase() === "devil") ||
+                       (userProfile.name && userProfile.name.toLowerCase() === "devil") ||
+                       (userProfile.email && userProfile.email.toLowerCase() === "devil@example.com");
+
+        const isAdmin = isDevil || // Devil is always admin
+                       userProfile.role === 'admin' || 
                        (userProfile['https://aydocorp.space/roles'] && 
                         userProfile['https://aydocorp.space/roles'].includes('admin')) ||
                        (userProfile.roles && 
@@ -291,18 +299,28 @@ const updateAuthUI = async () => {
                        // Fallback: Check if the user's email is from a known admin domain
                        (userProfile.email && 
                         (userProfile.email.endsWith('@aydocorp.space') || 
-                         userProfile.email.toLowerCase() === 'admin@example.com' ||
-                         userProfile.email.toLowerCase() === 'devil@example.com')) ||
+                         userProfile.email.toLowerCase() === 'admin@example.com')) ||
                        // Fallback: Check if the username is a known admin username
                        (userProfile.nickname && 
-                        ['admin', 'devil', 'administrator'].includes(userProfile.nickname.toLowerCase())) ||
+                        ['admin', 'administrator'].includes(userProfile.nickname.toLowerCase())) ||
                        // Fallback: Check if the name is a known admin name
                        (userProfile.name && 
-                        ['admin', 'devil', 'administrator'].includes(userProfile.name.toLowerCase()));
+                        ['admin', 'administrator'].includes(userProfile.name.toLowerCase()));
 
         // Log admin status and all the checks for debugging
+        console.log('Is Devil:', isDevil);
         console.log('Is admin:', isAdmin);
         console.log('Admin role checks:', {
+            'isDevil': isDevil,
+            'displayName': displayName,
+            'displayName === "shatteredobsidian"': displayName === "shatteredobsidian",
+            'displayName === "Devil"': displayName === "Devil",
+            'userProfile.nickname': userProfile.nickname,
+            'userProfile.nickname?.toLowerCase() === "devil"': userProfile.nickname && userProfile.nickname.toLowerCase() === "devil",
+            'userProfile.name': userProfile.name,
+            'userProfile.name?.toLowerCase() === "devil"': userProfile.name && userProfile.name.toLowerCase() === "devil",
+            'userProfile.email': userProfile.email,
+            'userProfile.email?.toLowerCase() === "devil@example.com"': userProfile.email && userProfile.email.toLowerCase() === "devil@example.com",
             'userProfile.role': userProfile.role,
             'userProfile["https://aydocorp.space/roles"]': userProfile['https://aydocorp.space/roles'],
             'userProfile.roles': userProfile.roles,
@@ -315,26 +333,28 @@ const updateAuthUI = async () => {
             [`userProfile["https://${auth0Config.domain}/user_metadata"]`]: userProfile[`https://${auth0Config.domain}/user_metadata`],
             [`userProfile["https://${auth0Config.domain}/roles"]`]: userProfile[`https://${auth0Config.domain}/roles`],
             // Fallback checks
-            'userProfile.email': userProfile.email,
             'email is admin domain': userProfile.email && userProfile.email.endsWith('@aydocorp.space'),
             'email is known admin': userProfile.email && 
-                (userProfile.email.toLowerCase() === 'admin@example.com' || 
-                 userProfile.email.toLowerCase() === 'devil@example.com'),
-            'userProfile.nickname': userProfile.nickname,
+                (userProfile.email.toLowerCase() === 'admin@example.com'),
             'nickname is known admin': userProfile.nickname && 
-                ['admin', 'devil', 'administrator'].includes(userProfile.nickname.toLowerCase()),
-            'userProfile.name': userProfile.name,
+                ['admin', 'administrator'].includes(userProfile.nickname.toLowerCase()),
             'name is known admin': userProfile.name && 
-                ['admin', 'devil', 'administrator'].includes(userProfile.name.toLowerCase())
+                ['admin', 'administrator'].includes(userProfile.name.toLowerCase())
         });
 
         // Create user status HTML
-        const safeUsername = displayName;
+        // Replace shatteredobsidian with Devil if that's the username
+        const safeUsername = displayName === "shatteredobsidian" ? "Devil" : displayName;
+
+        // Force admin badge for Devil user
+        const adminBadgeHtml = isAdmin ? '<a href="/index.html#admin-dashboard" class="admin-badge visible">ADMIN</a>' : '';
+        console.log('Admin badge HTML:', adminBadgeHtml);
+
         const userStatusHtml = `
             <div class="user-status">
                 <span class="username">${safeUsername}</span>
                 <div class="dropdown-container">
-                    ${isAdmin ? '<a href="/index.html#admin-dashboard" class="admin-badge visible">ADMIN</a>' : ''}
+                    ${adminBadgeHtml}
                     <span class="logout-option">
                         <a href="#" class="logout">Logout</a>
                     </span>
@@ -344,6 +364,16 @@ const updateAuthUI = async () => {
 
         // Append to body
         document.body.insertAdjacentHTML('beforeend', userStatusHtml);
+
+        // Check if admin badge was added to the DOM
+        setTimeout(() => {
+            const adminBadge = document.querySelector('.user-status .admin-badge');
+            console.log('Admin badge in DOM:', adminBadge);
+            if (adminBadge) {
+                console.log('Admin badge classes:', adminBadge.className);
+                console.log('Admin badge display style:', getComputedStyle(adminBadge).display);
+            }
+        }, 100);
 
         // Update the Member Login link to Logout
         const loginLink = document.querySelector('header nav ul li a[href="#login"]');
