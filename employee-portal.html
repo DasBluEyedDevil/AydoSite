@@ -61,45 +61,39 @@
                 <h3>Main Menu</h3>
                 <ul>
                     <li class="active">
-                        <a href="#dashboard" data-section="dashboard">
+                        <a href="#portal-home" data-section="portal-home">
                             <i class="fas fa-home"></i>
-                            <span>Dashboard</span>
+                            <span>Portal Home</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#announcements" data-section="announcements">
-                            <i class="fas fa-bullhorn"></i>
-                            <span>Announcements</span>
+                        <a href="#corp-archives" data-section="corp-archives">
+                            <i class="fas fa-archive"></i>
+                            <span>Corporate Archives</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#events" data-section="events">
-                            <i class="fas fa-calendar-alt"></i>
-                            <span>Events</span>
+                        <a href="#hierarchy" data-section="hierarchy">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Hierarchy Chart</span>
                         </a>
                     </li>
                 </ul>
             </div>
 
             <div class="nav-section">
-                <h3>Corporate</h3>
+                <h3>Subsidiaries</h3>
                 <ul>
                     <li>
-                        <a href="#archives" data-section="archives">
-                            <i class="fas fa-archive"></i>
-                            <span>Archives</span>
+                        <a href="#aydo-express" data-section="aydo-express">
+                            <i class="fas fa-shipping-fast"></i>
+                            <span>AydoExpress</span>
                         </a>
                     </li>
                     <li>
-                        <a href="#hierarchy" data-section="hierarchy">
-                            <i class="fas fa-sitemap"></i>
-                            <span>Hierarchy</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="#subsidiaries" data-section="subsidiaries">
-                            <i class="fas fa-building"></i>
-                            <span>Subsidiaries</span>
+                        <a href="#empyrion" data-section="empyrion">
+                            <i class="fas fa-industry"></i>
+                            <span>Empyrion Industries</span>
                         </a>
                     </li>
                 </ul>
@@ -109,15 +103,21 @@
                 <h3>Resources</h3>
                 <ul>
                     <li>
-                        <a href="#documents" data-section="documents">
-                            <i class="fas fa-file-alt"></i>
-                            <span>Documents</span>
+                        <a href="#useful-links" data-section="useful-links">
+                            <i class="fas fa-link"></i>
+                            <span>Useful Links</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#promo-pathway" data-section="promo-pathway">
+                            <i class="fas fa-road"></i>
+                            <span>Promotional Pathway</span>
                         </a>
                     </li>
                     <li>
                         <a href="#training" data-section="training">
                             <i class="fas fa-graduation-cap"></i>
-                            <span>Training</span>
+                            <span>Training Guides</span>
                         </a>
                     </li>
                     <li>
@@ -135,7 +135,7 @@
                     <li>
                         <a href="#database" data-section="database">
                             <i class="fas fa-users"></i>
-                            <span>Database</span>
+                            <span>Employee Database</span>
                         </a>
                     </li>
                     <li>
@@ -156,106 +156,423 @@
 
         <!-- Main Content Area -->
         <main id="portal-main">
-            <!-- Auth0 Gated Content -->
-            <div class="hidden" id="gated-content">
-                <p>
-                    You're seeing this content because you're currently
-                    <strong>logged in</strong>.
-                </p>
-                <label>
-                    Access token:
-                    <pre id="ipt-access-token"></pre>
-                </label>
-                <label>
-                    User profile:
-                    <pre id="ipt-user-profile"></pre>
-                </label>
-                <div class="api-test-container">
-                    <button id="btn-call-api" class="button primary">Call API</button>
-                    <div class="api-result-container">
-                        <h4>API Result:</h4>
-                        <pre id="api-call-result">Click the button above to call the API</pre>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Section -->
-            <section id="dashboard" class="portal-section active">
-                <div class="dashboard-grid">
-                    <!-- Welcome Banner -->
-                    <div class="dashboard-banner">
-                        <div class="banner-content">
-                            <h2>Welcome to AydoCorp</h2>
-                            <p>Excellence in shipping and resource consolidation across human and alien space.</p>
-                        </div>
-                        <div class="banner-image">
-                            <img src="images/Hull_E.jpg" alt="AydoCorp Fleet" />
-                        </div>
+            <!-- Portal Home Section -->
+            <section id="portal-home" class="portal-section active">
+                <div class="portal-home-container">
+                    <!-- Welcome Message -->
+                    <div class="welcome-banner">
+                        <h2>Welcome Back, <span id="welcome-user-name">Employee</span>!</h2>
                     </div>
 
-                    <!-- Quick Stats -->
-                    <div class="stats-container">
-                        <div class="stat-card">
-                            <i class="fas fa-ship"></i>
-                            <h3>Active Fleet</h3>
-                            <p class="stat-number">42</p>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-users"></i>
-                            <h3>Crew Members</h3>
-                            <p class="stat-number">156</p>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-box"></i>
-                            <h3>Cargo Missions</h3>
-                            <p class="stat-number">1,284</p>
-                        </div>
-                        <div class="stat-card">
-                            <i class="fas fa-star"></i>
-                            <h3>Systems Reached</h3>
-                            <p class="stat-number">18</p>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activity & Upcoming Events -->
-                    <div class="activity-events-container">
-                        <div class="recent-activity">
-                            <h3>Recent Activity</h3>
-                            <div class="activity-list">
-                                <!-- Dynamically populated -->
+                    <!-- Picture Carousel -->
+                    <div class="org-gallery-carousel">
+                        <div class="carousel-container">
+                            <div class="carousel-track">
+                                <img src="images/gallery/event1.jpg" alt="Organization Event 1" />
+                                <img src="images/gallery/event2.jpg" alt="Organization Event 2" />
+                                <img src="images/gallery/event3.jpg" alt="Organization Event 3" />
+                                <img src="images/gallery/event4.jpg" alt="Organization Event 4" />
                             </div>
                         </div>
-                        <div class="upcoming-events">
+                        <button class="carousel-prev"><i class="fas fa-chevron-left"></i></button>
+                        <button class="carousel-next"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+
+                    <!-- Main Content Blocks -->
+                    <div class="portal-content-blocks">
+                        <!-- Upcoming Events Section -->
+                        <div class="events-section">
                             <h3>Upcoming Events</h3>
-                            <div id="events-calendar"></div>
+                            <div class="calendar-container">
+                                <div id="events-calendar"></div>
+                                <button class="expand-calendar-button">
+                                    <i class="fas fa-expand-alt"></i> Expand Calendar
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Employee of the Month -->
-                    <div class="eotm-container">
-                        <h3>Employee of the Month</h3>
-                        <div class="eotm-content">
-                            <!-- Dynamically populated -->
-                        </div>
-                    </div>
-
-                    <!-- Latest Announcements -->
-                    <div class="announcements-container">
-                        <h3>Latest Announcements</h3>
-                        <div class="announcements-list">
-                            <!-- Dynamically populated -->
+                        <!-- Announcements Section -->
+                        <div class="announcements-section">
+                            <h3>Announcements</h3>
+                            <div class="announcements-container">
+                                <div class="announcement">
+                                    <h4>Operation Daybreak Extended</h4>
+                                    <p>Due to overwhelming success, we're extending Operation Daybreak for another three weeks. Coordinate with your team leads for scheduling.</p>
+                                    <small>Posted on: May 3, 2953</small>
+                                </div>
+                                <div class="announcement">
+                                    <h4>New Security Protocols</h4>
+                                    <p>All employees are required to update their security credentials by the end of the month. See the security office for details.</p>
+                                    <small>Posted on: April 28, 2953</small>
+                                </div>
+                                <div class="employee-of-month">
+                                    <h4>Employee of the Month</h4>
+                                    <div class="eotm-container">
+                                        <div class="eotm-avatar">
+                                            <img src="images/avatars/delta-dart.jpg" alt="Delta_Dart_42" />
+                                        </div>
+                                        <div class="eotm-details">
+                                            <h4>Delta_Dart_42</h4>
+                                            <p>Recognized for exceptional leadership during the Stanton-Pyro convoy mission, ensuring zero cargo loss despite multiple hostile encounters.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Other sections will be added dynamically -->
-            <section id="announcements" class="portal-section"></section>
-            <section id="events" class="portal-section"></section>
-            <section id="archives" class="portal-section"></section>
-            <section id="hierarchy" class="portal-section"></section>
-            <section id="subsidiaries" class="portal-section"></section>
-            <section id="documents" class="portal-section"></section>
+            <!-- Corporate Archives Section -->
+            <section id="corp-archives" class="portal-section">
+                <div class="corp-archives-container">
+                    <h2>Corporate Archives</h2>
+                    <div class="archives-tabs">
+                        <div class="tab active" data-tab="history">Corporate History</div>
+                        <div class="tab" data-tab="mission">Mission Statement</div>
+                        <div class="tab" data-tab="achievements">Major Achievements</div>
+                    </div>
+                    
+                    <div class="tab-content" id="history-content">
+                        <div class="history-timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-date">2949</div>
+                                <div class="timeline-content">
+                                    <h4>Foundation of Aydo Intergalactic Corp</h4>
+                                    <p>Founded by UdonMan with the vision of creating a logistics company focused on reliability and security.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-date">2950</div>
+                                <div class="timeline-content">
+                                    <h4>Expansion to Stanton System</h4>
+                                    <p>Established our first major operational hub in Stanton, beginning regular cargo routes between major planets.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-date">2951</div>
+                                <div class="timeline-content">
+                                    <h4>Formation of AydoExpress</h4>
+                                    <p>Creation of our specialized logistics subsidiary focused on rapid delivery and courier services.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-date">2952</div>
+                                <div class="timeline-content">
+                                    <h4>Formation of Empyrion Industries</h4>
+                                    <p>Expansion into manufacturing and resource processing with the formation of Empyrion Industries.</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-date">2953</div>
+                                <div class="timeline-content">
+                                    <h4>Current Operations</h4>
+                                    <p>Operating across multiple systems with a fleet of 42 ships and growing workforce of over 150 employees.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content hidden" id="mission-content">
+                        <h3>Our Mission</h3>
+                        <p>At Aydo Intergalactic Corporation, our mission is to provide the most reliable and secure logistics and resource services across human and alien space. We prioritize employee safety, client satisfaction, and operational excellence in everything we do.</p>
+                        
+                        <h3>Our Values</h3>
+                        <ul>
+                            <li><strong>Safety:</strong> The well-being of our crew comes first</li>
+                            <li><strong>Reliability:</strong> We deliver on our promises, every time</li>
+                            <li><strong>Integrity:</strong> Honest dealings with clients and employees</li>
+                            <li><strong>Innovation:</strong> Constantly improving our methods and technology</li>
+                            <li><strong>Community:</strong> Supporting each other and the wider galactic community</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tab-content hidden" id="achievements-content">
+                        <h3>Major Achievements</h3>
+                        <div class="achievement-list">
+                            <div class="achievement">
+                                <h4>Perfect Safety Record 2952</h4>
+                                <p>Completed over 500 cargo missions with zero crew casualties</p>
+                            </div>
+                            <div class="achievement">
+                                <h4>Pyro Expansion</h4>
+                                <p>Successfully established the first reliable trade routes through the Pyro system</p>
+                            </div>
+                            <div class="achievement">
+                                <h4>Fleet Milestone</h4>
+                                <p>Reached a major milestone of 40+ operational vessels</p>
+                            </div>
+                            <div class="achievement">
+                                <h4>Humanitarian Award 2951</h4>
+                                <p>Recognized for emergency relief operations during the Stanton crisis</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Hierarchy Chart Section -->
+            <section id="hierarchy" class="portal-section">
+                <div class="hierarchy-container">
+                    <h2>Organization Hierarchy</h2>
+                    
+                    <div class="hierarchy-tabs">
+                        <div class="tab active" data-tab="ranks">Rank Structure</div>
+                        <div class="tab" data-tab="leadership">Leadership Tree</div>
+                        <div class="tab" data-tab="payscales">Pay Scales</div>
+                    </div>
+                    
+                    <div class="tab-content" id="ranks-content">
+                        <div class="ranks-columns">
+                            <div class="rank-column main-ranks">
+                                <h3>Main Organization Ranks</h3>
+                                <ul class="rank-list">
+                                    <li class="rank-item">
+                                        <span class="rank-name">Board of Executives</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Director</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Manager</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Supervisor</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Senior Employee</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Employee</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Intern/Freelancer</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="rank-column subsidiary-ranks">
+                                <h3>AydoExpress Ranks</h3>
+                                <ul class="rank-list">
+                                    <li class="rank-item">
+                                        <span class="rank-name">Director</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Sub-Director</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Overseer</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Loadmaster</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Senior Service Agent</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Service Agent</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Associate</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Trainee</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="rank-column subsidiary-ranks">
+                                <h3>Empyrion Industries Ranks</h3>
+                                <ul class="rank-list">
+                                    <li class="rank-item">
+                                        <span class="rank-name">Director</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Sub-Director</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Overseer</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Specialist</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Senior Technician</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Technician</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Journeyman</span>
+                                    </li>
+                                    <li class="rank-item">
+                                        <span class="rank-name">Apprentice</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content hidden" id="leadership-content">
+                        <div class="org-structure">
+                            <div class="org-level">
+                                <div class="org-box ceo">
+                                    <div class="org-title">CEO</div>
+                                    <div class="org-name">Christoff Revan</div>
+                                    <div class="org-username">UdonMan</div>
+                                </div>
+                            </div>
+                            
+                            <div class="org-level">
+                                <div class="org-box board">
+                                    <div class="org-title">CSO</div>
+                                    <div class="org-name">Christoff Revan</div>
+                                    <div class="org-username">DasBlueEyedDevil</div>
+                                </div>
+                                <div class="org-box board">
+                                    <div class="org-title">COO</div>
+                                    <div class="org-name">Kaibo Zaiber</div>
+                                    <div class="org-username">Kaibo_Z</div>
+                                </div>
+                                <div class="org-box board">
+                                    <div class="org-title">CTO</div>
+                                    <div class="org-name">Ike Days</div>
+                                    <div class="org-username">IDays</div>
+                                </div>
+                            </div>
+                            
+                            <div class="org-level">
+                                <div class="org-box">
+                                    <div class="org-title">AydoExpress Director</div>
+                                    <div class="org-username">TBD</div>
+                                </div>
+                                <div class="org-box">
+                                    <div class="org-title">Empyrion Industries Director</div>
+                                    <div class="org-username">TBD</div>
+                                </div>
+                            </div>
+                            
+                            <div class="org-level">
+                                <div class="org-box">
+                                    <div class="org-title">AE Manager</div>
+                                    <div class="org-username">Delta_Dart_42</div>
+                                </div>
+                                <div class="org-box">
+                                    <div class="org-title">AE Manager</div>
+                                    <div class="org-username">MR-GR33N</div>
+                                </div>
+                                <div class="org-box">
+                                    <div class="org-title">EI Manager</div>
+                                    <div class="org-username">ArcZeroNine</div>
+                                </div>
+                                <div class="org-box">
+                                    <div class="org-title">EI Manager</div>
+                                    <div class="org-username">RamboSteph</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content hidden" id="payscales-content">
+                        <h3>Pay Scale Information</h3>
+                        <div class="payscale-tables">
+                            <div class="payscale-table">
+                                <h4>Base Organizational Pay</h4>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Annual Salary (UEC)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Board Member</td>
+                                            <td>350,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Director</td>
+                                            <td>200,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Manager</td>
+                                            <td>150,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Supervisor</td>
+                                            <td>120,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Senior Employee</td>
+                                            <td>100,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Employee</td>
+                                            <td>80,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Intern/Freelancer</td>
+                                            <td>48,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="payscale-table">
+                                <h4>Subsidiary Rank Bonuses (Additive)</h4>
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Subsidiary Rank</th>
+                                            <th>Additional Pay (UEC)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Rank 8 (Director)</td>
+                                            <td>+115,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 7 (Sub-Director)</td>
+                                            <td>+100,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 6 (Overseer)</td>
+                                            <td>+85,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 5 (Loadmaster/Specialist)</td>
+                                            <td>+70,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 4 (Senior Service/Senior Tech)</td>
+                                            <td>+55,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 3 (Service Agent/Technician)</td>
+                                            <td>+40,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 2 (Associate/Journeyman)</td>
+                                            <td>+25,000</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Rank 1 (Trainee/Apprentice)</td>
+                                            <td>+10,000</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Other sections (content will be added dynamically via JavaScript) -->
+            <section id="aydo-express" class="portal-section"></section>
+            <section id="empyrion" class="portal-section"></section>
+            <section id="useful-links" class="portal-section"></section>
+            <section id="promo-pathway" class="portal-section"></section>
             <section id="training" class="portal-section"></section>
             <section id="certifications" class="portal-section"></section>
             <section id="database" class="portal-section"></section>
@@ -291,6 +608,31 @@
             <p class="version">Portal Version: 2953.04.18</p>
         </div>
     </footer>
+
+    <!-- Account Verification Modal -->
+    <div id="verify-account-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Verify Your RSI Account</h2>
+            <p>To ensure only authorized members can access the employee portal, please verify your RSI account ownership.</p>
+            
+            <div class="verification-steps">
+                <h3>Verification Steps:</h3>
+                <ol>
+                    <li>Log in to your RSI account at <a href="https://robertsspaceindustries.com" target="_blank">robertsspaceindustries.com</a></li>
+                    <li>Navigate to your profile page</li>
+                    <li>Add the following verification code to your profile description:</li>
+                </ol>
+                <div class="verification-code">
+                    <code id="verification-code">AYDO-<span id="unique-verify-code">XXXX-XXXX</span></code>
+                    <button id="copy-code-btn" class="button small">Copy Code</button>
+                </div>
+                <p>Once you've added the code to your profile, click the button below to verify:</p>
+                <button id="verify-profile-btn" class="button primary">Verify My Profile</button>
+                <p class="verification-note">Our system will automatically check your RSI profile for the verification code. This process may take a few moments.</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="assets/js/jquery.min.js"></script>
