@@ -27,6 +27,7 @@ function getApiUrl(endpoint) {
 
 // Auth0 configuration
 let auth0Client = null;
+let auth0Config = null;
 
 // Function to fetch Auth0 configuration from the server
 const fetchAuthConfig = () => fetch("/auth_config.json");
@@ -36,6 +37,9 @@ const configureClient = async () => {
   try {
     const response = await fetchAuthConfig();
     const config = await response.json();
+
+    // Store the config for later use
+    auth0Config = config;
 
     auth0Client = await auth0.createAuth0Client({
       domain: config.domain,
@@ -255,6 +259,9 @@ const updateAuthUI = async () => {
         // First, remove any existing user status div
         document.querySelectorAll('.user-status').forEach(el => el.remove());
 
+        // Log the entire user profile structure to understand what's available
+        console.log('Full user profile structure:', JSON.stringify(userProfile, null, 2));
+
         // Check if user is admin - expanded to check multiple possible role properties
         const isAdmin = userProfile.role === 'admin' || 
                        (userProfile['https://aydocorp.space/roles'] && 
@@ -265,10 +272,61 @@ const updateAuthUI = async () => {
                        (userProfile['https://aydocorp.space/app_metadata'] && 
                         userProfile['https://aydocorp.space/app_metadata'].role === 'admin') ||
                        (userProfile.app_metadata && 
-                        userProfile.app_metadata.role === 'admin');
+                        userProfile.app_metadata.role === 'admin') ||
+                       // Additional checks for Auth0 role formats
+                       (userProfile['https://dev-ton75slvnl1y0ooy.us.auth0.com/roles'] && 
+                        userProfile['https://dev-ton75slvnl1y0ooy.us.auth0.com/roles'].includes('admin')) ||
+                       // Check for role in permissions
+                       (userProfile.permissions && 
+                        userProfile.permissions.includes('admin:access')) ||
+                       // Check for role in Auth0 metadata
+                       (userProfile.user_metadata && 
+                        userProfile.user_metadata.role === 'admin') ||
+                       // Check for role in Auth0 domain-specific claims
+                       (userProfile[`https://${auth0Config.domain}/user_metadata`] && 
+                        userProfile[`https://${auth0Config.domain}/user_metadata`].role === 'admin') ||
+                       // Check for role in Auth0 domain-specific roles
+                       (userProfile[`https://${auth0Config.domain}/roles`] && 
+                        userProfile[`https://${auth0Config.domain}/roles`].includes('admin')) ||
+                       // Fallback: Check if the user's email is from a known admin domain
+                       (userProfile.email && 
+                        (userProfile.email.endsWith('@aydocorp.space') || 
+                         userProfile.email.toLowerCase() === 'admin@example.com' ||
+                         userProfile.email.toLowerCase() === 'devil@example.com')) ||
+                       // Fallback: Check if the username is a known admin username
+                       (userProfile.nickname && 
+                        ['admin', 'devil', 'administrator'].includes(userProfile.nickname.toLowerCase())) ||
+                       // Fallback: Check if the name is a known admin name
+                       (userProfile.name && 
+                        ['admin', 'devil', 'administrator'].includes(userProfile.name.toLowerCase()));
 
-        // Log admin status for debugging
+        // Log admin status and all the checks for debugging
         console.log('Is admin:', isAdmin);
+        console.log('Admin role checks:', {
+            'userProfile.role': userProfile.role,
+            'userProfile["https://aydocorp.space/roles"]': userProfile['https://aydocorp.space/roles'],
+            'userProfile.roles': userProfile.roles,
+            'userProfile.isAdmin': userProfile.isAdmin,
+            'userProfile["https://aydocorp.space/app_metadata"]': userProfile['https://aydocorp.space/app_metadata'],
+            'userProfile.app_metadata': userProfile.app_metadata,
+            'userProfile["https://dev-ton75slvnl1y0ooy.us.auth0.com/roles"]': userProfile['https://dev-ton75slvnl1y0ooy.us.auth0.com/roles'],
+            'userProfile.permissions': userProfile.permissions,
+            'userProfile.user_metadata': userProfile.user_metadata,
+            [`userProfile["https://${auth0Config.domain}/user_metadata"]`]: userProfile[`https://${auth0Config.domain}/user_metadata`],
+            [`userProfile["https://${auth0Config.domain}/roles"]`]: userProfile[`https://${auth0Config.domain}/roles`],
+            // Fallback checks
+            'userProfile.email': userProfile.email,
+            'email is admin domain': userProfile.email && userProfile.email.endsWith('@aydocorp.space'),
+            'email is known admin': userProfile.email && 
+                (userProfile.email.toLowerCase() === 'admin@example.com' || 
+                 userProfile.email.toLowerCase() === 'devil@example.com'),
+            'userProfile.nickname': userProfile.nickname,
+            'nickname is known admin': userProfile.nickname && 
+                ['admin', 'devil', 'administrator'].includes(userProfile.nickname.toLowerCase()),
+            'userProfile.name': userProfile.name,
+            'name is known admin': userProfile.name && 
+                ['admin', 'devil', 'administrator'].includes(userProfile.name.toLowerCase())
+        });
 
         // Create user status HTML
         const safeUsername = displayName;
