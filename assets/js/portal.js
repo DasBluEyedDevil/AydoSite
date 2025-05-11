@@ -554,6 +554,9 @@ function loadSectionContent(section) {
         case 'profile':
             loadProfileSection(sectionElement);
             break;
+        case 'bank':
+            loadBankSection(sectionElement);
+            break;
         // Add other sections as needed
     }
 }
@@ -606,6 +609,333 @@ function loadProfileSection(container) {
             </div>
         </div>
     `;
+}
+
+// Load bank section
+function loadBankSection(container) {
+    container.innerHTML = `
+        <div class="bank-content">
+            <div class="bank-header">
+                <h2>AydoCorp Banking</h2>
+                <p>Manage your finances across the galaxy</p>
+            </div>
+
+            <div class="bank-dashboard">
+                <!-- Account Summary -->
+                <div class="account-summary">
+                    <h3>Account Summary</h3>
+                    <div class="balance-card">
+                        <div class="balance-info">
+                            <span class="balance-label">Available Balance</span>
+                            <span class="balance-amount">₩ 125,000</span>
+                        </div>
+                        <div class="balance-actions">
+                            <button class="button primary deposit-btn">Deposit</button>
+                            <button class="button withdraw-btn">Withdraw</button>
+                            <button class="button transfer-btn">Transfer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction History -->
+                <div class="transaction-history">
+                    <h3>Recent Transactions</h3>
+                    <div class="transaction-list">
+                        <div class="transaction-item deposit">
+                            <div class="transaction-icon">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-title">Deposit from Mission Payout</div>
+                                <div class="transaction-date">2953-04-15</div>
+                            </div>
+                            <div class="transaction-amount">+₩ 25,000</div>
+                        </div>
+                        <div class="transaction-item withdrawal">
+                            <div class="transaction-icon">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-title">Ship Maintenance</div>
+                                <div class="transaction-date">2953-04-12</div>
+                            </div>
+                            <div class="transaction-amount">-₩ 15,000</div>
+                        </div>
+                        <div class="transaction-item transfer">
+                            <div class="transaction-icon">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <div class="transaction-details">
+                                <div class="transaction-title">Transfer to Sarah Chen</div>
+                                <div class="transaction-date">2953-04-10</div>
+                            </div>
+                            <div class="transaction-amount">-₩ 5,000</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banking Forms (hidden by default) -->
+            <div class="banking-forms">
+                <div class="deposit-form form-panel" style="display: none;">
+                    <h3>Deposit Funds</h3>
+                    <form id="deposit-form">
+                        <div class="form-group">
+                            <label for="deposit-amount">Amount (₩)</label>
+                            <input type="number" id="deposit-amount" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="deposit-source">Source</label>
+                            <select id="deposit-source" required>
+                                <option value="">Select Source</option>
+                                <option value="mission">Mission Payout</option>
+                                <option value="trading">Trading Profit</option>
+                                <option value="mining">Mining Proceeds</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="deposit-notes">Notes (Optional)</label>
+                            <textarea id="deposit-notes"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="button primary">Confirm Deposit</button>
+                            <button type="button" class="button cancel-form">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="withdraw-form form-panel" style="display: none;">
+                    <h3>Withdraw Funds</h3>
+                    <form id="withdraw-form">
+                        <div class="form-group">
+                            <label for="withdraw-amount">Amount (₩)</label>
+                            <input type="number" id="withdraw-amount" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="withdraw-purpose">Purpose</label>
+                            <select id="withdraw-purpose" required>
+                                <option value="">Select Purpose</option>
+                                <option value="maintenance">Ship Maintenance</option>
+                                <option value="equipment">Equipment Purchase</option>
+                                <option value="fuel">Fuel</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="withdraw-notes">Notes (Optional)</label>
+                            <textarea id="withdraw-notes"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="button primary">Confirm Withdrawal</button>
+                            <button type="button" class="button cancel-form">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="transfer-form form-panel" style="display: none;">
+                    <h3>Transfer Funds</h3>
+                    <form id="transfer-form">
+                        <div class="form-group">
+                            <label for="transfer-amount">Amount (₩)</label>
+                            <input type="number" id="transfer-amount" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transfer-recipient">Recipient</label>
+                            <input type="text" id="transfer-recipient" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="transfer-purpose">Purpose</label>
+                            <input type="text" id="transfer-purpose">
+                        </div>
+                        <div class="form-group">
+                            <label for="transfer-notes">Notes (Optional)</label>
+                            <textarea id="transfer-notes"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="button primary">Confirm Transfer</button>
+                            <button type="button" class="button cancel-form">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Initialize bank functionality
+    initializeBankFunctionality(container);
+}
+
+// Initialize bank functionality
+function initializeBankFunctionality(container) {
+    // Get elements
+    const depositBtn = container.querySelector('.deposit-btn');
+    const withdrawBtn = container.querySelector('.withdraw-btn');
+    const transferBtn = container.querySelector('.transfer-btn');
+    const cancelButtons = container.querySelectorAll('.cancel-form');
+    const depositForm = container.querySelector('.deposit-form');
+    const withdrawForm = container.querySelector('.withdraw-form');
+    const transferForm = container.querySelector('.transfer-form');
+    const depositFormEl = container.querySelector('#deposit-form');
+    const withdrawFormEl = container.querySelector('#withdraw-form');
+    const transferFormEl = container.querySelector('#transfer-form');
+
+    // Hide all forms initially
+    const hideAllForms = () => {
+        depositForm.style.display = 'none';
+        withdrawForm.style.display = 'none';
+        transferForm.style.display = 'none';
+    };
+
+    // Show deposit form
+    depositBtn.addEventListener('click', () => {
+        hideAllForms();
+        depositForm.style.display = 'block';
+    });
+
+    // Show withdraw form
+    withdrawBtn.addEventListener('click', () => {
+        hideAllForms();
+        withdrawForm.style.display = 'block';
+    });
+
+    // Show transfer form
+    transferBtn.addEventListener('click', () => {
+        hideAllForms();
+        transferForm.style.display = 'block';
+    });
+
+    // Cancel buttons
+    cancelButtons.forEach(button => {
+        button.addEventListener('click', hideAllForms);
+    });
+
+    // Handle deposit form submission
+    depositFormEl.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('deposit-amount').value;
+        const source = document.getElementById('deposit-source').value;
+        const notes = document.getElementById('deposit-notes').value;
+
+        console.log('Deposit:', { amount, source, notes });
+
+        // Simulate successful deposit
+        const currentBalance = parseFloat(container.querySelector('.balance-amount').textContent.replace('₩ ', '').replace(',', ''));
+        const newBalance = currentBalance + parseFloat(amount);
+        container.querySelector('.balance-amount').textContent = `₩ ${newBalance.toLocaleString()}`;
+
+        // Add transaction to history
+        const transactionList = container.querySelector('.transaction-list');
+        const newTransaction = document.createElement('div');
+        newTransaction.className = 'transaction-item deposit';
+        newTransaction.innerHTML = `
+            <div class="transaction-icon">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-title">Deposit from ${document.getElementById('deposit-source').options[document.getElementById('deposit-source').selectedIndex].text}</div>
+                <div class="transaction-date">${new Date().toISOString().split('T')[0]}</div>
+            </div>
+            <div class="transaction-amount">+₩ ${parseFloat(amount).toLocaleString()}</div>
+        `;
+        transactionList.insertBefore(newTransaction, transactionList.firstChild);
+
+        // Reset form and hide
+        this.reset();
+        hideAllForms();
+
+        // Show success message
+        alert('Deposit successful!');
+    });
+
+    // Handle withdraw form submission
+    withdrawFormEl.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('withdraw-amount').value;
+        const purpose = document.getElementById('withdraw-purpose').value;
+        const notes = document.getElementById('withdraw-notes').value;
+
+        console.log('Withdrawal:', { amount, purpose, notes });
+
+        // Check if sufficient funds
+        const currentBalance = parseFloat(container.querySelector('.balance-amount').textContent.replace('₩ ', '').replace(',', ''));
+        if (parseFloat(amount) > currentBalance) {
+            alert('Insufficient funds!');
+            return;
+        }
+
+        // Simulate successful withdrawal
+        const newBalance = currentBalance - parseFloat(amount);
+        container.querySelector('.balance-amount').textContent = `₩ ${newBalance.toLocaleString()}`;
+
+        // Add transaction to history
+        const transactionList = container.querySelector('.transaction-list');
+        const newTransaction = document.createElement('div');
+        newTransaction.className = 'transaction-item withdrawal';
+        newTransaction.innerHTML = `
+            <div class="transaction-icon">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-title">${document.getElementById('withdraw-purpose').options[document.getElementById('withdraw-purpose').selectedIndex].text}</div>
+                <div class="transaction-date">${new Date().toISOString().split('T')[0]}</div>
+            </div>
+            <div class="transaction-amount">-₩ ${parseFloat(amount).toLocaleString()}</div>
+        `;
+        transactionList.insertBefore(newTransaction, transactionList.firstChild);
+
+        // Reset form and hide
+        this.reset();
+        hideAllForms();
+
+        // Show success message
+        alert('Withdrawal successful!');
+    });
+
+    // Handle transfer form submission
+    transferFormEl.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('transfer-amount').value;
+        const recipient = document.getElementById('transfer-recipient').value;
+        const purpose = document.getElementById('transfer-purpose').value;
+        const notes = document.getElementById('transfer-notes').value;
+
+        console.log('Transfer:', { amount, recipient, purpose, notes });
+
+        // Check if sufficient funds
+        const currentBalance = parseFloat(container.querySelector('.balance-amount').textContent.replace('₩ ', '').replace(',', ''));
+        if (parseFloat(amount) > currentBalance) {
+            alert('Insufficient funds!');
+            return;
+        }
+
+        // Simulate successful transfer
+        const newBalance = currentBalance - parseFloat(amount);
+        container.querySelector('.balance-amount').textContent = `₩ ${newBalance.toLocaleString()}`;
+
+        // Add transaction to history
+        const transactionList = container.querySelector('.transaction-list');
+        const newTransaction = document.createElement('div');
+        newTransaction.className = 'transaction-item transfer';
+        newTransaction.innerHTML = `
+            <div class="transaction-icon">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="transaction-details">
+                <div class="transaction-title">Transfer to ${recipient}</div>
+                <div class="transaction-date">${new Date().toISOString().split('T')[0]}</div>
+            </div>
+            <div class="transaction-amount">-₩ ${parseFloat(amount).toLocaleString()}</div>
+        `;
+        transactionList.insertBefore(newTransaction, transactionList.firstChild);
+
+        // Reset form and hide
+        this.reset();
+        hideAllForms();
+
+        // Show success message
+        alert('Transfer successful!');
+    });
 }
 
 // Show a clear login required message with a button
