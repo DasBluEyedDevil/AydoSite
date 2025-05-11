@@ -237,25 +237,46 @@ const updateAuthUI = async () => {
 
       // Update user info in UI
       if (userProfile) {
+        // Log the user profile for debugging
+        console.log('User profile:', userProfile);
+
+        // Get the display name from various possible properties
+        const displayName = userProfile.nickname || 
+                           userProfile.name || 
+                           userProfile.given_name || 
+                           userProfile.preferred_username || 
+                           (userProfile.username && userProfile.username !== userProfile.email ? userProfile.username : null) || 
+                           'Employee';
+
         const userNameElement = document.getElementById('user-name');
-        if (userNameElement) userNameElement.textContent = userProfile.username || userProfile.name || 'Employee';
+        if (userNameElement) userNameElement.textContent = displayName;
 
         // Add user status div with hover-over button
         // First, remove any existing user status div
         document.querySelectorAll('.user-status').forEach(el => el.remove());
 
-        // Check if user is admin
+        // Check if user is admin - expanded to check multiple possible role properties
         const isAdmin = userProfile.role === 'admin' || 
                        (userProfile['https://aydocorp.space/roles'] && 
-                        userProfile['https://aydocorp.space/roles'].includes('admin'));
+                        userProfile['https://aydocorp.space/roles'].includes('admin')) ||
+                       (userProfile.roles && 
+                        (userProfile.roles.includes('admin') || userProfile.roles.includes('Admin'))) ||
+                       userProfile.isAdmin === true ||
+                       (userProfile['https://aydocorp.space/app_metadata'] && 
+                        userProfile['https://aydocorp.space/app_metadata'].role === 'admin') ||
+                       (userProfile.app_metadata && 
+                        userProfile.app_metadata.role === 'admin');
+
+        // Log admin status for debugging
+        console.log('Is admin:', isAdmin);
 
         // Create user status HTML
-        const safeUsername = userProfile.username || userProfile.name || 'Employee';
+        const safeUsername = displayName;
         const userStatusHtml = `
             <div class="user-status">
                 <span class="username">${safeUsername}</span>
                 <div class="dropdown-container">
-                    ${isAdmin ? '<a href="/index.html#admin-dashboard" class="admin-badge">ADMIN</a>' : ''}
+                    ${isAdmin ? '<a href="/index.html#admin-dashboard" class="admin-badge visible">ADMIN</a>' : ''}
                     <span class="logout-option">
                         <a href="#" class="logout">Logout</a>
                     </span>

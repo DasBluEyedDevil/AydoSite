@@ -425,6 +425,11 @@ body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {
     text-transform: uppercase;
 }
 
+/* Make admin badge visible by default when it has the visible class */
+.user-status .admin-badge.visible {
+    display: inline-block;
+}
+
 /* Create a dropdown menu effect */
 .user-status:hover,
 .user-status:hover .logout-option,
