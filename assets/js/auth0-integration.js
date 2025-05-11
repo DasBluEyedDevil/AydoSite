@@ -208,6 +208,15 @@ const callApi = async () => {
 // Update UI based on authentication status
 const updateAuthUI = async () => {
   try {
+    // Hide login overlay
+    const overlay = document.getElementById('login-check-overlay');
+    if (overlay) {
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 300);
+    }
+
     const isAuth = await isAuthenticated();
 
     // Get elements
