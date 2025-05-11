@@ -184,7 +184,7 @@ const callApi = async () => {
     }
 
     // Call the API
-    const response = await fetch("/api/external", {
+    const response = await fetch(getApiUrl("external"), {
       headers: {
         Authorization: `Bearer ${token}`
       }
