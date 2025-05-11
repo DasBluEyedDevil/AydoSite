@@ -602,13 +602,186 @@ function loadProfileSection(container) {
     container.innerHTML = `
         <div class="profile-content">
             <div class="profile-header">
-                <h2>My Profile</h2>
+                <div class="header-left">
+                    <h2>Aydo Intergalactic Corp.</h2>
+                </div>
+                <div class="header-right">
+                    <a href="#" class="header-link"><i class="fas fa-cog"></i> Account Settings</a>
+                    <a href="#" class="header-link"><i class="fas fa-power-off"></i> Logout</a>
+                </div>
             </div>
-            <div class="profile-details">
-                <!-- Profile details will be populated dynamically -->
+
+            <div class="profile-panels">
+                <!-- Left Pane - User Details -->
+                <div class="profile-panel user-details-panel">
+                    <div class="user-identification">
+                        <h3 class="username">DasBlueEyedDevil</h3>
+                        <div class="user-identifier">
+                            <span class="user-icon"></span>
+                            <span class="user-org">RSI</span>
+                        </div>
+                    </div>
+
+                    <div class="user-role-status">
+                        <span class="user-role">Chief Safety Officer</span>
+                        <span class="user-status">Board Member</span>
+                    </div>
+
+                    <div class="user-accordion">
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>PERMISSIONS</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <!-- Permissions content -->
+                            </div>
+                        </div>
+
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>PROGRESSION</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <!-- Progression content -->
+                            </div>
+                        </div>
+
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>AFFILIATIONS</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <button class="add-button"><i class="fas fa-plus"></i> Add Affiliation</button>
+                            </div>
+                        </div>
+
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>SPECIALIZED SKILLS</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <button class="add-button"><i class="fas fa-plus"></i> Add Skill</button>
+                            </div>
+                        </div>
+
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>AWARDS & CERTIFICATIONS</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <button class="add-button"><i class="fas fa-plus"></i> Add Award or Certification</button>
+                            </div>
+                        </div>
+
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>ORGANIZATION REPUTATION</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <button class="add-button"><i class="fas fa-plus"></i> Add Organization</button>
+                            </div>
+                        </div>
+
+                        <div class="accordion-section">
+                            <div class="accordion-header">
+                                <span>CONTACTS REPUTATION</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="accordion-content">
+                                <button class="add-button"><i class="fas fa-plus"></i> Add Contact</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Pane - Primary List/Content -->
+                <div class="profile-panel primary-list-panel">
+                    <div class="panel-tabs">
+                        <div class="tab">USER DETAILS</div>
+                        <div class="tab active">USER HANGAR [JS]</div>
+                    </div>
+
+                    <div class="panel-filters">
+                        <span class="filter-toggle">Show Filters <i class="fas fa-chevron-down"></i></span>
+                    </div>
+
+                    <div class="panel-list">
+                        <div class="list-item">
+                            <div class="item-name">Aegis - Stealth Bomber Eclipse</div>
+                            <div class="item-description">Eclipse</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Aegis - Gunship Redeemer</div>
+                            <div class="item-description">Redeemer</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Anvil - Medical CBR Pisces Rescue</div>
+                            <div class="item-description">Pisces Rescue</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Anvil - Medium Fighter F7A Hornet MK II</div>
+                            <div class="item-description">Hornet MK II</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Aopoa - Light Fighter Khartu-al</div>
+                            <div class="item-description">Khartu-al</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Pane - Secondary List/Details -->
+                <div class="profile-panel secondary-list-panel">
+                    <div class="panel-search">
+                        <input type="text" placeholder="Search by Ship Model">
+                        <i class="fas fa-search"></i>
+                    </div>
+
+                    <div class="panel-list">
+                        <div class="list-item">
+                            <div class="item-name">Aegis - Interdiction Avenger Stalker</div>
+                            <div class="item-description">Avenger Stalker</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Aegis - Light Freight Avenger Titan</div>
+                            <div class="item-description">Avenger Titan</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Aegis - Light Freight Avenger Titan Renegade</div>
+                            <div class="item-description">Avenger Titan Renegade</div>
+                        </div>
+                        <div class="list-item">
+                            <div class="item-name">Aegis - Interdiction Avenger Warlock</div>
+                            <div class="item-description">Avenger Warlock</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
+
+    // Initialize accordion functionality
+    const accordionHeaders = container.querySelectorAll('.accordion-header');
+    accordionHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            this.classList.toggle('active');
+            const content = this.nextElementSibling;
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                this.querySelector('i').classList.remove('fa-chevron-up');
+                this.querySelector('i').classList.add('fa-chevron-down');
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                this.querySelector('i').classList.remove('fa-chevron-down');
+                this.querySelector('i').classList.add('fa-chevron-up');
+            }
+        });
+    });
 }
 
 // Load bank section
@@ -616,144 +789,121 @@ function loadBankSection(container) {
     container.innerHTML = `
         <div class="bank-content">
             <div class="bank-header">
-                <h2>AydoCorp Banking</h2>
-                <p>Manage your finances across the galaxy</p>
+                <h2>BANK BALANCE</h2>
             </div>
 
-            <div class="bank-dashboard">
-                <!-- Account Summary -->
-                <div class="account-summary">
-                    <h3>Account Summary</h3>
-                    <div class="balance-card">
-                        <div class="balance-info">
-                            <span class="balance-label">Available Balance</span>
-                            <span class="balance-amount">₩ 125,000</span>
-                        </div>
-                        <div class="balance-actions">
-                            <button class="button primary deposit-btn">Deposit</button>
-                            <button class="button withdraw-btn">Withdraw</button>
-                            <button class="button transfer-btn">Transfer</button>
-                        </div>
+            <div class="bank-layout">
+                <!-- Left Column - Actions -->
+                <div class="bank-column bank-actions-column">
+                    <button class="bank-action-button deposit-btn">
+                        <span>Deposit Funds</span>
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="bank-action-button withdraw-btn">
+                        <span>Withdraw Funds</span>
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button class="bank-action-button request-btn">
+                        <span>Request Funds</span>
+                        <i class="fas fa-question"></i>
+                    </button>
+                    <button class="bank-action-button balance-btn">
+                        <span>Balance Funds</span>
+                        <i class="fas fa-equals"></i>
+                    </button>
+                    <button class="bank-action-button clear-btn">
+                        <span>Clear Transaction History</span>
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+
+                <!-- Center Column - Balance Display -->
+                <div class="bank-column bank-balance-column">
+                    <div class="balance-display">
+                        <div class="balance-label">The Estimated Balance is:</div>
+                        <div class="balance-amount">3,658,767</div>
                     </div>
                 </div>
 
-                <!-- Transaction History -->
-                <div class="transaction-history">
-                    <h3>Recent Transactions</h3>
-                    <div class="transaction-list">
-                        <div class="transaction-item deposit">
-                            <div class="transaction-icon">
-                                <i class="fas fa-arrow-down"></i>
-                            </div>
-                            <div class="transaction-details">
-                                <div class="transaction-title">Deposit from Mission Payout</div>
-                                <div class="transaction-date">2953-04-15</div>
-                            </div>
-                            <div class="transaction-amount">+₩ 25,000</div>
+                <!-- Right Column - Transaction History -->
+                <div class="bank-column bank-transactions-column">
+                    <div class="transactions-header">
+                        <h3>TRANSACTIONS</h3>
+                    </div>
+                    <div class="transactions-list">
+                        <div class="transaction-record">
+                            <div class="transaction-status rejected">Rejected</div>
+                            <div class="transaction-description">[test text] - mor testing</div>
+                            <div class="transaction-amount negative">-714,965</div>
+                            <div class="transaction-timestamp">Sat, 03 May 2025 00:53:45 GMT</div>
+                            <div class="transaction-user">Wormfood</div>
                         </div>
-                        <div class="transaction-item withdrawal">
-                            <div class="transaction-icon">
-                                <i class="fas fa-arrow-up"></i>
-                            </div>
-                            <div class="transaction-details">
-                                <div class="transaction-title">Ship Maintenance</div>
-                                <div class="transaction-date">2953-04-12</div>
-                            </div>
-                            <div class="transaction-amount">-₩ 15,000</div>
+                        <div class="transaction-record">
+                            <div class="transaction-status deposit">Deposit</div>
+                            <div class="transaction-description">Udon's resurgent money</div>
+                            <div class="transaction-amount positive">+3,280,133</div>
+                            <div class="transaction-timestamp">Fri, 02 May 2025 14:22:10 GMT</div>
+                            <div class="transaction-user">UdonMan</div>
                         </div>
-                        <div class="transaction-item transfer">
-                            <div class="transaction-icon">
-                                <i class="fas fa-exchange-alt"></i>
-                            </div>
-                            <div class="transaction-details">
-                                <div class="transaction-title">Transfer to Sarah Chen</div>
-                                <div class="transaction-date">2953-04-10</div>
-                            </div>
-                            <div class="transaction-amount">-₩ 5,000</div>
+                        <div class="transaction-record">
+                            <div class="transaction-status withdraw">Withdraw</div>
+                            <div class="transaction-description">04/30/25 Hauling Op (accurate number)</div>
+                            <div class="transaction-amount negative">-1,250,000</div>
+                            <div class="transaction-timestamp">Thu, 01 May 2025 09:15:33 GMT</div>
+                            <div class="transaction-user">DasBlueEyedDevil</div>
+                        </div>
+                        <div class="transaction-record">
+                            <div class="transaction-status deposit">Deposit</div>
+                            <div class="transaction-description">clerical error</div>
+                            <div class="transaction-amount positive">+2,343,599</div>
+                            <div class="transaction-timestamp">Wed, 30 Apr 2025 16:42:21 GMT</div>
+                            <div class="transaction-user">Admin</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Banking Forms (hidden by default) -->
-            <div class="banking-forms">
-                <div class="deposit-form form-panel" style="display: none;">
-                    <h3>Deposit Funds</h3>
-                    <form id="deposit-form">
+            <!-- Admin Transaction Forms (hidden by default) -->
+            <div class="admin-transaction-forms">
+                <div class="transaction-form deposit-form" style="display: none;">
+                    <h3>Add Deposit Transaction</h3>
+                    <form id="admin-deposit-form">
                         <div class="form-group">
-                            <label for="deposit-amount">Amount (₩)</label>
-                            <input type="number" id="deposit-amount" min="1" required>
+                            <label for="admin-deposit-amount">Amount</label>
+                            <input type="number" id="admin-deposit-amount" min="1" required>
                         </div>
                         <div class="form-group">
-                            <label for="deposit-source">Source</label>
-                            <select id="deposit-source" required>
-                                <option value="">Select Source</option>
-                                <option value="mission">Mission Payout</option>
-                                <option value="trading">Trading Profit</option>
-                                <option value="mining">Mining Proceeds</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <label for="admin-deposit-description">Description/Memo</label>
+                            <textarea id="admin-deposit-description" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="deposit-notes">Notes (Optional)</label>
-                            <textarea id="deposit-notes"></textarea>
+                            <label for="admin-deposit-user">Associated User (Optional)</label>
+                            <input type="text" id="admin-deposit-user">
                         </div>
                         <div class="form-actions">
-                            <button type="submit" class="button primary">Confirm Deposit</button>
+                            <button type="submit" class="button primary">Add Deposit</button>
                             <button type="button" class="button cancel-form">Cancel</button>
                         </div>
                     </form>
                 </div>
 
-                <div class="withdraw-form form-panel" style="display: none;">
-                    <h3>Withdraw Funds</h3>
-                    <form id="withdraw-form">
+                <div class="transaction-form withdraw-form" style="display: none;">
+                    <h3>Add Withdrawal Transaction</h3>
+                    <form id="admin-withdraw-form">
                         <div class="form-group">
-                            <label for="withdraw-amount">Amount (₩)</label>
-                            <input type="number" id="withdraw-amount" min="1" required>
+                            <label for="admin-withdraw-amount">Amount</label>
+                            <input type="number" id="admin-withdraw-amount" min="1" required>
                         </div>
                         <div class="form-group">
-                            <label for="withdraw-purpose">Purpose</label>
-                            <select id="withdraw-purpose" required>
-                                <option value="">Select Purpose</option>
-                                <option value="maintenance">Ship Maintenance</option>
-                                <option value="equipment">Equipment Purchase</option>
-                                <option value="fuel">Fuel</option>
-                                <option value="other">Other</option>
-                            </select>
+                            <label for="admin-withdraw-description">Description/Memo</label>
+                            <textarea id="admin-withdraw-description" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="withdraw-notes">Notes (Optional)</label>
-                            <textarea id="withdraw-notes"></textarea>
+                            <label for="admin-withdraw-user">Associated User (Optional)</label>
+                            <input type="text" id="admin-withdraw-user">
                         </div>
                         <div class="form-actions">
-                            <button type="submit" class="button primary">Confirm Withdrawal</button>
-                            <button type="button" class="button cancel-form">Cancel</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="transfer-form form-panel" style="display: none;">
-                    <h3>Transfer Funds</h3>
-                    <form id="transfer-form">
-                        <div class="form-group">
-                            <label for="transfer-amount">Amount (₩)</label>
-                            <input type="number" id="transfer-amount" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="transfer-recipient">Recipient</label>
-                            <input type="text" id="transfer-recipient" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="transfer-purpose">Purpose</label>
-                            <input type="text" id="transfer-purpose">
-                        </div>
-                        <div class="form-group">
-                            <label for="transfer-notes">Notes (Optional)</label>
-                            <textarea id="transfer-notes"></textarea>
-                        </div>
-                        <div class="form-actions">
-                            <button type="submit" class="button primary">Confirm Transfer</button>
+                            <button type="submit" class="button primary">Add Withdrawal</button>
                             <button type="button" class="button cancel-form">Cancel</button>
                         </div>
                     </form>
@@ -771,20 +921,19 @@ function initializeBankFunctionality(container) {
     // Get elements
     const depositBtn = container.querySelector('.deposit-btn');
     const withdrawBtn = container.querySelector('.withdraw-btn');
-    const transferBtn = container.querySelector('.transfer-btn');
+    const requestBtn = container.querySelector('.request-btn');
+    const balanceBtn = container.querySelector('.balance-btn');
+    const clearBtn = container.querySelector('.clear-btn');
     const cancelButtons = container.querySelectorAll('.cancel-form');
     const depositForm = container.querySelector('.deposit-form');
     const withdrawForm = container.querySelector('.withdraw-form');
-    const transferForm = container.querySelector('.transfer-form');
-    const depositFormEl = container.querySelector('#deposit-form');
-    const withdrawFormEl = container.querySelector('#withdraw-form');
-    const transferFormEl = container.querySelector('#transfer-form');
+    const adminDepositForm = container.querySelector('#admin-deposit-form');
+    const adminWithdrawForm = container.querySelector('#admin-withdraw-form');
 
     // Hide all forms initially
     const hideAllForms = () => {
         depositForm.style.display = 'none';
         withdrawForm.style.display = 'none';
-        transferForm.style.display = 'none';
     };
 
     // Show deposit form
@@ -799,10 +948,23 @@ function initializeBankFunctionality(container) {
         withdrawForm.style.display = 'block';
     });
 
-    // Show transfer form
-    transferBtn.addEventListener('click', () => {
-        hideAllForms();
-        transferForm.style.display = 'block';
+    // Request funds button
+    requestBtn.addEventListener('click', () => {
+        alert('Fund request has been submitted for approval.');
+    });
+
+    // Balance funds button
+    balanceBtn.addEventListener('click', () => {
+        alert('Funds have been balanced successfully.');
+    });
+
+    // Clear transaction history button
+    clearBtn.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear the transaction history? This action cannot be undone.')) {
+            const transactionsList = container.querySelector('.transactions-list');
+            transactionsList.innerHTML = '';
+            alert('Transaction history has been cleared.');
+        }
     });
 
     // Cancel buttons
@@ -810,131 +972,84 @@ function initializeBankFunctionality(container) {
         button.addEventListener('click', hideAllForms);
     });
 
-    // Handle deposit form submission
-    depositFormEl.addEventListener('submit', function(e) {
+    // Handle admin deposit form submission
+    adminDepositForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const amount = document.getElementById('deposit-amount').value;
-        const source = document.getElementById('deposit-source').value;
-        const notes = document.getElementById('deposit-notes').value;
+        const amount = document.getElementById('admin-deposit-amount').value;
+        const description = document.getElementById('admin-deposit-description').value;
+        const user = document.getElementById('admin-deposit-user').value || 'System';
 
-        console.log('Deposit:', { amount, source, notes });
+        console.log('Admin Deposit:', { amount, description, user });
 
-        // Simulate successful deposit
-        const currentBalance = parseFloat(container.querySelector('.balance-amount').textContent.replace('₩ ', '').replace(',', ''));
-        const newBalance = currentBalance + parseFloat(amount);
-        container.querySelector('.balance-amount').textContent = `₩ ${newBalance.toLocaleString()}`;
+        // Update balance
+        const currentBalance = parseInt(container.querySelector('.balance-amount').textContent.replace(/,/g, ''));
+        const newBalance = currentBalance + parseInt(amount);
+        container.querySelector('.balance-amount').textContent = newBalance.toLocaleString();
 
         // Add transaction to history
-        const transactionList = container.querySelector('.transaction-list');
+        const transactionsList = container.querySelector('.transactions-list');
         const newTransaction = document.createElement('div');
-        newTransaction.className = 'transaction-item deposit';
+        newTransaction.className = 'transaction-record';
+
+        const now = new Date();
+        const timestamp = now.toUTCString();
+
         newTransaction.innerHTML = `
-            <div class="transaction-icon">
-                <i class="fas fa-arrow-down"></i>
-            </div>
-            <div class="transaction-details">
-                <div class="transaction-title">Deposit from ${document.getElementById('deposit-source').options[document.getElementById('deposit-source').selectedIndex].text}</div>
-                <div class="transaction-date">${new Date().toISOString().split('T')[0]}</div>
-            </div>
-            <div class="transaction-amount">+₩ ${parseFloat(amount).toLocaleString()}</div>
+            <div class="transaction-status deposit">Deposit</div>
+            <div class="transaction-description">${description}</div>
+            <div class="transaction-amount positive">+${parseInt(amount).toLocaleString()}</div>
+            <div class="transaction-timestamp">${timestamp}</div>
+            <div class="transaction-user">${user}</div>
         `;
-        transactionList.insertBefore(newTransaction, transactionList.firstChild);
+
+        transactionsList.insertBefore(newTransaction, transactionsList.firstChild);
 
         // Reset form and hide
         this.reset();
         hideAllForms();
 
         // Show success message
-        alert('Deposit successful!');
+        alert('Deposit transaction added successfully!');
     });
 
-    // Handle withdraw form submission
-    withdrawFormEl.addEventListener('submit', function(e) {
+    // Handle admin withdraw form submission
+    adminWithdrawForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const amount = document.getElementById('withdraw-amount').value;
-        const purpose = document.getElementById('withdraw-purpose').value;
-        const notes = document.getElementById('withdraw-notes').value;
+        const amount = document.getElementById('admin-withdraw-amount').value;
+        const description = document.getElementById('admin-withdraw-description').value;
+        const user = document.getElementById('admin-withdraw-user').value || 'System';
 
-        console.log('Withdrawal:', { amount, purpose, notes });
+        console.log('Admin Withdrawal:', { amount, description, user });
 
-        // Check if sufficient funds
-        const currentBalance = parseFloat(container.querySelector('.balance-amount').textContent.replace('₩ ', '').replace(',', ''));
-        if (parseFloat(amount) > currentBalance) {
-            alert('Insufficient funds!');
-            return;
-        }
-
-        // Simulate successful withdrawal
-        const newBalance = currentBalance - parseFloat(amount);
-        container.querySelector('.balance-amount').textContent = `₩ ${newBalance.toLocaleString()}`;
+        // Update balance
+        const currentBalance = parseInt(container.querySelector('.balance-amount').textContent.replace(/,/g, ''));
+        const newBalance = currentBalance - parseInt(amount);
+        container.querySelector('.balance-amount').textContent = newBalance.toLocaleString();
 
         // Add transaction to history
-        const transactionList = container.querySelector('.transaction-list');
+        const transactionsList = container.querySelector('.transactions-list');
         const newTransaction = document.createElement('div');
-        newTransaction.className = 'transaction-item withdrawal';
+        newTransaction.className = 'transaction-record';
+
+        const now = new Date();
+        const timestamp = now.toUTCString();
+
         newTransaction.innerHTML = `
-            <div class="transaction-icon">
-                <i class="fas fa-arrow-up"></i>
-            </div>
-            <div class="transaction-details">
-                <div class="transaction-title">${document.getElementById('withdraw-purpose').options[document.getElementById('withdraw-purpose').selectedIndex].text}</div>
-                <div class="transaction-date">${new Date().toISOString().split('T')[0]}</div>
-            </div>
-            <div class="transaction-amount">-₩ ${parseFloat(amount).toLocaleString()}</div>
+            <div class="transaction-status withdraw">Withdraw</div>
+            <div class="transaction-description">${description}</div>
+            <div class="transaction-amount negative">-${parseInt(amount).toLocaleString()}</div>
+            <div class="transaction-timestamp">${timestamp}</div>
+            <div class="transaction-user">${user}</div>
         `;
-        transactionList.insertBefore(newTransaction, transactionList.firstChild);
+
+        transactionsList.insertBefore(newTransaction, transactionsList.firstChild);
 
         // Reset form and hide
         this.reset();
         hideAllForms();
 
         // Show success message
-        alert('Withdrawal successful!');
-    });
-
-    // Handle transfer form submission
-    transferFormEl.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const amount = document.getElementById('transfer-amount').value;
-        const recipient = document.getElementById('transfer-recipient').value;
-        const purpose = document.getElementById('transfer-purpose').value;
-        const notes = document.getElementById('transfer-notes').value;
-
-        console.log('Transfer:', { amount, recipient, purpose, notes });
-
-        // Check if sufficient funds
-        const currentBalance = parseFloat(container.querySelector('.balance-amount').textContent.replace('₩ ', '').replace(',', ''));
-        if (parseFloat(amount) > currentBalance) {
-            alert('Insufficient funds!');
-            return;
-        }
-
-        // Simulate successful transfer
-        const newBalance = currentBalance - parseFloat(amount);
-        container.querySelector('.balance-amount').textContent = `₩ ${newBalance.toLocaleString()}`;
-
-        // Add transaction to history
-        const transactionList = container.querySelector('.transaction-list');
-        const newTransaction = document.createElement('div');
-        newTransaction.className = 'transaction-item transfer';
-        newTransaction.innerHTML = `
-            <div class="transaction-icon">
-                <i class="fas fa-exchange-alt"></i>
-            </div>
-            <div class="transaction-details">
-                <div class="transaction-title">Transfer to ${recipient}</div>
-                <div class="transaction-date">${new Date().toISOString().split('T')[0]}</div>
-            </div>
-            <div class="transaction-amount">-₩ ${parseFloat(amount).toLocaleString()}</div>
-        `;
-        transactionList.insertBefore(newTransaction, transactionList.firstChild);
-
-        // Reset form and hide
-        this.reset();
-        hideAllForms();
-
-        // Show success message
-        alert('Transfer successful!');
+        alert('Withdrawal transaction added successfully!');
     });
 }
 

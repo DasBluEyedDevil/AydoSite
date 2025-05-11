@@ -3,7 +3,7 @@
 /* Bank Content Container */
 .bank-content {
     padding: 20px;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
 }
 
@@ -18,26 +18,182 @@
 .bank-header h2 {
     font-size: 2.5rem;
     margin-bottom: 10px;
-    color: #fff;
+    color: var(--primary-color);
+    letter-spacing: 1px;
 }
 
-.bank-header p {
-    font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-/* Bank Dashboard */
-.bank-dashboard {
+/* Bank Layout */
+.bank-layout {
     display: grid;
     grid-template-columns: 1fr;
     gap: 30px;
     margin-bottom: 30px;
 }
 
-@media (min-width: 768px) {
-    .bank-dashboard {
-        grid-template-columns: 1fr 1fr;
+@media (min-width: 992px) {
+    .bank-layout {
+        grid-template-columns: 250px 1fr 1fr;
     }
+}
+
+/* Bank Columns */
+.bank-column {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Left Column - Actions */
+.bank-actions-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.bank-action-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bank-action-button:hover {
+    background: var(--hover-color);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.bank-action-button i {
+    font-size: 1.2rem;
+}
+
+/* Center Column - Balance Display */
+.bank-balance-column {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.balance-display {
+    text-align: center;
+    width: 100%;
+}
+
+.balance-label {
+    font-size: 1.2rem;
+    color: var(--text-color-muted);
+    margin-bottom: 20px;
+}
+
+.balance-amount {
+    font-size: 3.5rem;
+    font-weight: bold;
+    color: #4CAF50;
+    text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+}
+
+/* Right Column - Transaction History */
+.bank-transactions-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.transactions-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.transactions-header h3 {
+    color: var(--primary-color);
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.transactions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    overflow-y: auto;
+    max-height: 500px;
+}
+
+.transaction-record {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    padding: 15px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+        "status description amount"
+        "timestamp timestamp user";
+    gap: 10px;
+    align-items: center;
+}
+
+.transaction-status {
+    grid-area: status;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.transaction-status.deposit {
+    background-color: rgba(76, 175, 80, 0.2);
+    color: #4CAF50;
+}
+
+.transaction-status.withdraw {
+    background-color: rgba(244, 67, 54, 0.2);
+    color: #F44336;
+}
+
+.transaction-status.rejected {
+    background-color: rgba(255, 152, 0, 0.2);
+    color: #FF9800;
+}
+
+.transaction-description {
+    grid-area: description;
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.transaction-amount {
+    grid-area: amount;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.transaction-amount.positive {
+    color: #4CAF50;
+}
+
+.transaction-amount.negative {
+    color: #F44336;
+}
+
+.transaction-timestamp {
+    grid-area: timestamp;
+    font-size: 0.8rem;
+    color: var(--text-color-muted);
+}
+
+.transaction-user {
+    grid-area: user;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    text-align: right;
 }
 
 /* Account Summary */
@@ -182,26 +338,31 @@
     color: #F44336;
 }
 
-/* Banking Forms */
-.banking-forms {
+/* Admin Transaction Forms */
+.admin-transaction-forms {
     margin-top: 30px;
 }
 
-.form-panel {
-    background: rgba(0, 0, 0, 0.2);
+.transaction-form {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--surface-color);
     border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
-    margin: 0 auto;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
+    width: 90%;
+    z-index: 1000;
 }
 
-.form-panel h3 {
+.transaction-form h3 {
     margin-top: 0;
     margin-bottom: 20px;
     font-size: 1.5rem;
-    color: #fff;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--primary-color);
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 10px;
 }
 
@@ -213,17 +374,27 @@
     display: block;
     margin-bottom: 8px;
     font-weight: bold;
+    color: var(--text-color);
 }
 
 .form-group input,
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(83, 227, 251, 0.2);
 }
 
 .form-group textarea {
@@ -235,25 +406,102 @@
     display: flex;
     gap: 10px;
     justify-content: flex-end;
+    margin-top: 30px;
+}
+
+.form-actions button {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.form-actions button.primary {
+    background: var(--primary-color);
+    color: var(--background-color);
+    border: none;
+}
+
+.form-actions button.primary:hover {
+    background: #2c7a8a;
+}
+
+.form-actions button.cancel-form {
+    background: transparent;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.form-actions button.cancel-form:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--text-color);
 }
 
 /* Responsive Adjustments */
-@media (max-width: 767px) {
-    .balance-actions {
-        flex-direction: column;
+@media (max-width: 1200px) {
+    .bank-layout {
+        grid-template-columns: 250px 1fr;
     }
-    
-    .transaction-item {
-        flex-direction: column;
-        align-items: flex-start;
+
+    .bank-transactions-column {
+        grid-column: span 2;
     }
-    
-    .transaction-icon {
-        margin-bottom: 10px;
+}
+
+@media (max-width: 992px) {
+    .bank-layout {
+        grid-template-columns: 1fr;
     }
-    
-    .transaction-amount {
-        margin-top: 10px;
-        align-self: flex-end;
+
+    .bank-column {
+        grid-column: span 1;
+    }
+
+    .bank-actions-column {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .bank-action-button {
+        flex: 0 0 calc(50% - 10px);
+    }
+}
+
+@media (max-width: 768px) {
+    .bank-action-button {
+        flex: 0 0 100%;
+    }
+
+    .transaction-record {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "status"
+            "description"
+            "amount"
+            "timestamp"
+            "user";
+    }
+
+    .transaction-status,
+    .transaction-amount,
+    .transaction-user {
+        text-align: left;
+    }
+
+    .transaction-form {
+        width: 95%;
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .bank-header h2 {
+        font-size: 2rem;
+    }
+
+    .balance-amount {
+        font-size: 2.5rem;
     }
 }

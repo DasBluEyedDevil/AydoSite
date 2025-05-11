@@ -674,6 +674,342 @@
     border-color: rgba(83, 227, 251, 0.3);
 }
 
+/* User Profile Styles */
+.profile-content {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-left h2 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.8rem;
+}
+
+.header-right {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.header-link {
+    color: var(--text-color);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.header-link:hover {
+    color: var(--primary-color);
+}
+
+.profile-panels {
+    display: flex;
+    gap: 2rem;
+    height: calc(100vh - 300px);
+    min-height: 500px;
+}
+
+.profile-panel {
+    background: var(--surface-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+/* Left Panel - User Details */
+.user-details-panel {
+    flex: 0 0 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.user-identification {
+    margin-bottom: 1rem;
+}
+
+.username {
+    font-size: 1.8rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
+}
+
+.user-identifier {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-icon {
+    width: 16px;
+    height: 16px;
+    background-color: var(--primary-color);
+    display: inline-block;
+}
+
+.user-org {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    color: var(--text-color-muted);
+}
+
+.user-role-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.user-role {
+    font-size: 1.2rem;
+    color: var(--text-color);
+}
+
+.user-status {
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: var(--primary-color);
+}
+
+.user-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.accordion-section {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.accordion-header span {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+.accordion-content {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.accordion-header.active + .accordion-content {
+    padding: 1rem;
+}
+
+.add-button {
+    width: 100%;
+    padding: 0.5rem;
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.add-button:hover {
+    background: var(--hover-color);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Center Panel - Primary List */
+.primary-list-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: var(--text-color-muted);
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab:hover {
+    color: var(--text-color);
+}
+
+.tab.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.panel-filters {
+    margin-bottom: 1.5rem;
+}
+
+.filter-toggle {
+    cursor: pointer;
+    color: var(--text-color-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.filter-toggle:hover {
+    color: var(--primary-color);
+}
+
+.panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.list-item {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.list-item:hover {
+    background: var(--hover-color);
+}
+
+.item-name {
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    margin-bottom: 0.3rem;
+}
+
+.item-description {
+    font-size: 0.9rem;
+    color: var(--text-color-muted);
+}
+
+/* Right Panel - Secondary List */
+.secondary-list-panel {
+    flex: 0 0 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-search {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.panel-search input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+}
+
+.panel-search i {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-color-muted);
+}
+
+/* Profile Responsive Styles */
+@media screen and (max-width: 1400px) {
+    .profile-panels {
+        gap: 1.5rem;
+    }
+
+    .user-details-panel {
+        flex: 0 0 250px;
+    }
+
+    .secondary-list-panel {
+        flex: 0 0 300px;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    .profile-panels {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .profile-panel {
+        width: 100%;
+    }
+
+    .user-details-panel,
+    .secondary-list-panel {
+        flex: auto;
+    }
+
+    .user-details-panel {
+        order: 1;
+    }
+
+    .primary-list-panel {
+        order: 2;
+    }
+
+    .secondary-list-panel {
+        order: 3;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .accordion-header span {
+        font-size: 0.8rem;
+    }
+}
+
 /* Responsive Design */
 @media screen and (max-width: 1680px) {
     .portal-main-content,
